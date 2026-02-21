@@ -84,7 +84,7 @@
 
                 <a href="#" class="nav-item" data-view="auditoria" id="nav-auditoria">
                     <i class="fa-solid fa-clipboard-list"></i>
-                    <span>Auditoria</span>
+                    <span>Logs</span>
                 </a>
 
                 <a href="#" class="nav-item" data-view="backup" id="nav-backup">
@@ -416,19 +416,19 @@
 
             <!-- Auditoria View -->
             <div id="view-auditoria" class="view-section" style="display: none;">
-                <header class="section-header">
-                    <div>
-                        <h1>Auditoria de Sistema</h1>
-                        <p class="subtitle">Registro imutável de ações gerenciais e operacionais</p>
+                <div class="content-header fade-in">
+                    <div class="header-titles">
+                        <h1>Logs do Sistema</h1>
+                        <p>Registro de atividades e segurança</p>
                     </div>
                     <div class="header-actions">
-                        <button class="btn btn-primary" id="btn-export-logs">
-                            <i class="fa-solid fa-download"></i> Baixar CSV
+                        <button class="btn btn-secondary" id="btn-export-logs">
+                            <i class="fa-solid fa-download"></i> Exportar Logs CSV
                         </button>
                     </div>
-                </header>
+                </div>
 
-                <div class="glass-card full-table-container">
+                <div class="glass-card fade-in" style="margin-top: 1rem;">
                     <div class="table-responsive">
                         <table class="data-table" id="auditoria-table">
                             <thead>
@@ -467,7 +467,7 @@
                             </div>
                             <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem;">
                                 Gere um arquivo ".json" contendo 100% dos dados atuais do sistema, incluindo clientes,
-                                equipe, históricos de auditoria e senhas criptografadas. Guarde este arquivo em um local
+                                equipe, históricos de logs e senhas criptografadas. Guarde este arquivo em um local
                                 seguro.
                             </p>
                             <button class="btn btn-primary" id="btn-export-backup" style="width: 100%;">

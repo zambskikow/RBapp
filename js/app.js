@@ -1206,7 +1206,7 @@ function renderAuditoria() {
 
         tr.innerHTML = `
             <td style="white-space: nowrap;">${formatData}</td>
-            <td><strong>${log.user}</strong></td>
+            <td><strong>${log.user_name}</strong></td>
             <td><span class="badge ${log.permissao === 'Gerente' ? 'danger' : 'success'}">${log.permissao}</span></td>
             <td>${log.action}</td>
             <td><span style="color: var(--text-muted); font-size: 0.9em;">${log.details || '-'}</span></td>
@@ -1230,7 +1230,7 @@ function downloadAuditoriaCSV() {
         const formatData = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR');
 
         // Escape quotes and commas
-        const escUser = (l.user || "").replace(/"/g, '""');
+        const escUser = (l.user_name || "").replace(/"/g, '""');
         const escPerm = (l.permissao || "").replace(/"/g, '""');
         const escAction = (l.action || "").replace(/"/g, '""');
         const escDetails = (l.details || "").replace(/"/g, '""');

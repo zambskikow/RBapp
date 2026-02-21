@@ -294,6 +294,79 @@ window.Store = {
         }
     },
 
+    async addFuncionario(nome, setor, permissao, senha) {
+        const res = await fetch(`${API_BASE}/funcionarios`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, setor, permissao, senha })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            db.funcionarios.push({ id: data[0].id, nome, setor, permissao, senha });
+            this.registerLog("Gestão de Equipe", `Novo membro cadastrado: ${nome}`);
+        }
+    },
+
+    async addSetor(nome) {
+        const res = await fetch(`${API_BASE}/setores`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            db.setores.push(data[0].nome);
+            this.registerLog("Gestão de Setores", `Novo setor cadastrado: ${nome}`);
+        }
+    },
+
+    async addRotinaBase(nome, setor, frequencia, diaPrazoPadrao, checklistPadrao) {
+        const res = await fetch(`${API_BASE}/rotinas_base`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nome, setor, frequencia,
+                dia_prazo_padrao: diaPrazoPadrao,
+                checklist_padrao: checklistPadrao || []
+            })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            db.rotinasBase.push({
+                id: data[0].id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
+            });
+            this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome}`);
+        }
+    },
+
+    // Mocks for edit - in a full refactor these would be PUT requests
+    editClient(id, razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink = "") {
+        console.warn('API PUT endpoint para clientes ainda n\u00e3o implementado. Crie na V2.');
+        const c = db.clientes.find(x => x.id === parseInt(id));
+        if (c) {
+            c.razaoSocial = razaoSocial;
+            c.cnpj = cnpj;
+            c.regime = regime;
+            c.responsavelFiscal = responsavelFiscal;
+            c.rotinasSelecionadas = rotinasSelecionadasIds;
+            c.driveLink = driveLink;
+            this.registerLog("Editou Cliente", razaoSocial);
+        }
+    },
+
+    editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao) {
+        console.warn('API PUT endpoint para rotinas ainda n\u00e3o implementado. Crie na V2.');
+        const r = db.rotinasBase.find(x => x.id === parseInt(id));
+        if (r) {
+            r.nome = nome;
+            r.setor = setor;
+            r.frequencia = frequencia;
+            r.diaPrazoPadrao = diaPrazoPadrao;
+            r.checklistPadrao = checklistPadrao;
+            this.registerLog("Editou Rotina Base", nome);
+        }
+    },
+
     login(username, password) {
         console.log("Tentativa de login:", username, "- Senha Local:", password);
         console.log("Total Funcionarios carregados pelo Banco:", db.funcionarios.length);
