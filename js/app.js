@@ -77,6 +77,12 @@ async function initApp() {
     compFilter.addEventListener('change', (e) => {
         currentCompetencia = e.target.value;
         renderOperacional();
+
+        // Se a view atual for dashboard, atualiza os gráficos pra refletir
+        const dashboardView = document.getElementById('view-dashboard');
+        if (dashboardView && dashboardView.classList.contains('active') || dashboardView.style.display === 'block') {
+            renderDashboard();
+        }
     });
 
     // 4. Modals Events Setup
@@ -251,7 +257,7 @@ function setupNavigation() {
 // VIEW: Dashboard Manager
 // ==========================================
 function renderDashboard() {
-    const kpis = Store.getKPIs();
+    const kpis = Store.getKPIs(currentCompetencia);
 
     // Counters Animation
     animateValue('kpi-total', 0, kpis.total, 800);
@@ -264,7 +270,7 @@ function renderDashboard() {
     renderChart(kpis);
 
     // Render Bottlenecks table
-    const critical = Store.getCriticalBottlenecks();
+    const critical = Store.getCriticalBottlenecks(currentCompetencia);
     const tbody = document.querySelector('#critical-table tbody');
     tbody.innerHTML = '';
 
@@ -285,7 +291,10 @@ function renderDashboard() {
     }
 
     // Render Team Performance
-    const execsAll = Store.getExecucoesWithDetails('All');
+    let execsAll = Store.getExecucoesWithDetails('All');
+    if (currentCompetencia) {
+        execsAll = execsAll.filter(e => e.competencia === currentCompetencia);
+    }
     const teamStats = {};
     execsAll.forEach(ex => {
         if (!teamStats[ex.responsavel]) {

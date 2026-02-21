@@ -103,7 +103,88 @@ window.Store = {
 
     // As in local storage, but now wait for fetch
     async loadFromStorage() {
-        return await this.fetchAllData();
+        const loaded = await this.fetchAllData();
+        if (loaded) {
+            await this.checkCompetenciaRollover();
+        }
+        return loaded;
+    },
+
+    async checkCompetenciaRollover() {
+        if (!db.meses) db.meses = [];
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const monthNum = (now.getMonth() + 1).toString().padStart(2, '0');
+        const currentCompId = `${year}-${monthNum}`;
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const currentExt = `${monthNames[now.getMonth()]} ${year}`;
+
+        // Check if current real-world month exists in DB
+        const exists = db.meses.find(m => m.id === currentCompId);
+
+        if (!exists) {
+            console.log(`[Rollover] Mês ${currentCompId} não existe. Iniciando virada de competência...`);
+
+            // Deactivate old active months
+            const oldActives = db.meses.filter(m => m.ativo);
+            for (let m of oldActives) {
+                m.ativo = false;
+                try {
+                    await fetch(`${API_BASE}/meses/${m.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ativo: false })
+                    });
+                } catch (e) {
+                    console.error("Erro ao desativar mês antigo:", e);
+                }
+            }
+
+            // Create new month
+            const newMonth = {
+                id: currentCompId,
+                mes: currentExt,
+                ativo: true,
+                percent_concluido: 0,
+                atrasados: 0,
+                concluidos: 0,
+                total_execucoes: 0,
+                vencendo: 0
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/meses`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newMonth)
+                });
+
+                if (res.ok) {
+                    // It returns array, map back
+                    const data = await res.json();
+                    db.meses.push(data[0]);
+                    this.registerLog("Sistema", `Competência virada para ${currentExt}`);
+
+                    // Bootstrapping engine: Trigger creation of tasks for all clients
+                    console.log(`[Rollover] Gerando tarefas para ${db.clientes.length} clientes...`);
+                    // We must wait a tiny bit to assure month was pushed locally
+                    for (let cliente of db.clientes) {
+                        this.engineRotinas(cliente);
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao criar nova competência:", e);
+            }
+        } else if (!exists.ativo) {
+            // Fix edge case where month exists but is not marked active
+            exists.ativo = true;
+            await fetch(`${API_BASE}/meses/${exists.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ativo: true })
+            }).catch(e => { });
+        }
     },
 
     saveToStorage() {
@@ -192,8 +273,11 @@ window.Store = {
         return execs;
     },
 
-    getKPIs() {
-        const execs = this.getExecucoesWithDetails('All');
+    getKPIs(competencia = null) {
+        let execs = this.getExecucoesWithDetails('All');
+        if (competencia) {
+            execs = execs.filter(e => e.competencia === competencia);
+        }
         return {
             total: execs.length,
             concluidos: execs.filter(e => e.feito).length,
@@ -211,8 +295,12 @@ window.Store = {
         };
     },
 
-    getCriticalBottlenecks() {
-        return this.getExecucoesWithDetails('All')
+    getCriticalBottlenecks(competencia = null) {
+        let execs = this.getExecucoesWithDetails('All');
+        if (competencia) {
+            execs = execs.filter(e => e.competencia === competencia);
+        }
+        return execs
             .filter(e => e.semaforo === 'red' && e.ehPai && !e.feito)
             .sort((a, b) => new Date(a.diaPrazo || new Date()) - new Date(b.diaPrazo || new Date()));
     },

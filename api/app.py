@@ -40,6 +40,24 @@ class ClienteCreate(BaseModel):
 class SetorCreate(BaseModel):
     nome: str
 
+class MesCreate(BaseModel):
+    id: str
+    mes: str
+    ativo: bool = False
+    percent_concluido: int = 0
+    atrasados: int = 0
+    concluidos: int = 0
+    total_execucoes: int = 0
+    vencendo: int = 0
+
+class MesUpdate(BaseModel):
+    ativo: bool | None = None
+    percent_concluido: int | None = None
+    atrasados: int | None = None
+    concluidos: int | None = None
+    total_execucoes: int | None = None
+    vencendo: int | None = None
+
 class FuncionarioCreate(BaseModel):
     nome: str
     setor: str
@@ -95,6 +113,16 @@ def create_cliente(cliente: ClienteCreate):
 @app.get("/api/meses")
 def get_meses():
     response = supabase.table("meses").select("*").execute()
+    return response.data
+
+@app.post("/api/meses")
+def create_mes(mes: MesCreate):
+    response = supabase.table("meses").insert(mes.model_dump()).execute()
+    return response.data
+
+@app.put("/api/meses/{mes_id}")
+def update_mes(mes_id: str, updates: MesUpdate):
+    response = supabase.table("meses").update(updates.model_dump(exclude_unset=True)).eq("id", mes_id).execute()
     return response.data
 
 # --- Setores ---
