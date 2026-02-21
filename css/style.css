@@ -1109,3 +1109,62 @@ body {
         opacity: 1;
     }
 }
+
+/* ==========================================
+   PRINT LAYOUT (Relatórios PDF)
+   ========================================== */
+@media print {
+    body {
+        background: #fff !important;
+        color: #000 !important;
+        background-image: none !important;
+    }
+    
+    .sidebar, .topbar, .header-actions {
+        display: none !important;
+    }
+
+    .main-content {
+        overflow: visible !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .view-section {
+        padding: 0 !important;
+        animation: none !important;
+    }
+
+    .glass-card, .glass-panel, .glass-bar {
+        background: none !important;
+        backdrop-filter: none !important;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        color: #000 !important;
+    }
+
+    .kpi-value, .kpi-card h3, .section-header h1, .subtitle, .table-header-action h3 {
+        color: #000 !important;
+    }
+    
+    .kpi-icon {
+        background: #eee !important;
+        color: #333 !important;
+        border: 1px solid #ccc !important;
+    }
+
+    .status-badge {
+        border: 1px solid #ccc !important;
+        background: transparent !important;
+        color: #000 !important;
+    }
+
+    .data-table th, .data-table td {
+        border-bottom: 1px solid #ddd !important;
+        color: #000 !important;
+    }
+
+    canvas {
+        max-height: 300px !important;
+    }
+}

@@ -71,6 +71,10 @@
                     <i class="fa-solid fa-user-tie"></i>
                     <span>Gestão de Equipe</span>
                 </a>
+                <a href="#" class="nav-item" data-view="meu-desempenho">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Meu Desempenho</span>
+                </a>
                 <a href="#" class="nav-item" data-view="rotinas">
                     <i class="fa-solid fa-layer-group"></i>
                     <span>Gestão de Rotinas</span>
@@ -126,6 +130,21 @@
                     <div>
                         <h1>Visão Geral do Mês</h1>
                         <p class="subtitle">Acompanhe a saúde das entregas fiscais</p>
+                    </div>
+                    <div class="header-actions" style="display:flex; gap:0.5rem; align-items:center;">
+                        <select id="dash-competencia-filter" class="glass-select" style="min-width: 130px;">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <select id="dash-user-filter" class="glass-select" style="min-width: 130px;">
+                            <option value="All">Todos Analistas</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                        <select id="dash-client-filter" class="glass-select" style="min-width: 130px;">
+                            <option value="All">Todos Clientes</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                        <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i>
+                            Relatório</button>
                     </div>
                 </header>
 
@@ -222,6 +241,77 @@
                                 <!-- Populated by JS -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meu Desempenho View (Individual KPIs) -->
+            <div id="view-meu-desempenho" class="view-section" style="display: none;">
+                <header class="section-header">
+                    <div>
+                        <h1>Meu Desempenho</h1>
+                        <p class="subtitle">Acompanhe suas metas e produtividade individual</p>
+                    </div>
+                    <div class="header-actions" style="display:flex; gap:0.5rem; align-items:center;">
+                        <select id="meu-competencia-filter" class="glass-select" style="min-width: 140px;">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i>
+                            Imprimir Extrato</button>
+                    </div>
+                </header>
+
+                <div class="kpi-grid">
+                    <div class="glass-card kpi-card">
+                        <div class="kpi-icon"><i class="fa-solid fa-bullseye"></i></div>
+                        <div class="kpi-data">
+                            <h3>Total de Tarefas</h3>
+                            <p class="kpi-value" id="kpi-meu-total">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card status-success">
+                        <div class="kpi-icon"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="kpi-data">
+                            <h3>Concluídas</h3>
+                            <p class="kpi-value" id="kpi-meu-done">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card status-warning">
+                        <div class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                        <div class="kpi-data">
+                            <h3>Vencendo Hoje</h3>
+                            <p class="kpi-value" id="kpi-meu-warning">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card status-danger">
+                        <div class="kpi-icon"><i class="fa-solid fa-skull-crossbones"></i></div>
+                        <div class="kpi-data">
+                            <h3>Atrasadas</h3>
+                            <p class="kpi-value" id="kpi-meu-late">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid" style="margin-top: 1.5rem;">
+                    <div class="glass-card table-container" style="flex: 1;">
+                        <div class="table-header-action">
+                            <h3>Minhas Próximas Entregas (Prioridade)</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="minhas-proximas-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Rotina</th>
+                                        <th>Prazo</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

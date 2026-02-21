@@ -62,11 +62,20 @@ async function initApp() {
     // 2. Set Format Dates
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Populate Competencia Filter
+    // Populate Competencia Filter (Both Dashboard and Operacional)
     const compFilter = document.getElementById('competencia-filter');
+    const dashCompFilter = document.getElementById('dash-competencia-filter');
+    const meuCompFilter = document.getElementById('meu-competencia-filter');
+
     compFilter.innerHTML = '';
+    dashCompFilter.innerHTML = '';
+    meuCompFilter.innerHTML = '';
+
     Store.getData().meses.forEach(m => {
-        compFilter.innerHTML += `<option value="${m.id}">${m.mes}</option>`;
+        const option = `<option value="${m.id}">${m.mes}</option>`;
+        compFilter.innerHTML += option;
+        dashCompFilter.innerHTML += option;
+        meuCompFilter.innerHTML += option;
     });
 
     // Set default values based on the store's active month
@@ -74,9 +83,14 @@ async function initApp() {
     if (activeMonth) {
         currentCompetencia = activeMonth.id;
         compFilter.value = currentCompetencia;
+        dashCompFilter.value = currentCompetencia;
+        meuCompFilter.value = currentCompetencia;
     } else {
         currentCompetencia = '2026-02'; // Fallback
     }
+
+    // Populate the Dashboard Selects
+    populateDashboardSelects();
 
     // 3. User & Competencia Filter global events
     document.getElementById('user-filter').addEventListener('change', (e) => {
@@ -86,14 +100,35 @@ async function initApp() {
 
     compFilter.addEventListener('change', (e) => {
         currentCompetencia = e.target.value;
+        dashCompFilter.value = currentCompetencia;
+        meuCompFilter.value = currentCompetencia;
         renderOperacional();
-
-        // Se a view atual for dashboard, atualiza os gráficos pra refletir
         const dashboardView = document.getElementById('view-dashboard');
-        if (dashboardView && dashboardView.classList.contains('active') || dashboardView.style.display === 'block') {
-            renderDashboard();
-        }
+        if (dashboardView && dashboardView.style.display === 'block') renderDashboard();
+        const meuDesempenhoView = document.getElementById('view-meu-desempenho');
+        if (meuDesempenhoView && meuDesempenhoView.style.display === 'block') renderMeuDesempenho();
     });
+
+    dashCompFilter.addEventListener('change', (e) => {
+        currentCompetencia = e.target.value;
+        compFilter.value = currentCompetencia;
+        meuCompFilter.value = currentCompetencia;
+        renderDashboard();
+        renderOperacional();
+        renderMeuDesempenho();
+    });
+
+    meuCompFilter.addEventListener('change', (e) => {
+        currentCompetencia = e.target.value;
+        compFilter.value = currentCompetencia;
+        dashCompFilter.value = currentCompetencia;
+        renderMeuDesempenho();
+        renderOperacional();
+        renderDashboard();
+    });
+
+    document.getElementById('dash-user-filter').addEventListener('change', renderDashboard);
+    document.getElementById('dash-client-filter').addEventListener('change', renderDashboard);
 
     // 4. Modals Events Setup
     document.getElementById('close-modal').addEventListener('click', closeModal);
@@ -187,14 +222,18 @@ function handleLogin(e) {
             const navAudit = document.getElementById('nav-auditoria');
             const navBackup = document.getElementById('nav-backup');
             const btnSetores = document.getElementById('btn-manage-setores');
+            const navDashboard = document.querySelector('.nav-item[data-view="dashboard"]');
+
             if (auth.permissao !== 'Gerente') {
                 if (navAudit) navAudit.style.display = 'none';
                 if (navBackup) navBackup.style.display = 'none';
                 if (btnSetores) btnSetores.style.display = 'none';
+                if (navDashboard) navDashboard.style.display = 'none';
             } else {
                 if (navAudit) navAudit.style.display = 'flex';
                 if (navBackup) navBackup.style.display = 'flex';
                 if (btnSetores) btnSetores.style.display = 'inline-block';
+                if (navDashboard) navDashboard.style.display = 'flex';
             }
 
             localStorage.setItem('fiscalapp_session', auth.id);
@@ -247,6 +286,7 @@ function setupNavigation() {
 
                 // Refresh data based on view
                 if (targetView === 'dashboard') renderDashboard();
+                if (targetView === 'meu-desempenho') renderMeuDesempenho();
                 if (targetView === 'operacional') renderOperacional();
                 if (targetView === 'clientes') renderClientes();
                 if (targetView === 'equipe') renderEquipe();
@@ -264,18 +304,58 @@ function setupNavigation() {
     });
 }
 
+function populateDashboardSelects() {
+    const dashUserFilter = document.getElementById('dash-user-filter');
+    const dashClientFilter = document.getElementById('dash-client-filter');
+
+    // Users
+    dashUserFilter.innerHTML = '<option value="All">Todos Analistas</option>';
+    Store.getData().funcionarios.forEach(f => {
+        dashUserFilter.innerHTML += `<option value="${f.nome}">${f.nome} - ${f.setor}</option>`;
+    });
+
+    // Clients
+    dashClientFilter.innerHTML = '<option value="All">Todos Clientes</option>';
+    Store.getData().clientes.forEach(c => {
+        dashClientFilter.innerHTML += `<option value="${c.id}">${c.razaoSocial}</option>`;
+    });
+}
+
 // ==========================================
 // VIEW: Dashboard Manager
 // ==========================================
 function renderDashboard() {
-    const kpis = Store.getKPIs(currentCompetencia);
+    const dashUser = document.getElementById('dash-user-filter').value;
+    const dashClient = document.getElementById('dash-client-filter').value;
+
+    let execsAll = Store.getExecucoesWithDetails(dashUser);
+
+    // Filter by Competencia
+    if (currentCompetencia) {
+        execsAll = execsAll.filter(e => e.competencia === currentCompetencia);
+    }
+
+    // Filter by Client
+    if (dashClient !== 'All') {
+        const clientId = parseInt(dashClient);
+        execsAll = execsAll.filter(e => e.clienteId === clientId);
+    }
+
+    // Recalculate KPIs based on filtered array
+    const kpis = {
+        total: execsAll.length,
+        concluidos: execsAll.filter(e => e.feito).length,
+        emAndamento: execsAll.filter(e => !e.feito).length,
+        vencendo: execsAll.filter(e => !e.feito && e.semaforo === 'yellow').length,
+        atrasados: execsAll.filter(e => !e.feito && e.semaforo === 'red').length
+    };
 
     // Counters Animation
-    animateValue('kpi-total', 0, kpis.total, 800);
-    animateValue('kpi-done', 0, kpis.concluidos, 800);
-    animateValue('kpi-andamento', 0, kpis.emAndamento, 800);
-    animateValue('kpi-warning', 0, kpis.vencendo, 800);
-    animateValue('kpi-late', 0, kpis.atrasados, 800);
+    animateValue('kpi-total', parseInt(document.getElementById('kpi-total').innerText) || 0, kpis.total, 800);
+    animateValue('kpi-done', parseInt(document.getElementById('kpi-done').innerText) || 0, kpis.concluidos, 800);
+    animateValue('kpi-andamento', parseInt(document.getElementById('kpi-andamento').innerText) || 0, kpis.emAndamento, 800);
+    animateValue('kpi-warning', parseInt(document.getElementById('kpi-warning').innerText) || 0, kpis.vencendo, 800);
+    animateValue('kpi-late', parseInt(document.getElementById('kpi-late').innerText) || 0, kpis.atrasados, 800);
 
     // Chart.js initialization
     renderChart(kpis);
@@ -302,12 +382,12 @@ function renderDashboard() {
     }
 
     // Render Team Performance
-    let execsAll = Store.getExecucoesWithDetails('All');
+    let execsTeam = Store.getExecucoesWithDetails('All');
     if (currentCompetencia) {
-        execsAll = execsAll.filter(e => e.competencia === currentCompetencia);
+        execsTeam = execsTeam.filter(e => e.competencia === currentCompetencia);
     }
     const teamStats = {};
-    execsAll.forEach(ex => {
+    execsTeam.forEach(ex => {
         if (!teamStats[ex.responsavel]) {
             teamStats[ex.responsavel] = { total: 0, concluidas: 0, hoje: 0, atrasadas: 0 };
         }
@@ -384,6 +464,83 @@ function renderChart(kpis) {
             }
         }
     });
+}
+
+// ==========================================
+// VIEW: Meu Desempenho
+// ==========================================
+let currentMeuSemaforoChart = null;
+
+function renderMeuDesempenho() {
+    if (!LOGGED_USER) return;
+
+    let myExecs = Store.getExecucoesWithDetails(LOGGED_USER.nome);
+    if (currentCompetencia) {
+        myExecs = myExecs.filter(e => e.competencia === currentCompetencia);
+    }
+
+    const kpis = {
+        total: myExecs.length,
+        concluidas: myExecs.filter(e => e.feito).length,
+        vencendo: myExecs.filter(e => !e.feito && e.semaforo === 'yellow').length,
+        atrasadas: myExecs.filter(e => !e.feito && e.semaforo === 'red').length
+    };
+
+    animateValue('kpi-meu-total', parseInt(document.getElementById('kpi-meu-total').innerText) || 0, kpis.total, 800);
+    animateValue('kpi-meu-done', parseInt(document.getElementById('kpi-meu-done').innerText) || 0, kpis.concluidas, 800);
+    animateValue('kpi-meu-warning', parseInt(document.getElementById('kpi-meu-warning').innerText) || 0, kpis.vencendo, 800);
+    animateValue('kpi-meu-late', parseInt(document.getElementById('kpi-meu-late').innerText) || 0, kpis.atrasadas, 800);
+
+    // Chart
+    const ctx = document.getElementById('meuSemaforoChart');
+    if (currentMeuSemaforoChart) {
+        currentMeuSemaforoChart.destroy();
+    }
+
+    const andamento = kpis.total - kpis.concluidas - kpis.vencendo - kpis.atrasadas;
+    const data = [kpis.concluidas, andamento > 0 ? andamento : 0, kpis.vencendo, kpis.atrasadas];
+    if (data.every(d => d === 0)) data[0] = 0.1;
+
+    currentMeuSemaforoChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Concluída', 'No Prazo', 'Vencendo Hoje', 'Atrasada'],
+            datasets: [{
+                data: data,
+                backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
+                borderWidth: 0,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            cutout: '70%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#F8FAFC', padding: 15, font: { family: 'Inter', size: 12 } } }
+            }
+        }
+    });
+
+    // Minhas Próximas Entregas (Prioridade)
+    const pending = myExecs.filter(e => !e.feito).sort((a, b) => new Date(a.diaPrazo) - new Date(b.diaPrazo)).slice(0, 10);
+    const tbody = document.querySelector('#minhas-proximas-table tbody');
+    tbody.innerHTML = '';
+
+    if (pending.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--success);"><i class="fa-solid fa-hands-clapping fa-2x mb-3"></i><br/>Todas as entregas em dia!</td></tr>`;
+    } else {
+        pending.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${p.clientName}</strong></td>
+                <td><span class="resp-tag">${p.rotina}</span></td>
+                <td>${formatDate(p.diaPrazo)}</td>
+                <td><span class="status-badge ${p.semaforo === 'red' ? 'atrasado' : (p.semaforo === 'yellow' ? 'vencendo' : 'noprazo')}">${p.statusAuto}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 }
 
 // ==========================================
