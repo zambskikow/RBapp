@@ -498,6 +498,20 @@ window.Store = {
         return db.mensagens.filter(m => m.destinatario === usuario && !m.lida).length;
     },
 
+    async markMensagemLida(id) {
+        const m = db.mensagens.find(x => x.id === id);
+        if (m) {
+            m.lida = true;
+            try {
+                await fetch(`${API_BASE}/mensagens/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lida: true })
+                });
+            } catch (e) { console.error("Falha ao marcar msg lida", e); }
+        }
+    },
+
     engineRotinas(cliente) {
         // Build routines for the active month
         const month = db.meses.find(m => m.ativo);
@@ -514,16 +528,19 @@ window.Store = {
             if (!rotina) return;
 
             // Format deadline date for PostgreSQL (YYYY-MM-DD)
-            let [y, m] = currentComp.split('-');
+            let [y, mStr] = currentComp.split('-');
             let dia = rotina.diaPrazoPadrao.toString().padStart(2, '0');
-            // Basic handling for bad days that overflow (ex: month without 31)
-            let dateStr = `${y}-${m}-${dia}`;
+            let dateStr = `${y}-${mStr}-${dia}`;
 
-            const subitems = (rotina.checklistPadrao || []).map((item, idx) => ({
-                id: idx + 1,
-                texto: item,
-                done: false
-            }));
+            // Checklists might be arrays of strings or objects. Normalize to objects for 'execucoes'.
+            const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
+                const text = typeof item === 'string' ? item : item.texto;
+                return {
+                    id: idx + 1,
+                    texto: text,
+                    done: false
+                };
+            });
 
             // Dispatch task to API asynchronously
             fetch(`${API_BASE}/execucoes`, {

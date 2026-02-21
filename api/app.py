@@ -76,6 +76,15 @@ class ExecucaoUpdate(BaseModel):
     feito_em: str | None = None
     subitems: list = []
 
+class MensagemCreate(BaseModel):
+    remetente: str
+    destinatario: str
+    texto: str
+    lida: bool = False
+
+class MensagemUpdate(BaseModel):
+    lida: bool
+
 class ExecucaoCreate(BaseModel):
     cliente_id: int
     rotina: str
@@ -183,6 +192,16 @@ def update_execucao(exec_id: int, updates: ExecucaoUpdate):
 @app.get("/api/mensagens")
 def get_mensagens():
     response = supabase.table("mensagens").select("*").execute()
+    return response.data
+
+@app.post("/api/mensagens")
+def create_mensagem(msg: MensagemCreate):
+    response = supabase.table("mensagens").insert(msg.model_dump()).execute()
+    return response.data
+
+@app.put("/api/mensagens/{msg_id}")
+def update_mensagem(msg_id: int, updates: MensagemUpdate):
+    response = supabase.table("mensagens").update({"lida": updates.lida}).eq("id", msg_id).execute()
     return response.data
 
 # --- Logs ---

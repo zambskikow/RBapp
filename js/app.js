@@ -663,8 +663,8 @@ function renderEquipe() {
     const func = Store.getData().funcionarios;
 
     // Restrict UI for non-managers
-    const btnNovoMembro = document.getElementById('btn-add-equipe'); // Changed from btn-novo-membro to btn-add-equipe
-    if (LOGGED_USER && LOGGED_USER.permissao !== 'Gerente') {
+    const btnNovoMembro = document.getElementById('btn-add-equipe');
+    if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() !== 'gerente') {
         btnNovoMembro.style.display = 'none';
     } else {
         btnNovoMembro.style.display = 'inline-block';
