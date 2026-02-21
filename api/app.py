@@ -57,6 +57,12 @@ def create_cliente(cliente: ClienteCreate):
     response = supabase.table("clientes").insert(data).execute()
     return response.data
 
+# --- Meses ---
+@app.get("/api/meses")
+def get_meses():
+    response = supabase.table("meses").select("*").execute()
+    return response.data
+
 # --- Setores ---
 @app.get("/api/setores")
 def get_setores():
