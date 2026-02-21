@@ -58,6 +58,12 @@ class MesUpdate(BaseModel):
     total_execucoes: int | None = None
     vencendo: int | None = None
 
+class LogCreate(BaseModel):
+    user_name: str
+    permissao: str
+    action: str
+    details: str
+
 class FuncionarioCreate(BaseModel):
     nome: str
     setor: str
@@ -230,5 +236,10 @@ def update_mensagem(msg_id: int, updates: MensagemUpdate):
 # --- Logs ---
 @app.get("/api/logs")
 def get_logs():
-    response = supabase.table("logs").select("*").execute()
+    response = supabase.table("logs").select("*").order("timestamp", desc=True).limit(500).execute()
+    return response.data
+
+@app.post("/api/logs")
+def create_log(log: LogCreate):
+    response = supabase.table("logs").insert(log.model_dump()).execute()
     return response.data
