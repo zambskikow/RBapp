@@ -419,166 +419,182 @@ window.Store = {
     },
 
     async addRotinaBase(nome, setor, frequencia, diaPrazoPadrao, checklistPadrao) {
-        const res = await fetch(`${API_BASE}/rotinas_base`, {
+        this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome} (Offline)`);
+        this.saveData();
+    }
+},
+
+    async deleteRotinaBase(id) {
+    if (!LOGGED_USER || LOGGED_USER.permissao !== 'Gerente') return;
+
+    const db = this.getData();
+    const rotinaIndex = db.rotinasBase.findIndex(r => r.id === id);
+    if (rotinaIndex === -1) return;
+
+    const rotinaNome = db.rotinasBase[rotinaIndex].nome;
+
+    try {
+        const res = await fetch(`${API_BASE}/rotinas_base/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!res.ok) {
+            console.warn('API DELETE endpoint para rotinas falhou ou não existe. Removendo localmente.', res.status);
+        }
+
+        db.rotinasBase.splice(rotinaIndex, 1);
+        this.registerLog("Gestão de Rotinas", `Rotina base excluída: ${rotinaNome}`);
+        this.saveData();
+    } catch (e) {
+        console.error("Erro ao excluir rotina base via API, fallback local:", e);
+        db.rotinasBase.splice(rotinaIndex, 1);
+        this.registerLog("Gestão de Rotinas", `Rotina base excluída: ${rotinaNome} (Offline)`);
+        this.saveData();
+    }
+},
+
+// Mocks for edit - in a full refactor these would be PUT requests
+editClient(id, razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink = "") {
+    console.warn('API PUT endpoint para clientes ainda n\u00e3o implementado. Crie na V2.');
+    const c = db.clientes.find(x => x.id === parseInt(id));
+    if (c) {
+        c.razaoSocial = razaoSocial;
+        c.cnpj = cnpj;
+        c.regime = regime;
+        c.responsavelFiscal = responsavelFiscal;
+        c.rotinasSelecionadas = rotinasSelecionadasIds;
+        c.driveLink = driveLink;
+        this.registerLog("Editou Cliente", razaoSocial);
+    }
+},
+
+editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao) {
+    console.warn('API PUT endpoint para rotinas ainda n\u00e3o implementado. Crie na V2.');
+    const r = db.rotinasBase.find(x => x.id === parseInt(id));
+    if (r) {
+        r.nome = nome;
+        r.setor = setor;
+        r.frequencia = frequencia;
+        r.diaPrazoPadrao = diaPrazoPadrao;
+        r.checklistPadrao = checklistPadrao;
+        this.registerLog("Editou Rotina Base", nome);
+    }
+},
+
+login(username, password) {
+    console.log("Tentativa de login:", username, "- Senha Local:", password);
+    console.log("Total Funcionarios carregados pelo Banco:", db.funcionarios.length);
+    console.log("Funcionarios no DB:", db.funcionarios);
+
+    const user = db.funcionarios.find(f => f.nome === username && f.senha === password);
+
+    if (user) {
+        console.log("Usuário encontrado! Logando...");
+        this.registerLog("Acesso ao Sistema", `Login efetuado por ${username}`);
+    } else {
+        console.log("Falha no login. Nenhum usuário combinou com as credenciais fornecidas.");
+    }
+    return user || null;
+},
+
+// Additional methods mock
+sendMensagem(remetente, destinatario, texto) {
+    // Push locally
+    const m = { id: Date.now(), remetente, destinatario, texto, lida: false, data: new Date().toISOString() };
+    db.mensagens.push(m);
+    // Post api
+    fetch(`${API_BASE}/mensagens`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ remetente, destinatario, texto, lida: false }) }).catch(e => { });
+},
+
+getMensagensPara(usuario) {
+    return db.mensagens.filter(m => m.destinatario === usuario).sort((a, b) => new Date(b.data) - new Date(a.data));
+},
+
+getUnreadCount(usuario) {
+    return db.mensagens.filter(m => m.destinatario === usuario && !m.lida).length;
+},
+
+    async markMensagemLida(id) {
+    const m = db.mensagens.find(x => x.id === id);
+    if (m) {
+        m.lida = true;
+        try {
+            await fetch(`${API_BASE}/mensagens/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lida: true })
+            });
+        } catch (e) { console.error("Falha ao marcar msg lida", e); }
+    }
+},
+
+engineRotinas(cliente) {
+    // Build routines for the active month
+    const month = db.meses.find(m => m.ativo);
+    if (!month) {
+        console.warn("Rotinas Engine abortado: Nenhum mês ativo definido no sistema.");
+        return;
+    }
+
+    const currentComp = month.id; // e.g. "2026-02"
+    if (!cliente.rotinasSelecionadas || cliente.rotinasSelecionadas.length === 0) return;
+
+    cliente.rotinasSelecionadas.forEach(rotId => {
+        const rotina = db.rotinasBase.find(r => r.id === rotId);
+        if (!rotina) return;
+
+        // Format deadline date for PostgreSQL (YYYY-MM-DD)
+        let [y, mStr] = currentComp.split('-');
+        let dia = rotina.diaPrazoPadrao.toString().padStart(2, '0');
+        let dateStr = `${y}-${mStr}-${dia}`;
+
+        // Checklists might be arrays of strings or objects. Normalize to objects for 'execucoes'.
+        const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
+            const text = typeof item === 'string' ? item : item.texto;
+            return {
+                id: idx + 1,
+                texto: text,
+                done: false
+            };
+        });
+
+        // Dispatch task to API asynchronously
+        fetch(`${API_BASE}/execucoes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                nome, setor, frequencia,
-                dia_prazo_padrao: diaPrazoPadrao,
-                checklist_padrao: checklistPadrao || []
+                cliente_id: cliente.id,
+                rotina: rotina.nome,
+                competencia: currentComp,
+                dia_prazo: dateStr,
+                drive_link: cliente.driveLink,
+                responsavel: cliente.responsavelFiscal,
+                subitems: subitems,
+                eh_pai: true,
+                feito: false,
+                iniciado_em: new Date().toISOString().split('T')[0],
+                checklist_gerado: true
             })
-        });
-        if (res.ok) {
-            const data = await res.json();
-            db.rotinasBase.push({
-                id: data[0].id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
-            });
-            this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome}`);
-        }
-    },
-
-    // Mocks for edit - in a full refactor these would be PUT requests
-    editClient(id, razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink = "") {
-        console.warn('API PUT endpoint para clientes ainda n\u00e3o implementado. Crie na V2.');
-        const c = db.clientes.find(x => x.id === parseInt(id));
-        if (c) {
-            c.razaoSocial = razaoSocial;
-            c.cnpj = cnpj;
-            c.regime = regime;
-            c.responsavelFiscal = responsavelFiscal;
-            c.rotinasSelecionadas = rotinasSelecionadasIds;
-            c.driveLink = driveLink;
-            this.registerLog("Editou Cliente", razaoSocial);
-        }
-    },
-
-    editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao) {
-        console.warn('API PUT endpoint para rotinas ainda n\u00e3o implementado. Crie na V2.');
-        const r = db.rotinasBase.find(x => x.id === parseInt(id));
-        if (r) {
-            r.nome = nome;
-            r.setor = setor;
-            r.frequencia = frequencia;
-            r.diaPrazoPadrao = diaPrazoPadrao;
-            r.checklistPadrao = checklistPadrao;
-            this.registerLog("Editou Rotina Base", nome);
-        }
-    },
-
-    login(username, password) {
-        console.log("Tentativa de login:", username, "- Senha Local:", password);
-        console.log("Total Funcionarios carregados pelo Banco:", db.funcionarios.length);
-        console.log("Funcionarios no DB:", db.funcionarios);
-
-        const user = db.funcionarios.find(f => f.nome === username && f.senha === password);
-
-        if (user) {
-            console.log("Usuário encontrado! Logando...");
-            this.registerLog("Acesso ao Sistema", `Login efetuado por ${username}`);
-        } else {
-            console.log("Falha no login. Nenhum usuário combinou com as credenciais fornecidas.");
-        }
-        return user || null;
-    },
-
-    // Additional methods mock
-    sendMensagem(remetente, destinatario, texto) {
-        // Push locally
-        const m = { id: Date.now(), remetente, destinatario, texto, lida: false, data: new Date().toISOString() };
-        db.mensagens.push(m);
-        // Post api
-        fetch(`${API_BASE}/mensagens`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ remetente, destinatario, texto, lida: false }) }).catch(e => { });
-    },
-
-    getMensagensPara(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario).sort((a, b) => new Date(b.data) - new Date(a.data));
-    },
-
-    getUnreadCount(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario && !m.lida).length;
-    },
-
-    async markMensagemLida(id) {
-        const m = db.mensagens.find(x => x.id === id);
-        if (m) {
-            m.lida = true;
-            try {
-                await fetch(`${API_BASE}/mensagens/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lida: true })
-                });
-            } catch (e) { console.error("Falha ao marcar msg lida", e); }
-        }
-    },
-
-    engineRotinas(cliente) {
-        // Build routines for the active month
-        const month = db.meses.find(m => m.ativo);
-        if (!month) {
-            console.warn("Rotinas Engine abortado: Nenhum mês ativo definido no sistema.");
-            return;
-        }
-
-        const currentComp = month.id; // e.g. "2026-02"
-        if (!cliente.rotinasSelecionadas || cliente.rotinasSelecionadas.length === 0) return;
-
-        cliente.rotinasSelecionadas.forEach(rotId => {
-            const rotina = db.rotinasBase.find(r => r.id === rotId);
-            if (!rotina) return;
-
-            // Format deadline date for PostgreSQL (YYYY-MM-DD)
-            let [y, mStr] = currentComp.split('-');
-            let dia = rotina.diaPrazoPadrao.toString().padStart(2, '0');
-            let dateStr = `${y}-${mStr}-${dia}`;
-
-            // Checklists might be arrays of strings or objects. Normalize to objects for 'execucoes'.
-            const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
-                const text = typeof item === 'string' ? item : item.texto;
-                return {
-                    id: idx + 1,
-                    texto: text,
-                    done: false
-                };
-            });
-
-            // Dispatch task to API asynchronously
-            fetch(`${API_BASE}/execucoes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    cliente_id: cliente.id,
+        }).then(async (res) => {
+            if (res.ok) {
+                const data = await res.json();
+                db.execucoes.push({
+                    id: data[0].id,
+                    clienteId: cliente.id,
                     rotina: rotina.nome,
                     competencia: currentComp,
-                    dia_prazo: dateStr,
-                    drive_link: cliente.driveLink,
-                    responsavel: cliente.responsavelFiscal,
-                    subitems: subitems,
-                    eh_pai: true,
+                    diaPrazo: dateStr,
+                    driveLink: cliente.driveLink,
                     feito: false,
-                    iniciado_em: new Date().toISOString().split('T')[0],
-                    checklist_gerado: true
-                })
-            }).then(async (res) => {
-                if (res.ok) {
-                    const data = await res.json();
-                    db.execucoes.push({
-                        id: data[0].id,
-                        clienteId: cliente.id,
-                        rotina: rotina.nome,
-                        competencia: currentComp,
-                        diaPrazo: dateStr,
-                        driveLink: cliente.driveLink,
-                        feito: false,
-                        feitoEm: null,
-                        responsavel: cliente.responsavelFiscal,
-                        iniciadoEm: new Date().toISOString().split('T')[0],
-                        checklistGerado: true,
-                        ehPai: true,
-                        subitems: subitems
-                    });
-                }
-            }).catch(e => console.error("Falha na geracao engineRotinas para", rotina.nome, e));
-        });
-    }
+                    feitoEm: null,
+                    responsavel: cliente.responsavelFiscal,
+                    iniciadoEm: new Date().toISOString().split('T')[0],
+                    checklistGerado: true,
+                    ehPai: true,
+                    subitems: subitems
+                });
+            }
+        }).catch(e => console.error("Falha na geracao engineRotinas para", rotina.nome, e));
+    });
+}
 };

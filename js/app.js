@@ -746,8 +746,11 @@ function renderRotinas() {
             <td><span class="resp-tag" style="background: rgba(255,255,255,0.05); color: var(--text-main);">${r.setor || '-'}</span></td>
             <td>${diaText}</td>
             <td>
-                <button class="btn btn-small btn-secondary" onclick="openRotinaModal(${r.id})">
+                <button class="btn btn-small btn-secondary" onclick="openRotinaModal(${r.id})" style="margin-right: 4px;">
                     <i class="fa-solid fa-pen"></i> Editar
+                </button>
+                <button class="btn btn-small btn-secondary" onclick="handleDeleteRotina(${r.id})" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);">
+                    <i class="fa-solid fa-trash"></i> Excluir
                 </button>
             </td>
         `;
@@ -881,6 +884,16 @@ function handleSaveRotina(e) {
 
     renderRotinas();
     closeRotinaModal();
+}
+
+async function handleDeleteRotina(id) {
+    const rotina = Store.getData().rotinasBase.find(r => r.id === id);
+    if (!rotina) return;
+
+    if (confirm(`Atenção: Tem certeza que deseja CONCLUIR E EXCLUIR a rotina '${rotina.nome}'? Isso a removerá da base de rotinas disponíveis.`)) {
+        await Store.deleteRotinaBase(id);
+        renderRotinas();
+    }
 }
 
 // ==========================================
