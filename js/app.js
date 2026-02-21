@@ -769,10 +769,15 @@ function renderEquipe() {
         btnNovoMembro.style.display = 'inline-block';
     }
 
+    const ativos = func.filter(f => f.ativo !== false).length;
+    const inativos = func.length - ativos;
+
     animateValue('kpi-total-equipe', 0, func.length, 600);
+    animateValue('kpi-equipe-ativos', 0, ativos, 600);
+    animateValue('kpi-equipe-inativos', 0, inativos, 600);
 
     if (func.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 3rem;">Nenhum funcionário cadastrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 3rem;">Nenhum funcionário cadastrado.</td></tr>`;
         return;
     }
 
@@ -783,13 +788,21 @@ function renderEquipe() {
         const badgeColor = f.permissao === 'Gerente' ? 'var(--primary)' : 'var(--success)';
         const isAtivo = f.ativo !== false; // default true
 
-        let statusBadge = '';
+        let statusHtml = '';
         if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'gerente') {
-            statusBadge = isAtivo
-                ? `<span class="status-badge noprazo" style="cursor:pointer; display:inline-block;" onclick="toggleFuncionarioStatus('${f.id}')" title="Clique para inativar"><i class="fa-solid fa-check-circle"></i> Ativo</span>`
-                : `<span class="status-badge atrasado" style="cursor:pointer; display:inline-block;" onclick="toggleFuncionarioStatus('${f.id}')" title="Clique para ativar"><i class="fa-solid fa-xmark-circle"></i> Inativo</span>`;
+            statusHtml = `
+                <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: flex-start;">
+                    <label class="custom-toggle" style="margin: 0;">
+                        <input type="checkbox" ${isAtivo ? 'checked' : ''} onchange="toggleFuncionarioStatus('${f.id}')">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span style="font-size: 0.8rem; font-weight: 500; color: ${isAtivo ? 'var(--success)' : 'var(--danger)'};">
+                        ${isAtivo ? 'Ativo' : 'Inativo'}
+                    </span>
+                </div>
+            `;
         } else {
-            statusBadge = isAtivo
+            statusHtml = isAtivo
                 ? `<span class="status-badge noprazo"><i class="fa-solid fa-check-circle"></i> Ativo</span>`
                 : `<span class="status-badge atrasado"><i class="fa-solid fa-xmark-circle"></i> Inativo</span>`;
         }
@@ -799,7 +812,7 @@ function renderEquipe() {
             <td>${f.nome}</td>
             <td>${f.setor}</td>
             <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${f.permissao}</span></td>
-            <td>${statusBadge}</td>
+            <td>${statusHtml}</td>
             <td>
                 <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                     <i class="fa-solid fa-pen"></i> Editar
@@ -869,17 +882,14 @@ async function toggleFuncionarioStatus(id) {
     const f = Store.getData().funcionarios.find(x => x.id.toString() === stringId);
     if (!f) return;
 
-    if (confirm(`Deseja alterar o status de ${f.nome}?`)) {
-        const novoStatus = f.ativo === false ? true : false;
+    const novoStatus = f.ativo === false ? true : false;
 
-        // Optimistic UI update
-        f.ativo = novoStatus;
-        renderEquipe();
+    // Optimistic UI update
+    f.ativo = novoStatus;
+    renderEquipe();
 
-        // Push backend change
-        await Store.editFuncionario(f.id, f.nome, f.setor, f.permissao, f.senha, novoStatus);
-        renderEquipe(); // Re-render from source of truth
-    }
+    // Push backend change
+    await Store.editFuncionario(f.id, f.nome, f.setor, f.permissao, f.senha, novoStatus);
 }
 
 // ==========================================
