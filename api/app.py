@@ -118,6 +118,11 @@ def create_cliente(cliente: ClienteCreate):
     response = supabase.table("clientes").insert(data).execute()
     return response.data
 
+@app.delete("/api/clientes/{cliente_id}")
+def delete_cliente(cliente_id: int):
+    response = supabase.table("clientes").delete().eq("id", cliente_id).execute()
+    return response.data
+
 # --- Meses ---
 @app.get("/api/meses")
 def get_meses():
@@ -170,6 +175,11 @@ def get_rotinas_base():
 @app.post("/api/rotinas_base")
 def create_rotina(rotina: RotinaBaseCreate):
     response = supabase.table("rotinas_base").insert(rotina.model_dump()).execute()
+    return response.data
+
+@app.delete("/api/rotinas_base/{rotina_id}")
+def delete_rotina(rotina_id: int):
+    response = supabase.table("rotinas_base").delete().eq("id", rotina_id).execute()
     return response.data
 
 # --- Execucoes ---
