@@ -61,8 +61,12 @@ async function initApp() {
 
     // Set default values based on the store's active month
     const activeMonth = Store.getData().meses.find(m => m.ativo) || Store.getData().meses[0];
-    currentCompetencia = activeMonth.id;
-    compFilter.value = currentCompetencia;
+    if (activeMonth) {
+        currentCompetencia = activeMonth.id;
+        compFilter.value = currentCompetencia;
+    } else {
+        currentCompetencia = '2026-02'; // Fallback
+    }
 
     // 3. User & Competencia Filter global events
     document.getElementById('user-filter').addEventListener('change', (e) => {
