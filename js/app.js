@@ -35,6 +35,10 @@ async function initApp() {
 
             // Trigger renders since we now have contextual access
             loadSetoresSelects();
+
+            const savedView = localStorage.getItem('fiscalapp_current_view') || 'dashboard';
+
+            // Render everything invisibly first
             renderDashboard();
             renderOperacional();
             renderClientes();
@@ -43,6 +47,12 @@ async function initApp() {
             renderMensagens();
             renderAuditoria();
             updateMensagensBadges();
+
+            // Set the active view dynamically based on previous state
+            setTimeout(() => {
+                const navLink = document.querySelector(`.nav-item[data-view="${savedView}"]`);
+                if (navLink) navLink.click();
+            }, 50);
         }
     }
 
@@ -223,6 +233,7 @@ function setupNavigation() {
 
             // Switch views globally
             const targetView = link.getAttribute('data-view');
+            localStorage.setItem('fiscalapp_current_view', targetView);
             document.querySelectorAll('.view-section').forEach(view => {
                 view.style.display = 'none';
                 view.classList.remove('active');
@@ -771,9 +782,17 @@ function renderEquipe() {
 
         const badgeColor = f.permissao === 'Gerente' ? 'var(--primary)' : 'var(--success)';
         const isAtivo = f.ativo !== false; // default true
-        const statusBadge = isAtivo
-            ? `<span class="status-badge noprazo"><i class="fa-solid fa-check-circle"></i> Ativo</span>`
-            : `<span class="status-badge atrasado"><i class="fa-solid fa-xmark-circle"></i> Inativo</span>`;
+
+        let statusBadge = '';
+        if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'gerente') {
+            statusBadge = isAtivo
+                ? `<span class="status-badge noprazo" style="cursor:pointer; display:inline-block;" onclick="toggleFuncionarioStatus('${f.id}')" title="Clique para inativar"><i class="fa-solid fa-check-circle"></i> Ativo</span>`
+                : `<span class="status-badge atrasado" style="cursor:pointer; display:inline-block;" onclick="toggleFuncionarioStatus('${f.id}')" title="Clique para ativar"><i class="fa-solid fa-xmark-circle"></i> Inativo</span>`;
+        } else {
+            statusBadge = isAtivo
+                ? `<span class="status-badge noprazo"><i class="fa-solid fa-check-circle"></i> Ativo</span>`
+                : `<span class="status-badge atrasado"><i class="fa-solid fa-xmark-circle"></i> Inativo</span>`;
+        }
 
         tr.innerHTML = `
             <td><strong>#${f.id.toString().padStart(3, '0')}</strong></td>
@@ -782,7 +801,7 @@ function renderEquipe() {
             <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${f.permissao}</span></td>
             <td>${statusBadge}</td>
             <td>
-                <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal(${f.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                     <i class="fa-solid fa-pen"></i> Editar
                 </button>
             </td>
@@ -843,6 +862,24 @@ function handleAddFuncionario(e) {
 
     closeEquipeModal();
     renderEquipe();
+}
+
+async function toggleFuncionarioStatus(id) {
+    const stringId = id.toString();
+    const f = Store.getData().funcionarios.find(x => x.id.toString() === stringId);
+    if (!f) return;
+
+    if (confirm(`Deseja alterar o status de ${f.nome}?`)) {
+        const novoStatus = f.ativo === false ? true : false;
+
+        // Optimistic UI update
+        f.ativo = novoStatus;
+        renderEquipe();
+
+        // Push backend change
+        await Store.editFuncionario(f.id, f.nome, f.setor, f.permissao, f.senha, novoStatus);
+        renderEquipe(); // Re-render from source of truth
+    }
 }
 
 // ==========================================
