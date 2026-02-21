@@ -1134,7 +1134,7 @@ function renderChecklist() {
 
         div.innerHTML = `
             <input type="checkbox" class="custom-checkbox" id="chk_${sub.id}" ${sub.done ? 'checked' : ''}>
-            <label for="chk_${sub.id}" class="item-text">${sub.desc}</label>
+            <label for="chk_${sub.id}" class="item-text">${sub.texto || sub.desc || 'Item sem nome'}</label>
         `;
 
         // Single checklist item changed
