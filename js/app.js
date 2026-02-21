@@ -541,21 +541,109 @@ function renderClientes() {
         }
 
         tr.innerHTML = `
+            <td style="text-align: center;">
+                <input type="checkbox" class="client-checkbox custom-checkbox" value="${c.id}">
+            </td>
             <td><strong>${c.codigo}</strong></td>
             <td>${c.razaoSocial}</td>
             <td>${c.cnpj}</td>
             <td>${c.regime}</td>
             <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${c.responsavelFiscal}</span></td>
             <td><div style="display:flex; gap:4px; flex-wrap:wrap; max-width:200px;">${tagsHtml}</div></td>
-            <td>
-                <button class="btn btn-small btn-secondary" onclick="openClientModal(${c.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+            <td style="white-space: nowrap;">
+                <button class="btn btn-small btn-secondary" onclick="openClientModal(${c.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-right: 4px;">
                     <i class="fa-solid fa-pen"></i> Editar
+                </button>
+                <button class="btn btn-small btn-secondary btn-delete-single-client" data-id="${c.id}" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                    <i class="fa-solid fa-trash"></i> Excluir
                 </button>
             </td>
         `;
 
         tbody.appendChild(tr);
     });
+
+    setupClientCheckboxes();
+
+    // Add single delete events
+    document.querySelectorAll('.btn-delete-single-client').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = parseInt(e.currentTarget.getAttribute('data-id'));
+            const c = Store.getData().clientes.find(x => x.id === id);
+            if (c && confirm(`Atenção: Tem certeza que deseja excluir o cliente '${c.razaoSocial}' e TUDO que estiver atrelado a ele?`)) {
+                await Store.deleteClient(id);
+                renderClientes();
+                renderOperacional();
+                renderDashboard();
+            }
+        });
+    });
+}
+
+function setupClientCheckboxes() {
+    const selectAllCb = document.getElementById('select-all-clients');
+    const checkboxes = document.querySelectorAll('.client-checkbox');
+    const deleteBtn = document.getElementById('btn-delete-clients');
+    const badge = document.getElementById('delete-clients-badge');
+
+    const updateDeleteBtnVisibility = () => {
+        const checkedCount = document.querySelectorAll('.client-checkbox:checked').length;
+        if (checkedCount > 0) {
+            deleteBtn.style.display = 'inline-block';
+            badge.textContent = checkedCount;
+            // Uncheck "select all" if not all are checked
+            if (checkedCount < checkboxes.length && selectAllCb) selectAllCb.checked = false;
+            else if (selectAllCb) selectAllCb.checked = true;
+        } else {
+            deleteBtn.style.display = 'none';
+            if (selectAllCb) selectAllCb.checked = false;
+        }
+    };
+
+    if (selectAllCb) {
+        selectAllCb.checked = false;
+        // Need to replace the element to prevent duplicate event listeners since renderClientes is called repeatedly
+        const newSelectAll = selectAllCb.cloneNode(true);
+        selectAllCb.parentNode.replaceChild(newSelectAll, selectAllCb);
+
+        newSelectAll.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            checkboxes.forEach(cb => cb.checked = isChecked);
+            updateDeleteBtnVisibility();
+        });
+    }
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateDeleteBtnVisibility);
+    });
+
+    // Handle bulk delete click
+    if (deleteBtn) {
+        // Remove old listeners to prevent duplicates
+        const newDeleteBtn = deleteBtn.cloneNode(true);
+        deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+
+        newDeleteBtn.addEventListener('click', async () => {
+            const selectedIds = Array.from(document.querySelectorAll('.client-checkbox:checked')).map(cb => parseInt(cb.value));
+            if (selectedIds.length === 0) return;
+
+            if (confirm(`Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados?`)) {
+                newDeleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
+                for (let id of selectedIds) {
+                    await Store.deleteClient(id);
+                }
+                newDeleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir Selecionados <span class="badge" id="delete-clients-badge">0</span>';
+                newDeleteBtn.style.display = 'none';
+
+                const currentSelectAll = document.getElementById('select-all-clients');
+                if (currentSelectAll) currentSelectAll.checked = false;
+
+                renderClientes();
+                renderOperacional();
+                renderDashboard();
+            }
+        });
+    }
 }
 
 function openClientModal(id = null) {

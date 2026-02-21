@@ -257,7 +257,10 @@
                         <h1>Gestão de Clientes</h1>
                         <p class="subtitle">Base de clientes e Painel de Rotinas Fiscais</p>
                     </div>
-                    <div class="header-actions">
+                    <div class="header-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn btn-danger" id="btn-delete-clients" style="display: none; background: var(--danger);">
+                            <i class="fa-solid fa-trash"></i> Excluir Selecionados <span class="badge" id="delete-clients-badge">0</span>
+                        </button>
                         <button class="btn btn-primary" id="btn-add-client">
                             <i class="fa-solid fa-plus"></i> Novo Cliente
                         </button>
@@ -295,12 +298,16 @@
                         <table class="data-table" id="clients-table">
                             <thead>
                                 <tr>
+                                    <th style="width: 40px; text-align: center;">
+                                        <input type="checkbox" id="select-all-clients" class="custom-checkbox">
+                                    </th>
                                     <th>Cód</th>
                                     <th>Razão Social</th>
                                     <th>CNPJ</th>
                                     <th>Regime Tributário</th>
                                     <th>Responsável Fiscal</th>
                                     <th>Status Motor</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>

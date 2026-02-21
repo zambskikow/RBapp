@@ -485,6 +485,9 @@ window.Store = {
         console.warn('API PUT endpoint para clientes ainda não implementado. Crie na V2.');
         const c = db.clientes.find(x => x.id === parseInt(id));
         if (c) {
+            const oldRotinas = c.rotinasSelecionadas || [];
+            const newRotinas = rotinasSelecionadasIds.filter(rId => !oldRotinas.includes(rId));
+
             c.razaoSocial = razaoSocial;
             c.cnpj = cnpj;
             c.regime = regime;
@@ -492,6 +495,29 @@ window.Store = {
             c.rotinasSelecionadas = rotinasSelecionadasIds;
             c.driveLink = driveLink;
             this.registerLog("Editou Cliente", razaoSocial);
+
+            if (newRotinas.length > 0) {
+                const tempClient = { ...c, rotinasSelecionadas: newRotinas };
+                this.engineRotinas(tempClient);
+            }
+        }
+    },
+
+    async deleteClient(id) {
+        const clientIndex = db.clientes.findIndex(c => c.id === id);
+        if (clientIndex === -1) return;
+        const cName = db.clientes[clientIndex].razaoSocial;
+
+        try {
+            const res = await fetch(`${API_BASE}/clientes/${id}`, { method: 'DELETE' });
+            if (!res.ok) console.warn('API DELETE falhou.', res.status);
+
+            db.clientes.splice(clientIndex, 1);
+            this.registerLog("Gestão de Clientes", `Cliente excluído: ${cName}`);
+        } catch (e) {
+            console.error(e);
+            db.clientes.splice(clientIndex, 1);
+            this.registerLog("Gestão de Clientes", `Cliente excluído: ${cName} (Offline)`);
         }
     },
 
