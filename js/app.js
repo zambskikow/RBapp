@@ -916,7 +916,12 @@ function renderSetoresListPreview() {
         li.style.borderRadius = '4px';
         li.style.fontSize = '0.85rem';
 
-        li.innerHTML = `<span><i class="fa-solid fa-folder" style="color:var(--primary); margin-right:8px;"></i> ${s}</span>`;
+        li.innerHTML = `
+            <span><i class="fa-solid fa-folder" style="color:var(--primary); margin-right:8px;"></i> ${s}</span>
+            <button type="button" class="btn-icon" onclick="handleDeleteSetor('${s}')" style="color:var(--danger); background:transparent; border:none; cursor:pointer;" title="Excluir Setor">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        `;
         ul.appendChild(li);
     });
 }
@@ -935,53 +940,62 @@ function handleAddSetor() {
     const input = document.getElementById('new-setor-name');
     const val = input.value.trim();
     if (val) {
-        Store.addSetor(val);
-        input.value = '';
-        renderSetoresListPreview();
-        loadSetoresSelects(); // Update all selects globally
-    }
-}
-
-// ==========================================
-// VIEW: Mensagens (Inbox)
-// ==========================================
-
-function updateMensagensBadges() {
-    // For the UI we show the badge for the logged user
-    if (!LOGGED_USER) return;
-    const unreadCount = Store.getUnreadCount(LOGGED_USER.nome);
-
-    const topbarBadge = document.getElementById('topbar-badge-msg');
-
-    if (unreadCount > 0) {
-        topbarBadge.style.display = 'inline-flex';
-        topbarBadge.textContent = unreadCount;
-    } else {
-        topbarBadge.style.display = 'none';
-    }
-}
-
-function renderMensagens() {
-    const container = document.getElementById('mensagens-container');
-    if (!LOGGED_USER) return;
-    const msgs = Store.getMensagensPara(LOGGED_USER.nome);
-
-    container.innerHTML = '';
-
-    if (msgs.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding: 2rem; color: var(--text-muted);">Sua caixa de entrada está vazia.</p>`;
-        updateMensagensBadges();
-        return;
+        if (val) {
+            Store.addSetor(val);
+            input.value = '';
+            renderSetoresListPreview();
+            loadSetoresSelects(); // Update all selects globally
+        }
     }
 
-    msgs.forEach(m => {
-        const div = document.createElement('div');
-        div.className = `glass-card fade-in ${m.lida ? '' : 'unread-msg'}`;
-        div.style.marginBottom = '1rem';
-        div.style.padding = '1.25rem';
-        div.style.borderLeft = m.lida ? '3px solid transparent' : '3px solid var(--primary)';
+    async function handleDeleteSetor(nome) {
+        if (confirm(`Atenção: Tem certeza que deseja excluir o setor '${nome}'? Isso não altera as rotinas e funcionários que já estão nomeados para ele, mas ele deixará de aparecer nas opções.`)) {
+            await Store.deleteSetor(nome);
+            renderSetoresListPreview();
+            loadSetoresSelects();
+        }
+    }
 
-        div.innerHTML = `
+    // ==========================================
+    // VIEW: Mensagens (Inbox)
+    // ==========================================
+
+    function updateMensagensBadges() {
+        // For the UI we show the badge for the logged user
+        if (!LOGGED_USER) return;
+        const unreadCount = Store.getUnreadCount(LOGGED_USER.nome);
+
+        const topbarBadge = document.getElementById('topbar-badge-msg');
+
+        if (unreadCount > 0) {
+            topbarBadge.style.display = 'inline-flex';
+            topbarBadge.textContent = unreadCount;
+        } else {
+            topbarBadge.style.display = 'none';
+        }
+    }
+
+    function renderMensagens() {
+        const container = document.getElementById('mensagens-container');
+        if (!LOGGED_USER) return;
+        const msgs = Store.getMensagensPara(LOGGED_USER.nome);
+
+        container.innerHTML = '';
+
+        if (msgs.length === 0) {
+            container.innerHTML = `<p style="text-align:center; padding: 2rem; color: var(--text-muted);">Sua caixa de entrada está vazia.</p>`;
+            updateMensagensBadges();
+            return;
+        }
+
+        msgs.forEach(m => {
+            const div = document.createElement('div');
+            div.className = `glass-card fade-in ${m.lida ? '' : 'unread-msg'}`;
+            div.style.marginBottom = '1rem';
+            div.style.padding = '1.25rem';
+            div.style.borderLeft = m.lida ? '3px solid transparent' : '3px solid var(--primary)';
+
+            div.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 0.5rem;">
                 <h4 style="margin:0; font-size: 1rem;"><i class="fa-solid fa-user-circle" style="color:var(--text-muted);"></i> De: ${m.remetente}</h4>
                 <small style="color:var(--text-muted);">${new Date(m.data).toLocaleString('pt-BR')}</small>
@@ -994,356 +1008,356 @@ function renderMensagens() {
             ` : ''}
         `;
 
-        container.appendChild(div);
-    });
+            container.appendChild(div);
+        });
 
-    updateMensagensBadges();
-}
+        updateMensagensBadges();
+    }
 
-function markAsRead(id) {
-    Store.markMensagemLida(id);
-    renderMensagens();
-}
+    function markAsRead(id) {
+        Store.markMensagemLida(id);
+        renderMensagens();
+    }
 
-function openNovaMensagemModal() {
-    const select = document.getElementById('msg-destinatario');
-    select.innerHTML = '';
-    // Load all users except self
-    Store.getData().funcionarios.forEach(f => {
-        //if (f.nome !== LOGGED_USER) {  // Optional: let them message themselves for testing
-        select.innerHTML += `<option value="${f.nome}">${f.nome} (${f.setor})</option>`;
-        //}
-    });
+    function openNovaMensagemModal() {
+        const select = document.getElementById('msg-destinatario');
+        select.innerHTML = '';
+        // Load all users except self
+        Store.getData().funcionarios.forEach(f => {
+            //if (f.nome !== LOGGED_USER) {  // Optional: let them message themselves for testing
+            select.innerHTML += `<option value="${f.nome}">${f.nome} (${f.setor})</option>`;
+            //}
+        });
 
-    document.getElementById('nova-mensagem-form').reset();
-    document.getElementById('nova-mensagem-modal').classList.add('active');
-}
+        document.getElementById('nova-mensagem-form').reset();
+        document.getElementById('nova-mensagem-modal').classList.add('active');
+    }
 
-function closeNovaMensagemModal() {
-    document.getElementById('nova-mensagem-modal').classList.remove('active');
-}
+    function closeNovaMensagemModal() {
+        document.getElementById('nova-mensagem-modal').classList.remove('active');
+    }
 
-function handleSendMensagem(e) {
-    e.preventDefault();
-    const dest = document.getElementById('msg-destinatario').value;
-    const texto = document.getElementById('msg-texto').value;
+    function handleSendMensagem(e) {
+        e.preventDefault();
+        const dest = document.getElementById('msg-destinatario').value;
+        const texto = document.getElementById('msg-texto').value;
 
-    Store.sendMensagem(LOGGED_USER.nome, dest, texto);
+        Store.sendMensagem(LOGGED_USER.nome, dest, texto);
 
-    alert(`Mensagem enviada para ${dest}!`);
-    closeNovaMensagemModal();
-    renderMensagens(); // in case they sent it to themselves
-}
+        alert(`Mensagem enviada para ${dest}!`);
+        closeNovaMensagemModal();
+        renderMensagens(); // in case they sent it to themselves
+    }
 
-// ==========================================
-// MODAL CONTROLLERS & CHECKLISTS
-// ==========================================
-let currentOpenTask = null;
+    // ==========================================
+    // MODAL CONTROLLERS & CHECKLISTS
+    // ==========================================
+    let currentOpenTask = null;
 
-function openTaskModal(taskId) {
-    const task = Store.getExecucoesWithDetails('All').find(t => t.id === taskId);
-    if (!task) return;
-    currentOpenTask = task;
+    function openTaskModal(taskId) {
+        const task = Store.getExecucoesWithDetails('All').find(t => t.id === taskId);
+        if (!task) return;
+        currentOpenTask = task;
 
-    // Fill Header contents
-    document.getElementById('modal-rotina-name').textContent = task.rotina;
-    document.getElementById('modal-cliente').textContent = task.clientName;
+        // Fill Header contents
+        document.getElementById('modal-rotina-name').textContent = task.rotina;
+        document.getElementById('modal-cliente').textContent = task.clientName;
 
-    const isLate = task.semaforo === 'red';
-    const isToday = task.semaforo === 'yellow' && task.statusAuto === 'Hoje';
-    const deadBadge = isLate ? 'atrasado' : (isToday ? 'hoje' : 'noprazo');
+        const isLate = task.semaforo === 'red';
+        const isToday = task.semaforo === 'yellow' && task.statusAuto === 'Hoje';
+        const deadBadge = isLate ? 'atrasado' : (isToday ? 'hoje' : 'noprazo');
 
-    document.getElementById('modal-prazo').innerHTML = `<span class="status-badge ${deadBadge}">${formatDate(task.diaPrazo)}</span>`;
+        document.getElementById('modal-prazo').innerHTML = `<span class="status-badge ${deadBadge}">${formatDate(task.diaPrazo)}</span>`;
 
-    const statusHtml = task.feito
-        ? '<span class="status-badge concluido" style="font-size: 1rem;"><i class="fa-solid fa-check"></i> Finalizado</span>'
-        : '<span class="status-badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass); color: #fff; font-size: 1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
-
-    document.getElementById('modal-status').innerHTML = statusHtml;
-
-    // Render Subitems
-    renderChecklist();
-
-    const overlay = document.getElementById('task-modal');
-    overlay.classList.add('active');
-
-    // Binding the main Toggle inside modal
-    const mainToggle = document.getElementById('modal-done-toggle');
-    const newToggle = mainToggle.cloneNode(true);
-    mainToggle.parentNode.replaceChild(newToggle, mainToggle);
-
-    newToggle.checked = task.feito;
-    newToggle.addEventListener('change', (e) => {
-        const checked = e.target.checked;
-        Store.toggleExecucaoFeito(task.id, checked);
-
-        // Refresh views natively
-        renderChecklist();
-        renderOperacional();
-        renderDashboard();
-
-        // Auto update header
-        document.getElementById('modal-status').innerHTML = checked
+        const statusHtml = task.feito
             ? '<span class="status-badge concluido" style="font-size: 1rem;"><i class="fa-solid fa-check"></i> Finalizado</span>'
             : '<span class="status-badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass); color: #fff; font-size: 1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
-    });
 
-    document.getElementById('modal-save').onclick = () => {
-        closeModal();
-    };
-}
+        document.getElementById('modal-status').innerHTML = statusHtml;
 
-function renderChecklist() {
-    if (!currentOpenTask) return;
-    const task = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
-    currentOpenTask = task;
+        // Render Subitems
+        renderChecklist();
 
-    const container = document.getElementById('modal-checklist');
-    container.innerHTML = '';
+        const overlay = document.getElementById('task-modal');
+        overlay.classList.add('active');
 
-    let completed = 0;
+        // Binding the main Toggle inside modal
+        const mainToggle = document.getElementById('modal-done-toggle');
+        const newToggle = mainToggle.cloneNode(true);
+        mainToggle.parentNode.replaceChild(newToggle, mainToggle);
 
-    task.subitems.forEach((sub, index) => {
-        if (sub.done) completed++;
+        newToggle.checked = task.feito;
+        newToggle.addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            Store.toggleExecucaoFeito(task.id, checked);
 
-        const div = document.createElement('div');
-        div.className = 'checklist-item fade-in';
-        div.style.animationDelay = `${index * 0.04}s`; // Micro-staggered entry
-
-        div.innerHTML = `
-            <input type="checkbox" class="custom-checkbox" id="chk_${sub.id}" ${sub.done ? 'checked' : ''}>
-            <label for="chk_${sub.id}" class="item-text">${sub.desc}</label>
-        `;
-
-        // Single checklist item changed
-        const chk = div.querySelector('input');
-        chk.addEventListener('change', (e) => {
-            Store.updateChecklist(task.id, sub.id, e.target.checked);
-
-            // Re-render checklist and update underlaying lists
+            // Refresh views natively
             renderChecklist();
             renderOperacional();
             renderDashboard();
 
-            // Re-sync header if state changed due to all checks
-            const refreshedTask = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
-            document.getElementById('modal-status').innerHTML = refreshedTask.feito
+            // Auto update header
+            document.getElementById('modal-status').innerHTML = checked
                 ? '<span class="status-badge concluido" style="font-size: 1rem;"><i class="fa-solid fa-check"></i> Finalizado</span>'
                 : '<span class="status-badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass); color: #fff; font-size: 1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
         });
 
-        container.appendChild(div);
-    });
-
-    // Update Progress UI
-    const total = task.subitems.length;
-    const pct = total > 0 ? Math.round((completed / total) * 100) : (task.feito ? 100 : 0);
-
-    document.getElementById('modal-progress').style.width = `${pct}%`;
-    document.getElementById('modal-progress-text').textContent = `${pct}% Concluído`;
-
-    // Sync Main Toggle visually
-    const toggle = document.getElementById('modal-done-toggle');
-    if (toggle) toggle.checked = task.feito;
-}
-
-function closeModal() {
-    currentOpenTask = null;
-    document.getElementById('task-modal').classList.remove('active');
-}
-
-// Helpers
-function formatDate(dateStr) {
-    if (!dateStr) return '--/--/----';
-    const parts = dateStr.split('T')[0].split('-');
-    if (parts.length !== 3) return dateStr;
-    const [y, m, d] = parts;
-    return `${d}/${m}/${y}`;
-}
-
-// Easing Animation for Numbers
-function animateValue(id, start, end, duration) {
-    const obj = document.getElementById(id);
-    let startTimestamp = null;
-    const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        // Exponential easeout
-        const easeAmount = 1 - Math.pow(1 - progress, 4);
-        obj.innerHTML = Math.floor(easeAmount * (end - start) + start);
-        if (progress < 1) {
-            window.requestAnimationFrame(step);
-        } else {
-            // Guarantee end state
-            obj.innerHTML = end;
-        }
-    };
-    window.requestAnimationFrame(step);
-}
-
-// ==========================================
-// VIEW: Auditoria
-// ==========================================
-function renderAuditoria() {
-    const tbody = document.querySelector('#auditoria-table tbody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    const logs = [...Store.getData().logs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    if (logs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 3rem;">Nenhum registro de auditoria encontrado.</td></tr>`;
-        return;
+        document.getElementById('modal-save').onclick = () => {
+            closeModal();
+        };
     }
 
-    logs.forEach(log => {
-        const tr = document.createElement('tr');
-        tr.className = 'fade-in';
+    function renderChecklist() {
+        if (!currentOpenTask) return;
+        const task = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
+        currentOpenTask = task;
 
-        // Format date BR
-        const d = new Date(log.timestamp);
-        const formatData = d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR');
+        const container = document.getElementById('modal-checklist');
+        container.innerHTML = '';
 
-        tr.innerHTML = `
+        let completed = 0;
+
+        task.subitems.forEach((sub, index) => {
+            if (sub.done) completed++;
+
+            const div = document.createElement('div');
+            div.className = 'checklist-item fade-in';
+            div.style.animationDelay = `${index * 0.04}s`; // Micro-staggered entry
+
+            div.innerHTML = `
+            <input type="checkbox" class="custom-checkbox" id="chk_${sub.id}" ${sub.done ? 'checked' : ''}>
+            <label for="chk_${sub.id}" class="item-text">${sub.desc}</label>
+        `;
+
+            // Single checklist item changed
+            const chk = div.querySelector('input');
+            chk.addEventListener('change', (e) => {
+                Store.updateChecklist(task.id, sub.id, e.target.checked);
+
+                // Re-render checklist and update underlaying lists
+                renderChecklist();
+                renderOperacional();
+                renderDashboard();
+
+                // Re-sync header if state changed due to all checks
+                const refreshedTask = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
+                document.getElementById('modal-status').innerHTML = refreshedTask.feito
+                    ? '<span class="status-badge concluido" style="font-size: 1rem;"><i class="fa-solid fa-check"></i> Finalizado</span>'
+                    : '<span class="status-badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass); color: #fff; font-size: 1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
+            });
+
+            container.appendChild(div);
+        });
+
+        // Update Progress UI
+        const total = task.subitems.length;
+        const pct = total > 0 ? Math.round((completed / total) * 100) : (task.feito ? 100 : 0);
+
+        document.getElementById('modal-progress').style.width = `${pct}%`;
+        document.getElementById('modal-progress-text').textContent = `${pct}% Concluído`;
+
+        // Sync Main Toggle visually
+        const toggle = document.getElementById('modal-done-toggle');
+        if (toggle) toggle.checked = task.feito;
+    }
+
+    function closeModal() {
+        currentOpenTask = null;
+        document.getElementById('task-modal').classList.remove('active');
+    }
+
+    // Helpers
+    function formatDate(dateStr) {
+        if (!dateStr) return '--/--/----';
+        const parts = dateStr.split('T')[0].split('-');
+        if (parts.length !== 3) return dateStr;
+        const [y, m, d] = parts;
+        return `${d}/${m}/${y}`;
+    }
+
+    // Easing Animation for Numbers
+    function animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // Exponential easeout
+            const easeAmount = 1 - Math.pow(1 - progress, 4);
+            obj.innerHTML = Math.floor(easeAmount * (end - start) + start);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                // Guarantee end state
+                obj.innerHTML = end;
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // ==========================================
+    // VIEW: Auditoria
+    // ==========================================
+    function renderAuditoria() {
+        const tbody = document.querySelector('#auditoria-table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const logs = [...Store.getData().logs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        if (logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 3rem;">Nenhum registro de auditoria encontrado.</td></tr>`;
+            return;
+        }
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.className = 'fade-in';
+
+            // Format date BR
+            const d = new Date(log.timestamp);
+            const formatData = d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR');
+
+            tr.innerHTML = `
             <td style="white-space: nowrap;">${formatData}</td>
             <td><strong>${log.user_name}</strong></td>
             <td><span class="badge ${log.permissao === 'Gerente' ? 'danger' : 'success'}">${log.permissao}</span></td>
             <td>${log.action}</td>
             <td><span style="color: var(--text-muted); font-size: 0.9em;">${log.details || '-'}</span></td>
         `;
-        tbody.appendChild(tr);
-    });
-}
-
-function downloadAuditoriaCSV() {
-    const logs = [...Store.getData().logs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    if (logs.length === 0) {
-        alert("Não há dados para exportar.");
-        return;
+            tbody.appendChild(tr);
+        });
     }
 
-    // CSV Header
-    let csvContent = "Data/Hora,Usuário,Permissão,Ação,Detalhes\n";
+    function downloadAuditoriaCSV() {
+        const logs = [...Store.getData().logs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        if (logs.length === 0) {
+            alert("Não há dados para exportar.");
+            return;
+        }
 
-    logs.forEach(l => {
-        const d = new Date(l.timestamp);
-        const formatData = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR');
+        // CSV Header
+        let csvContent = "Data/Hora,Usuário,Permissão,Ação,Detalhes\n";
 
-        // Escape quotes and commas
-        const escUser = (l.user_name || "").replace(/"/g, '""');
-        const escPerm = (l.permissao || "").replace(/"/g, '""');
-        const escAction = (l.action || "").replace(/"/g, '""');
-        const escDetails = (l.details || "").replace(/"/g, '""');
+        logs.forEach(l => {
+            const d = new Date(l.timestamp);
+            const formatData = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR');
 
-        csvContent += `"${formatData}","${escUser}","${escPerm}","${escAction}","${escDetails}"\n`;
-    });
+            // Escape quotes and commas
+            const escUser = (l.user_name || "").replace(/"/g, '""');
+            const escPerm = (l.permissao || "").replace(/"/g, '""');
+            const escAction = (l.action || "").replace(/"/g, '""');
+            const escDetails = (l.details || "").replace(/"/g, '""');
 
-    // Create Blob URL and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+            csvContent += `"${formatData}","${escUser}","${escPerm}","${escAction}","${escDetails}"\n`;
+        });
 
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `auditoria_fiscalapp_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
+        // Create Blob URL and trigger download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
 
-// ==========================================
-// VIEW: Backup e Segurança
-// ==========================================
-function renderBackupView() {
-    const config = Store.getData().config;
-    const toggle = document.getElementById('toggle-auto-backup');
-    if (toggle) toggle.checked = config && config.autoBackup;
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `auditoria_fiscalapp_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
-    const lastBackupText = document.getElementById('last-backup-text');
-    if (lastBackupText) {
-        if (config && config.lastBackupData) {
-            const d = new Date(config.lastBackupData);
-            lastBackupText.innerHTML = `Último backup automático: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
-        } else {
-            lastBackupText.innerHTML = `Último backup: Nunca`;
+    // ==========================================
+    // VIEW: Backup e Segurança
+    // ==========================================
+    function renderBackupView() {
+        const config = Store.getData().config;
+        const toggle = document.getElementById('toggle-auto-backup');
+        if (toggle) toggle.checked = config && config.autoBackup;
+
+        const lastBackupText = document.getElementById('last-backup-text');
+        if (lastBackupText) {
+            if (config && config.lastBackupData) {
+                const d = new Date(config.lastBackupData);
+                lastBackupText.innerHTML = `Último backup automático: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
+            } else {
+                lastBackupText.innerHTML = `Último backup: Nunca`;
+            }
         }
     }
-}
 
-function downloadBackupFile() {
-    const dataStr = JSON.stringify(Store.getData(), null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    const d = new Date();
-    const dateString = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}${d.getDate().toString().padStart(2, '0')}`;
-
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `fiscalapp_backup_${dateString}.json`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    Store.registerLog("Backup de Segurança", "Realizou o download manual da base de dados");
-    Store.saveToStorage();
-}
-
-function restoreBackupFile() {
-    const fileInput = document.getElementById('backup-file-input');
-    if (fileInput.files.length === 0) {
-        alert("Por favor, selecione um arquivo JSON de backup.");
-        return;
-    }
-
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    reader.onload = function (e) {
-        try {
-            const parsedData = JSON.parse(e.target.result);
-            if (!parsedData.clientes || !parsedData.execucoes || !parsedData.funcionarios) {
-                alert("Arquivo de backup inválido ou corrompido.");
-                return;
-            }
-            if (confirm("ATENÇÃO: Você está prestes a substituir toda a base de dados atual. Todas as alterações feitas após este backup serão PERDIDAS. Quer mesmo continuar?")) {
-                Store.restoreDatabase(parsedData);
-                alert("Banco de dados restaurado com sucesso! A página será recarregada.");
-                window.location.reload();
-            }
-        } catch (error) {
-            alert("Erro ao processar o arquivo. Certifique-se de que é um JSON válido.");
-        }
-    };
-    reader.readAsText(file);
-}
-
-function checkAndRunAutoBackup() {
-    const config = Store.getData().config;
-    if (!config || !config.autoBackup) return;
-
-    const now = new Date();
-    const lastBackup = config.lastBackupData ? new Date(config.lastBackupData) : null;
-
-    // Se nunca fez backup ou se passaram mais de 7 dias
-    if (!lastBackup || (now - lastBackup) > (7 * 24 * 60 * 60 * 1000)) {
-        console.log("Executando Auto-Backup semanal...");
+    function downloadBackupFile() {
         const dataStr = JSON.stringify(Store.getData(), null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
 
-        const dateString = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+        const d = new Date();
+        const dateString = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}${d.getDate().toString().padStart(2, '0')}`;
 
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', `fiscalapp_autobackup_${dateString}.json`);
+        link.setAttribute('download', `fiscalapp_backup_${dateString}.json`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        Store.updateConfig('lastBackupData', now.toISOString());
-        Store.registerLog("Backup Automático", "O sistema realizou o download automático agendado.");
+        Store.registerLog("Backup de Segurança", "Realizou o download manual da base de dados");
         Store.saveToStorage();
-        renderBackupView();
     }
-}
+
+    function restoreBackupFile() {
+        const fileInput = document.getElementById('backup-file-input');
+        if (fileInput.files.length === 0) {
+            alert("Por favor, selecione um arquivo JSON de backup.");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            try {
+                const parsedData = JSON.parse(e.target.result);
+                if (!parsedData.clientes || !parsedData.execucoes || !parsedData.funcionarios) {
+                    alert("Arquivo de backup inválido ou corrompido.");
+                    return;
+                }
+                if (confirm("ATENÇÃO: Você está prestes a substituir toda a base de dados atual. Todas as alterações feitas após este backup serão PERDIDAS. Quer mesmo continuar?")) {
+                    Store.restoreDatabase(parsedData);
+                    alert("Banco de dados restaurado com sucesso! A página será recarregada.");
+                    window.location.reload();
+                }
+            } catch (error) {
+                alert("Erro ao processar o arquivo. Certifique-se de que é um JSON válido.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function checkAndRunAutoBackup() {
+        const config = Store.getData().config;
+        if (!config || !config.autoBackup) return;
+
+        const now = new Date();
+        const lastBackup = config.lastBackupData ? new Date(config.lastBackupData) : null;
+
+        // Se nunca fez backup ou se passaram mais de 7 dias
+        if (!lastBackup || (now - lastBackup) > (7 * 24 * 60 * 60 * 1000)) {
+            console.log("Executando Auto-Backup semanal...");
+            const dataStr = JSON.stringify(Store.getData(), null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const dateString = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `fiscalapp_autobackup_${dateString}.json`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            Store.updateConfig('lastBackupData', now.toISOString());
+            Store.registerLog("Backup Automático", "O sistema realizou o download automático agendado.");
+            Store.saveToStorage();
+            renderBackupView();
+        }
+    }

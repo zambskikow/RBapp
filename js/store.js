@@ -320,6 +320,16 @@ window.Store = {
         }
     },
 
+    async deleteSetor(nome) {
+        const res = await fetch(`${API_BASE}/setores/${encodeURIComponent(nome)}`, {
+            method: 'DELETE'
+        });
+        if (res.ok) {
+            db.setores = db.setores.filter(s => s !== nome);
+            this.registerLog("Gestão de Setores", `Setor excluído: ${nome}`);
+        }
+    },
+
     async addRotinaBase(nome, setor, frequencia, diaPrazoPadrao, checklistPadrao) {
         const res = await fetch(`${API_BASE}/rotinas_base`, {
             method: 'POST',
@@ -401,7 +411,69 @@ window.Store = {
     },
 
     engineRotinas(cliente) {
-        // ... simplified iteration calling /api/execucoes POST for each routine setup.
-        console.log("Rotinas engine trigger bypass para demonstração da migração.");
+        // Build routines for the active month
+        const month = db.meses.find(m => m.ativo);
+        if (!month) {
+            console.warn("Rotinas Engine abortado: Nenhum mês ativo definido no sistema.");
+            return;
+        }
+
+        const currentComp = month.id; // e.g. "2026-02"
+        if (!cliente.rotinasSelecionadas || cliente.rotinasSelecionadas.length === 0) return;
+
+        cliente.rotinasSelecionadas.forEach(rotId => {
+            const rotina = db.rotinasBase.find(r => r.id === rotId);
+            if (!rotina) return;
+
+            // Format deadline date for PostgreSQL (YYYY-MM-DD)
+            let [y, m] = currentComp.split('-');
+            let dia = rotina.diaPrazoPadrao.toString().padStart(2, '0');
+            // Basic handling for bad days that overflow (ex: month without 31)
+            let dateStr = `${y}-${m}-${dia}`;
+
+            const subitems = (rotina.checklistPadrao || []).map((item, idx) => ({
+                id: idx + 1,
+                texto: item,
+                done: false
+            }));
+
+            // Dispatch task to API asynchronously
+            fetch(`${API_BASE}/execucoes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cliente_id: cliente.id,
+                    rotina: rotina.nome,
+                    competencia: currentComp,
+                    dia_prazo: dateStr,
+                    drive_link: cliente.driveLink,
+                    responsavel: cliente.responsavelFiscal,
+                    subitems: subitems,
+                    eh_pai: true,
+                    feito: false,
+                    iniciado_em: new Date().toISOString().split('T')[0],
+                    checklist_gerado: true
+                })
+            }).then(async (res) => {
+                if (res.ok) {
+                    const data = await res.json();
+                    db.execucoes.push({
+                        id: data[0].id,
+                        clienteId: cliente.id,
+                        rotina: rotina.nome,
+                        competencia: currentComp,
+                        diaPrazo: dateStr,
+                        driveLink: cliente.driveLink,
+                        feito: false,
+                        feitoEm: null,
+                        responsavel: cliente.responsavelFiscal,
+                        iniciadoEm: new Date().toISOString().split('T')[0],
+                        checklistGerado: true,
+                        ehPai: true,
+                        subitems: subitems
+                    });
+                }
+            }).catch(e => console.error("Falha na geracao engineRotinas para", rotina.nome, e));
+        });
     }
 };

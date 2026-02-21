@@ -58,6 +58,19 @@ class ExecucaoUpdate(BaseModel):
     feito_em: str | None = None
     subitems: list = []
 
+class ExecucaoCreate(BaseModel):
+    cliente_id: int
+    rotina: str
+    competencia: str
+    dia_prazo: str
+    drive_link: str = ""
+    feito: bool = False
+    responsavel: str
+    iniciado_em: str
+    checklist_gerado: bool = True
+    eh_pai: bool = True
+    subitems: list = []
+
 # --- API Endpoints ---
 
 @app.get("/api/status")
@@ -95,6 +108,11 @@ def create_setor(setor: SetorCreate):
     response = supabase.table("setores").insert(setor.model_dump()).execute()
     return response.data
 
+@app.delete("/api/setores/{nome}")
+def delete_setor(nome: str):
+    response = supabase.table("setores").delete().eq("nome", nome).execute()
+    return response.data
+
 # --- Funcionarios ---
 @app.get("/api/funcionarios")
 def get_funcionarios():
@@ -121,6 +139,11 @@ def create_rotina(rotina: RotinaBaseCreate):
 @app.get("/api/execucoes")
 def get_execucoes():
     response = supabase.table("execucoes").select("*").execute()
+    return response.data
+
+@app.post("/api/execucoes")
+def create_execucao(execucao: ExecucaoCreate):
+    response = supabase.table("execucoes").insert(execucao.model_dump()).execute()
     return response.data
 
 @app.put("/api/execucoes/{exec_id}")
