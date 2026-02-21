@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Execução Fiscal - Portal Manager</title>
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for robust icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Login Screen Overlay -->
+    <div id="login-overlay" class="login-fullscreen active">
+        <div class="glass-card login-card">
+            <div class="logo login-logo">
+                <i class="fa-solid fa-chart-line"></i> FiscalApp
+            </div>
+            <h2>Acesso ao Sistema</h2>
+            <p style="color:var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Insira suas credenciais para
+                continuar</p>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Usuário</label>
+                    <input type="text" id="login-username" class="glass-input" placeholder="Seu nome (Ex: Manager)"
+                        required>
+                </div>
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label>Senha</label>
+                    <input type="password" id="login-password" class="glass-input" placeholder="Sua senha" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.9rem; font-size: 1.05rem;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Entrar
+                </button>
+            </form>
+            <p id="login-error"
+                style="color:var(--danger); margin-top: 1rem; font-size: 0.85rem; display:none; text-align:center;">
+                Usuário ou senha inválidos.</p>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container" style="display:none;" id="main-app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>RB|App</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <i class="fa-solid fa-gauge"></i>
+                    <span>Manager Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-view="operacional">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Painel Operacional</span>
+                </a>
+                <a href="#" class="nav-item" data-view="clientes">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Gestão de Clientes</span>
+                </a>
+                <a href="#" class="nav-item" data-view="equipe">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Gestão de Equipe</span>
+                </a>
+                <a href="#" class="nav-item" data-view="rotinas">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Gestão de Rotinas</span>
+                </a>
+                <a href="#" class="nav-item" data-view="mensagens">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>Mensagens</span>
+                </a>
+
+                <div class="nav-divider"></div>
+
+                <a href="#" class="nav-item" data-view="auditoria" id="nav-auditoria">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>Auditoria</span>
+                </a>
+
+                <a href="#" class="nav-item" data-view="backup" id="nav-backup">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    <span>Backup e Segurança</span>
+                </a>
+            </nav>
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Avatar"
+                    class="avatar">
+                <div class="user-info">
+                    <span class="user-name">Manager</span>
+                    <span class="user-role">Setor Fiscal</span>
+                </div>
+            </div>
+
+            <a href="#" class="nav-item" id="btn-logout" style="margin-top: 10px; color: var(--danger);">
+                <i class="fa-solid fa-power-off"></i> Sair
+            </a>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Navigation Bar -->
+            <header class="topbar glass-bar">
+                <div style="flex: 1;"></div> <!-- Spacer replacing search bar -->
+                <div class="topbar-actions">
+                    <button class="action-btn" onclick="document.querySelector('[data-view=mensagens]').click()">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="badge" id="topbar-badge-msg" style="display:none;">0</span>
+                    </button>
+                    <div class="date-display" id="currentDate">--/--/----</div>
+                </div>
+            </header>
+
+            <!-- Dashboard View (Manager) -->
+            <div id="view-dashboard" class="view-section active">
+                <header class="section-header">
+                    <div>
+                        <h1>Visão Geral do Mês</h1>
+                        <p class="subtitle">Acompanhe a saúde das entregas fiscais</p>
+                    </div>
+                </header>
+
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="glass-card kpi-card">
+                        <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
+                        <div class="kpi-data">
+                            <h3>Total Execuções</h3>
+                            <p class="kpi-value" id="kpi-total">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card status-success">
+                        <div class="kpi-icon"><i class="fa-solid fa-check-double"></i></div>
+                        <div class="kpi-data">
+                            <h3>Concluídos</h3>
+                            <p class="kpi-value" id="kpi-done">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card status-info">
+                        <div class="kpi-icon"><i class="fa-solid fa-bars-progress"></i></div>
+                        <div class="kpi-data">
+                            <h3>Em Andamento</h3>
+                            <p class="kpi-value" id="kpi-andamento">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card status-warning">
+                        <div class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                        <div class="kpi-data">
+                            <h3>Vencendo Hoje</h3>
+                            <p class="kpi-value" id="kpi-warning">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card status-danger">
+                        <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="kpi-data">
+                            <h3>Atrasados</h3>
+                            <p class="kpi-value" id="kpi-late">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Critical Actions -->
+                <div class="charts-grid">
+                    <div class="glass-card chart-container">
+                        <h3>Status Semáforo (Saúde)</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="semaforoChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card table-container">
+                        <div class="table-header-action">
+                            <h3>Ações Críticas (Gargalos)</h3>
+                            <span class="table-filter-info">Prioridade Máxima</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="critical-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Rotina</th>
+                                        <th>Resp.</th>
+                                        <th>Prazo</th>
+                                        <th>Status Auto</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desempenho da Equipe -->
+                <div class="glass-card full-table-container" style="margin-top: 1.5rem;">
+                    <div class="table-header-action">
+                        <h3>Desempenho da Equipe</h3>
+                        <span class="table-filter-info">Produtividade no Período</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="team-performance-table">
+                            <thead>
+                                <tr>
+                                    <th>Funcionário</th>
+                                    <th>Total Entregas</th>
+                                    <th>Concluídas</th>
+                                    <th>Vencendo Hoje</th>
+                                    <th>Atrasadas</th>
+                                    <th>% Rendimento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operacional View (User Area) -->
+            <div id="view-operacional" class="view-section" style="display: none;">
+                <header class="section-header">
+                    <div>
+                        <h1>Minhas Tarefas</h1>
+                        <p class="subtitle">Gestão diária de rotinas fiscais e documentação</p>
+                    </div>
+                    <div class="header-actions" style="display:flex; gap:0.5rem; align-items:center;">
+                        <select id="competencia-filter" class="glass-select" style="min-width: 140px;">
+                            <!-- Populated dynamically by JS -->
+                        </select>
+                        <select id="user-filter" class="glass-select">
+                            <option value="All">Todos os Responsáveis</option>
+                            <option value="Dandara">Dandara</option>
+                            <option value="Manager">Manager</option>
+                        </select>
+                    </div>
+                </header>
+
+                <div id="operacional-groups-container">
+                    <!-- Routine Groups injected by app.js here -->
+                </div>
+            </div>
+
+            <!-- Client Management View -->
+            <div id="view-clientes" class="view-section" style="display: none;">
+                <header class="section-header">
+                    <div>
+                        <h1>Gestão de Clientes</h1>
+                        <p class="subtitle">Base de clientes e Painel de Rotinas Fiscais</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="btn-add-client">
+                            <i class="fa-solid fa-plus"></i> Novo Cliente
+                        </button>
+                    </div>
+                </header>
+
+                <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="glass-card kpi-card">
+                        <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="kpi-data">
+                            <h3>Total Clientes</h3>
+                            <p class="kpi-value" id="kpi-total-clientes">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card">
+                        <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--accent);"><i
+                                class="fa-solid fa-building"></i></div>
+                        <div class="kpi-data">
+                            <h3>Simples Nacional</h3>
+                            <p class="kpi-value" id="kpi-simples">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card">
+                        <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);"><i
+                                class="fa-solid fa-scale-balanced"></i></div>
+                        <div class="kpi-data">
+                            <h3>Demais Regimes</h3>
+                            <p class="kpi-value" id="kpi-outros-regimes">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card full-table-container">
+                    <div class="table-responsive">
+                        <table class="data-table" id="clients-table">
+                            <thead>
+                                <tr>
+                                    <th>Cód</th>
+                                    <th>Razão Social</th>
+                                    <th>CNPJ</th>
+                                    <th>Regime Tributário</th>
+                                    <th>Responsável Fiscal</th>
+                                    <th>Status Motor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipe Management View -->
+            <div id="view-equipe" class="view-section" style="display: none;">
+                <header class="section-header">
+                    <div>
+                        <h1>Gestão de Equipe</h1>
+                        <p class="subtitle">Administração de funcionários, setores e permissões de acesso</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="btn-add-equipe">
+                            <i class="fa-solid fa-user-plus"></i> Novo Funcionário
+                        </button>
+                    </div>
+                </header>
+
+                <div class="kpi-grid">
+                    <div class="glass-card kpi-card">
+                        <div class="kpi-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary);"><i
+                                class="fa-solid fa-users-viewfinder"></i></div>
+                        <div class="kpi-data">
+                            <h3>Total Equipe</h3>
+                            <p class="kpi-value" id="kpi-total-equipe">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card full-table-container">
+                    <div class="table-responsive">
+                        <table class="data-table" id="equipe-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Setor</th>
+                                    <th>Permissão</th>
+                                    <th>Status Conta</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rotinas Base Management View -->
+            <div id="view-rotinas" class="view-section" style="display: none;">
+                <header class="section-header">
+                    <div>
+                        <h1>Gestão de Rotinas</h1>
+                        <p class="subtitle">Administração das matrizes de rotinas e prazos padrão</p>
+                    </div>
+                    <div class="header-actions" style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary" id="btn-manage-setores">
+                            <i class="fa-solid fa-layer-group"></i> Gerenciar Setores
+                        </button>
+                        <button class="btn btn-primary" id="btn-add-rotina">
+                            <i class="fa-solid fa-plus"></i> Nova Rotina
+                        </button>
+                    </div>
+                </header>
+
+                <div class="glass-card full-table-container">
+                    <div class="table-responsive">
+                        <table class="data-table" id="rotinas-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome da Rotina</th>
+                                    <th>Frequência</th>
+                                    <th>Setor</th>
+                                    <th>Dia de Vencimento Padrão</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caixa de Mensagens View -->
+            <div id="view-mensagens" class="view-section" style="display: none;">
+                <header class="section-header">
+                    <div>
+                        <h1>Caixa de Entrada (Inbox)</h1>
+                        <p class="subtitle">Comunicações e Notificações do Sistema</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="btn-nova-mensagem">
+                            <i class="fa-solid fa-paper-plane"></i> Nova Mensagem
+                        </button>
+                    </div>
+                </header>
+
+                <div class="glass-card full-table-container">
+                    <div id="mensagens-container" style="padding: 1rem;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auditoria View -->
+            <div id="view-auditoria" class="view-section" style="display: none;">
+                <header class="section-header">
+                    <div>
+                        <h1>Auditoria de Sistema</h1>
+                        <p class="subtitle">Registro imutável de ações gerenciais e operacionais</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="btn-export-logs">
+                            <i class="fa-solid fa-download"></i> Baixar CSV
+                        </button>
+                    </div>
+                </header>
+
+                <div class="glass-card full-table-container">
+                    <div class="table-responsive">
+                        <table class="data-table" id="auditoria-table">
+                            <thead>
+                                <tr>
+                                    <th>Data / Hora</th>
+                                    <th>Usuário</th>
+                                    <th>Permissão</th>
+                                    <th>Ação Registrada</th>
+                                    <th>Detalhes Adicionais</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Backup e Segurança View -->
+                <div id="view-backup" class="view-section" style="display: none;">
+                    <header class="section-header">
+                        <div>
+                            <h1>Backup e Segurança</h1>
+                            <p class="subtitle">Faça cópias de segurança de todo o sistema ou restaure um backup antigo
+                            </p>
+                        </div>
+                    </header>
+
+                    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));">
+
+                        <!-- Export Card -->
+                        <div class="glass-card table-container">
+                            <div class="table-header-action" style="margin-bottom: 1rem;">
+                                <h3><i class="fa-solid fa-cloud-arrow-down" style="color:var(--primary)"></i> Fazer
+                                    Backup Manual</h3>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem;">
+                                Gere um arquivo ".json" contendo 100% dos dados atuais do sistema, incluindo clientes,
+                                equipe, históricos de auditoria e senhas criptografadas. Guarde este arquivo em um local
+                                seguro.
+                            </p>
+                            <button class="btn btn-primary" id="btn-export-backup" style="width: 100%;">
+                                <i class="fa-solid fa-file-export"></i> Baixar Base de Dados Agora
+                            </button>
+
+                            <hr style="border: 1px solid rgba(255,255,255,0.05); margin: 2rem 0;">
+
+                            <div class="table-header-action" style="margin-bottom: 1rem;">
+                                <h3><i class="fa-solid fa-robot" style="color:var(--success)"></i> Backup Automático
+                                    (Semanal)</h3>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem;">
+                                Se ativado, o sistema fará o download de um backup automaticamente no seu primeiro
+                                acesso da semana. Recomendado: configure a pasta de Downloads do seu navegador para
+                                apontar para o <strong>Google Drive Desktop</strong>.
+                            </p>
+                            <div class="form-group"
+                                style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                                <label style="margin: 0;">Ativar Auto-Backup</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-auto-backup">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div style="margin-top: 0.5rem; font-size: 0.8em; color: var(--text-muted); text-align: right;"
+                                id="last-backup-text">
+                                Último backup: Nunca
+                            </div>
+                        </div>
+
+                        <!-- Import Card -->
+                        <div class="glass-card table-container" style="border: 1px solid rgba(239, 68, 68, 0.3);">
+                            <div class="table-header-action" style="margin-bottom: 1rem;">
+                                <h3 style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Zona
+                                    de Perigo: Restaurar Sistema</h3>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem;">
+                                Faça o upload de um arquivo de backup ".json" gerado anteriormente por este sistema.
+                                <strong>Aviso Categórico:</strong> Restaurar um backup irá <u>esmagar e apagar
+                                    permanentemente</u> todos os dados inseridos desde a data do backup.
+                            </p>
+
+                            <div class="form-group">
+                                <label>Arquivo de Backup (.json)</label>
+                                <input type="file" id="backup-file-input" accept=".json" class="glass-input"
+                                    style="padding: 0.5rem;">
+                            </div>
+
+                            <button class="btn btn-primary" id="btn-restore-backup"
+                                style="width: 100%; background: var(--danger); margin-top: 1rem;">
+                                <i class="fa-solid fa-rotate-left"></i> Esmagar Base Atual e Restaurar
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+        </main>
+    </div>
+
+    <!-- Details and Checklist Modal -->
+    <div class="modal-overlay" id="task-modal">
+        <div class="glass-card modal-content">
+            <header class="modal-header">
+                <h2>Rotina: <span id="modal-rotina-name" class="highlight-text"></span></h2>
+                <button class="close-btn" id="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+
+            <div class="modal-body">
+                <div class="task-info-grid">
+                    <div class="info-group">
+                        <label>Cliente</label>
+                        <p id="modal-cliente"></p>
+                    </div>
+                    <div class="info-group">
+                        <label>Prazo de Entrega</label>
+                        <p id="modal-prazo"></p>
+                    </div>
+                    <div class="info-group">
+                        <label>Status Sistema</label>
+                        <p id="modal-status"></p>
+                    </div>
+                </div>
+
+                <div class="checklist-section">
+                    <div class="checklist-header">
+                        <h3><i class="fa-solid fa-list-check"></i> Checklist Operacional Automático</h3>
+                        <span class="progress-text" id="modal-progress-text">0% Concluído</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="modal-progress" style="width: 0%"></div>
+                    </div>
+                    <div class="checklist-items" id="modal-checklist">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="actions-section">
+                    <label class="custom-toggle">
+                        <input type="checkbox" id="modal-done-toggle">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Marcar Rotina como Feita</span>
+                    </label>
+                </div>
+            </div>
+
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel">Sair</button>
+                <button class="btn btn-primary" id="modal-save">Salvar Alterações</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Add/Edit Client Modal -->
+    <div class="modal-overlay" id="add-client-modal">
+        <div class="glass-card modal-content" style="max-width: 500px;">
+            <header class="modal-header">
+                <h2 id="modal-client-title"><i class="fa-solid fa-user-plus highlight-text"></i> Novo Cliente</h2>
+                <button class="close-btn" id="close-client-modal"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+
+            <div class="modal-body" style="padding-bottom: 0;">
+                <p class="subtitle" style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+                    *Selecione explicitamente quais rotinas devem ser geradas mensalmente para este cliente.
+                </p>
+                <form id="add-client-form">
+                    <input type="hidden" id="client-id" value="">
+                    <div class="form-group">
+                        <label>Razão Social</label>
+                        <input type="text" id="client-razao" required class="glass-input"
+                            placeholder="Ex: Nova Empresa Ltda">
+                    </div>
+                    <div class="form-group">
+                        <label>CNPJ</label>
+                        <input type="text" id="client-cnpj" required class="glass-input"
+                            placeholder="00.000.000/0001-00">
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Regime Tributário</label>
+                            <select id="client-regime" class="glass-select" style="width: 100%;">
+                                <option value="Simples Nacional">Simples Nacional</option>
+                                <option value="Lucro Presumido">Lucro Presumido</option>
+                                <option value="Lucro Real">Lucro Real</option>
+                                <option value="MEI">MEI</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsável Fiscal (Func.)</label>
+                            <select id="client-responsavel" class="glass-select" style="width: 100%;">
+                                <!-- Loaded dynamically via app.js -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 0.5rem;">
+                        <label><i class="fa-brands fa-google-drive"></i> Link da Pasta no Drive (Opcional)</label>
+                        <input type="url" id="client-drive" class="glass-input"
+                            placeholder="https://drive.google.com/drive/folders/...">
+                    </div>
+                    <div class="form-group" style="margin-top: 0.5rem;">
+                        <label>Rotinas Aplicáveis <span
+                                style="font-weight:400; font-size:0.75rem; color:var(--text-muted);">(Selecione as
+                                tarefas recorrentes que este cliente exige)</span></label>
+                        <div id="rotinas-checkbox-grid" class="form-grid"
+                            style="gap: 0.5rem; grid-template-columns: 1fr 1fr; margin-top: 0.5rem;">
+                            <!-- Checkboxes injected by app.js -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" id="client-modal-cancel">Cancelar</button>
+                <button class="btn btn-primary" form="add-client-form" type="submit"
+                    id="client-modal-submit-btn">Cadastrar e Gerar Rotinas</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Add Funcionario Modal -->
+    <div class="modal-overlay" id="add-equipe-modal">
+        <div class="glass-card modal-content" style="max-width: 400px;">
+            <header class="modal-header">
+                <h2><i class="fa-solid fa-user-shield highlight-text"></i> Novo Funcionário</h2>
+                <button class="close-btn" id="close-equipe-modal"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+
+            <div class="modal-body" style="padding-bottom: 0;">
+                <form id="add-equipe-form">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="equipe-nome" required class="glass-input" placeholder="Ex: João Silva">
+                    </div>
+                    <div class="form-group">
+                        <label>Setor Principal</label>
+                        <select id="equipe-setor" class="glass-select" style="width: 100%;">
+                            <!-- Populated dynamically via JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nível de Permissão</label>
+                        <select id="equipe-permissao" class="glass-select" style="width: 100%;">
+                            <option value="Operacional">Operacional (Apenas suas tarefas)</option>
+                            <option value="Supervisor">Supervisor (Visualiza equipe)</option>
+                            <option value="Gerente">Gerente (Acesso Total + Dashboards)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Senha de Acesso</label>
+                        <input type="password" id="equipe-senha" required class="glass-input" placeholder="Ex: 123">
+                    </div>
+                </form>
+            </div>
+
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" id="equipe-modal-cancel">Cancelar</button>
+                <button class="btn btn-primary" form="add-equipe-form" type="submit">Cadastrar</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Add/Edit Rotina Base Modal -->
+    <div class="modal-overlay" id="add-rotina-modal">
+        <div class="glass-card modal-content" style="max-width: 400px;">
+            <header class="modal-header">
+                <h2 id="modal-rotina-title"><i class="fa-solid fa-layer-group highlight-text"></i> Nova Rotina</h2>
+                <button class="close-btn" id="close-rotina-modal"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+
+            <div class="modal-body" style="padding-bottom: 0;">
+                <form id="add-rotina-form">
+                    <input type="hidden" id="rotina-id" value="">
+                    <div class="form-group">
+                        <label>Nome da Rotina</label>
+                        <input type="text" id="rotina-nome" required class="glass-input"
+                            placeholder="Ex: Declaração XPTO">
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Frequência</label>
+                            <select id="rotina-frequencia" class="glass-select" style="width: 100%;">
+                                <option value="Mensal">Mensal (Dia fixo)</option>
+                                <option value="Anual">Anual (Data exata)</option>
+                                <option value="Eventual">Eventual (Por Demanda)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Setor Relacionado</label>
+                            <select id="rotina-setor" class="glass-select" style="width: 100%;">
+                                <!-- Populated dynamically by JS -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 0.5rem;">
+                        <label id="label-rotina-prazo">Dia Vencimento Padrão (1 a 31)</label>
+                        <input type="text" id="rotina-prazo" required class="glass-input" placeholder="Ex: 15">
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Itens do Checklist Padrão</label>
+                        <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                            <input type="text" id="new-checklist-item" class="glass-input" placeholder="Ex: Baixar XML">
+                            <button type="button" class="btn btn-secondary" id="btn-add-checklist-item"
+                                style="padding: 0 1rem;"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                        </div>
+                        <ul id="rotina-checklist-preview"
+                            style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.25rem;">
+                            <!-- Injetado por JS -->
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" id="rotina-modal-cancel">Cancelar</button>
+                <button class="btn btn-primary" form="add-rotina-form" type="submit">Salvar Rotina</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Nova Mensagem Modal -->
+    <div class="modal-overlay" id="nova-mensagem-modal">
+        <div class="glass-card modal-content" style="max-width: 500px;">
+            <header class="modal-header">
+                <h2><i class="fa-solid fa-envelope highlight-text"></i> Enviar Mensagem</h2>
+                <button class="close-btn" id="close-mensagem-modal"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+
+            <div class="modal-body" style="padding-bottom: 0;">
+                <form id="nova-mensagem-form">
+                    <div class="form-group">
+                        <label>Para (Destinatário)</label>
+                        <select id="msg-destinatario" class="glass-select" style="width: 100%;" required>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mensagem</label>
+                        <textarea id="msg-texto" required class="glass-input" rows="4"
+                            placeholder="Escreva seu recado aqui..."></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" id="mensagem-modal-cancel">Cancelar</button>
+                <button class="btn btn-primary" form="nova-mensagem-form" type="submit"><i
+                        class="fa-solid fa-paper-plane"></i> Enviar</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Manage Setores Modal -->
+    <div class="modal-overlay" id="manage-setores-modal">
+        <div class="glass-card modal-content" style="max-width: 400px;">
+            <header class="modal-header">
+                <h2><i class="fa-solid fa-list-ul highlight-text"></i> Gerenciar Setores</h2>
+                <button class="close-btn" id="close-setores-modal"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Adicionar Novo Setor</label>
+                    <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                        <input type="text" id="new-setor-name" class="glass-input" placeholder="Ex: Financeiro">
+                        <button type="button" class="btn btn-primary" id="btn-add-setor-submit"
+                            style="padding: 0 1rem;"><i class="fa-solid fa-plus"></i> Incluir</button>
+                    </div>
+                </div>
+
+                <label>Setores Existentes no Sistema</label>
+                <ul id="setores-list-preview"
+                    style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.25rem; max-height: 200px; overflow-y: auto;">
+                    <!-- Injetado por JS -->
+                </ul>
+            </div>
+
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" id="setores-modal-close-btn">Fechar</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/store.js?v=1.1"></script>
+    <script src="js/app.js?v=1.1"></script>
+</body>
+
+</html>
