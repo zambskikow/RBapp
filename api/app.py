@@ -63,6 +63,14 @@ class FuncionarioCreate(BaseModel):
     setor: str
     permissao: str
     senha: str
+    ativo: bool = True
+
+class FuncionarioUpdate(BaseModel):
+    nome: str | None = None
+    setor: str | None = None
+    permissao: str | None = None
+    senha: str | None = None
+    ativo: bool | None = None
 
 class RotinaBaseCreate(BaseModel):
     nome: str
@@ -164,6 +172,11 @@ def get_funcionarios():
 @app.post("/api/funcionarios")
 def create_funcionario(funcionario: FuncionarioCreate):
     response = supabase.table("funcionarios").insert(funcionario.model_dump()).execute()
+    return response.data
+
+@app.put("/api/funcionarios/{funcionario_id}")
+def update_funcionario(funcionario_id: int, updates: FuncionarioUpdate):
+    response = supabase.table("funcionarios").update(updates.model_dump(exclude_unset=True)).eq("id", funcionario_id).execute()
     return response.data
 
 # --- Rotinas Base ---

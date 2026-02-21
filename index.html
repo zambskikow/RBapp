@@ -258,8 +258,10 @@
                         <p class="subtitle">Base de clientes e Painel de Rotinas Fiscais</p>
                     </div>
                     <div class="header-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button class="btn btn-danger" id="btn-delete-clients" style="display: none; background: var(--danger);">
-                            <i class="fa-solid fa-trash"></i> Excluir Selecionados <span class="badge" id="delete-clients-badge">0</span>
+                        <button class="btn btn-danger" id="btn-delete-clients"
+                            style="display: none; background: var(--danger);">
+                            <i class="fa-solid fa-trash"></i> Excluir Selecionados <span class="badge"
+                                id="delete-clients-badge">0</span>
                         </button>
                         <button class="btn btn-primary" id="btn-add-client">
                             <i class="fa-solid fa-plus"></i> Novo Cliente
@@ -353,6 +355,7 @@
                                     <th>Setor</th>
                                     <th>Permissão</th>
                                     <th>Status Conta</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -659,12 +662,20 @@
     <div class="modal-overlay" id="add-equipe-modal">
         <div class="glass-card modal-content" style="max-width: 400px;">
             <header class="modal-header">
-                <h2><i class="fa-solid fa-user-shield highlight-text"></i> Novo Funcionário</h2>
+                <h2 id="modal-equipe-title"><i class="fa-solid fa-user-shield highlight-text"></i> Novo Funcionário</h2>
                 <button class="close-btn" id="close-equipe-modal"><i class="fa-solid fa-xmark"></i></button>
             </header>
 
             <div class="modal-body" style="padding-bottom: 0;">
                 <form id="add-equipe-form">
+                    <input type="hidden" id="equipe-id" value="">
+                    <div class="form-group" id="equipe-status-container" style="display: none; margin-bottom: 1rem;">
+                        <label class="custom-toggle" style="justify-content: flex-start; gap: 0.5rem;">
+                            <input type="checkbox" id="equipe-ativo" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label" style="font-weight: 500;">Conta Ativa</span>
+                        </label>
+                    </div>
                     <div class="form-group">
                         <label>Nome Completo</label>
                         <input type="text" id="equipe-nome" required class="glass-input" placeholder="Ex: João Silva">

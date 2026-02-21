@@ -770,13 +770,22 @@ function renderEquipe() {
         tr.className = 'fade-in';
 
         const badgeColor = f.permissao === 'Gerente' ? 'var(--primary)' : 'var(--success)';
+        const isAtivo = f.ativo !== false; // default true
+        const statusBadge = isAtivo
+            ? `<span class="status-badge noprazo"><i class="fa-solid fa-check-circle"></i> Ativo</span>`
+            : `<span class="status-badge atrasado"><i class="fa-solid fa-xmark-circle"></i> Inativo</span>`;
 
         tr.innerHTML = `
             <td><strong>#${f.id.toString().padStart(3, '0')}</strong></td>
             <td>${f.nome}</td>
             <td>${f.setor}</td>
             <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${f.permissao}</span></td>
-            <td><span class="status-badge noprazo"><i class="fa-solid fa-check-circle"></i> Ativo</span></td>
+            <td>${statusBadge}</td>
+            <td>
+                <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal(${f.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                    <i class="fa-solid fa-pen"></i> Editar
+                </button>
+            </td>
         `;
 
         tbody.appendChild(tr);
@@ -785,6 +794,28 @@ function renderEquipe() {
 
 function openEquipeModal() {
     document.getElementById('add-equipe-form').reset();
+    document.getElementById('equipe-id').value = '';
+    document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Novo Funcionário';
+    document.getElementById('equipe-status-container').style.display = 'none';
+    document.getElementById('add-equipe-modal').classList.add('active');
+}
+
+function openEditEquipeModal(id) {
+    const f = Store.getData().funcionarios.find(x => x.id === id);
+    if (!f) return;
+
+    document.getElementById('add-equipe-form').reset();
+    document.getElementById('equipe-id').value = f.id;
+    document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Editar Funcionário';
+
+    document.getElementById('equipe-nome').value = f.nome;
+    document.getElementById('equipe-setor').value = f.setor;
+    document.getElementById('equipe-permissao').value = f.permissao;
+    document.getElementById('equipe-senha').value = f.senha;
+
+    document.getElementById('equipe-ativo').checked = f.ativo !== false;
+    document.getElementById('equipe-status-container').style.display = 'block';
+
     document.getElementById('add-equipe-modal').classList.add('active');
 }
 
@@ -794,14 +825,23 @@ function closeEquipeModal() {
 
 function handleAddFuncionario(e) {
     if (e) e.preventDefault();
-    const nome = document.getElementById('equipe-nome').value; // Changed from membro-nome to equipe-nome
-    const email = ''; // Ignored in store, no email field in current form
+    const id = document.getElementById('equipe-id').value;
+    const nome = document.getElementById('equipe-nome').value;
     const setor = document.getElementById('equipe-setor').value;
     const permissao = document.getElementById('equipe-permissao').value;
     const senha = document.getElementById('equipe-senha').value;
 
-    Store.addFuncionario(nome, setor, permissao, senha);
-    closeEquipeModal(); // Changed from closeManageEquipeModal to closeEquipeModal
+    // Status is only used if editing, or defaults to true for new ones
+    const isEditing = !!id;
+    const ativo = isEditing ? document.getElementById('equipe-ativo').checked : true;
+
+    if (isEditing) {
+        Store.editFuncionario(id, nome, setor, permissao, senha, ativo);
+    } else {
+        Store.addFuncionario(nome, setor, permissao, senha, ativo);
+    }
+
+    closeEquipeModal();
     renderEquipe();
 }
 

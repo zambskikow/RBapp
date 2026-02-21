@@ -382,16 +382,31 @@ window.Store = {
         }
     },
 
-    async addFuncionario(nome, setor, permissao, senha) {
+    async addFuncionario(nome, setor, permissao, senha, ativo = true) {
         const res = await fetch(`${API_BASE}/funcionarios`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, setor, permissao, senha })
+            body: JSON.stringify({ nome, setor, permissao, senha, ativo })
         });
         if (res.ok) {
             const data = await res.json();
-            db.funcionarios.push({ id: data[0].id, nome, setor, permissao, senha });
+            db.funcionarios.push({ id: data[0].id, nome, setor, permissao, senha, ativo });
             this.registerLog("Gestão de Equipe", `Novo membro cadastrado: ${nome}`);
+        }
+    },
+
+    async editFuncionario(id, nome, setor, permissao, senha, ativo) {
+        const res = await fetch(`${API_BASE}/funcionarios/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, setor, permissao, senha, ativo })
+        });
+        if (res.ok) {
+            const index = db.funcionarios.findIndex(f => f.id === parseInt(id));
+            if (index !== -1) {
+                db.funcionarios[index] = { ...db.funcionarios[index], nome, setor, permissao, senha, ativo };
+                this.registerLog("Gestão de Equipe", `Membro editado: ${nome} (Ativo: ${ativo})`);
+            }
         }
     },
 
