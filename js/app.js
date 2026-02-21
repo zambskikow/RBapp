@@ -890,9 +890,15 @@ async function handleDeleteRotina(id) {
     const rotina = Store.getData().rotinasBase.find(r => r.id === id);
     if (!rotina) return;
 
-    if (confirm(`Atenção: Tem certeza que deseja CONCLUIR E EXCLUIR a rotina '${rotina.nome}'? Isso a removerá da base de rotinas disponíveis.`)) {
-        await Store.deleteRotinaBase(id);
-        renderRotinas();
+    if (confirm(`Atenção: Tem certeza que deseja EXCLUIR a rotina '${rotina.nome}'? Isso a removerá da base de rotinas disponíveis.`)) {
+        try {
+            await Store.deleteRotinaBase(id);
+            renderRotinas();
+            alert(`Rotina '${rotina.nome}' excluída com sucesso!`);
+        } catch (error) {
+            console.error(error);
+            alert("Ocorreu um erro ao excluir a rotina. Verifique o console.");
+        }
     }
 }
 

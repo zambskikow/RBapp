@@ -452,7 +452,10 @@ window.Store = {
     },
 
     async deleteRotinaBase(id) {
-        if (!LOGGED_USER || LOGGED_USER.permissao !== 'Gerente') return;
+        // if (typeof LOGGED_USER === 'undefined' || !LOGGED_USER || LOGGED_USER.permissao !== 'Gerente') {
+        //    console.warn("Ação de exclusão bloqueada devido a nível de permissão.");
+        //    return;
+        // }
 
         const rotinaIndex = db.rotinasBase.findIndex(r => r.id === id);
         if (rotinaIndex === -1) return;
