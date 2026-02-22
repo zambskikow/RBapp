@@ -500,10 +500,11 @@
                                     </div>
                                     <div class="form-grid" style="margin-bottom: 1rem;">
                                         <div class="form-group">
-                                            <label>Responsável Pela Rotina</label>
-                                            <select id="rotina-responsavel" class="glass-select" style="width: 100%;">
-                                                <!-- Loaded dynamically via app.js -->
-                                            </select>
+                                            <label>Responsáveis Pela Rotina</label>
+                                            <div id="rotina-responsavel-grid" class="form-grid"
+                                                style="gap: 0.5rem; margin-top: 0.5rem; max-height: 150px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.05); border-radius: 4px; grid-template-columns: 1fr 1fr;">
+                                                <!-- Checkboxes injected by app.js -->
+                                            </div>
                                         </div>
                                         <div class="form-group">
                                             <label id="label-rotina-prazo">Dia Vencimento Padrão (1 a 31)</label>

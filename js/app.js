@@ -553,18 +553,30 @@ function setupNavigation() {
 function populateDashboardSelects() {
     const dashUserFilter = document.getElementById('dash-user-filter');
     const dashClientFilter = document.getElementById('dash-client-filter');
+    const userFilter = document.getElementById('user-filter');
 
     // Users
-    dashUserFilter.innerHTML = '<option value="All">Todos Analistas</option>';
-    Store.getData().funcionarios.forEach(f => {
-        dashUserFilter.innerHTML += `<option value="${f.nome}">${f.nome} - ${f.setor}</option>`;
-    });
+    if (dashUserFilter) {
+        dashUserFilter.innerHTML = '<option value="All">Todos Analistas</option>';
+        Store.getData().funcionarios.forEach(f => {
+            dashUserFilter.innerHTML += `<option value="${f.nome}">${f.nome} - ${f.setor}</option>`;
+        });
+    }
+
+    if (userFilter) {
+        userFilter.innerHTML = '<option value="All">Todos os Responsáveis</option>';
+        Store.getData().funcionarios.forEach(f => {
+            userFilter.innerHTML += `<option value="${f.nome}">${f.nome}</option>`;
+        });
+    }
 
     // Clients
-    dashClientFilter.innerHTML = '<option value="All">Todos Clientes</option>';
-    Store.getData().clientes.forEach(c => {
-        dashClientFilter.innerHTML += `<option value="${c.id}">${c.razaoSocial}</option>`;
-    });
+    if (dashClientFilter) {
+        dashClientFilter.innerHTML = '<option value="All">Todos Clientes</option>';
+        Store.getData().clientes.forEach(c => {
+            dashClientFilter.innerHTML += `<option value="${c.id}">${c.razaoSocial}</option>`;
+        });
+    }
 }
 
 // ==========================================
@@ -634,13 +646,16 @@ function renderDashboard() {
     }
     const teamStats = {};
     execsTeam.forEach(ex => {
-        if (!teamStats[ex.responsavel]) {
-            teamStats[ex.responsavel] = { total: 0, concluidas: 0, hoje: 0, atrasadas: 0 };
-        }
-        teamStats[ex.responsavel].total++;
-        if (ex.feito) teamStats[ex.responsavel].concluidas++;
-        else if (ex.semaforo === 'red') teamStats[ex.responsavel].atrasadas++;
-        else if (ex.semaforo === 'yellow') teamStats[ex.responsavel].hoje++;
+        const reps = (ex.responsavel || "Automático").split(",").map(r => r.trim());
+        reps.forEach(resp => {
+            if (!teamStats[resp]) {
+                teamStats[resp] = { total: 0, concluidas: 0, hoje: 0, atrasadas: 0 };
+            }
+            teamStats[resp].total++;
+            if (ex.feito) teamStats[resp].concluidas++;
+            else if (ex.semaforo === 'red') teamStats[resp].atrasadas++;
+            else if (ex.semaforo === 'yellow') teamStats[resp].hoje++;
+        });
     });
 
     const ptbody = document.querySelector('#team-performance-table tbody');
@@ -1278,6 +1293,7 @@ async function handleAddFuncionario(e) {
 
     closeEquipeModal();
     renderEquipe();
+    populateDashboardSelects();
 }
 
 async function toggleFuncionarioStatus(id) {
@@ -1346,11 +1362,16 @@ function openRotinaModal(id = null) {
     const selectFreq = document.getElementById('rotina-frequencia');
 
     // Dynamic loading of Employees (Responsáveis)
-    const respSelect = document.getElementById('rotina-responsavel');
-    if (respSelect) {
-        respSelect.innerHTML = '';
+    const respGrid = document.getElementById('rotina-responsavel-grid');
+    if (respGrid) {
+        respGrid.innerHTML = '';
         Store.getData().funcionarios.forEach(f => {
-            respSelect.innerHTML += `<option value="${f.nome}">${f.nome} (${f.permissao})</option>`;
+            respGrid.innerHTML += `
+                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
+                    <input type="checkbox" name="responsavel-sel" value="${f.nome}" class="custom-checkbox resp-checkbox">
+                    ${f.nome}
+                </label>
+            `;
         });
     }
 
@@ -1406,7 +1427,13 @@ function openRotinaModal(id = null) {
             document.getElementById('rotina-frequencia').value = rotina.frequencia || 'Mensal';
             document.getElementById('rotina-setor').value = rotina.setor || '';
             document.getElementById('rotina-prazo').value = rotina.diaPrazoPadrao;
-            document.getElementById('rotina-responsavel').value = rotina.responsavel || '';
+
+            // Check the responsible employees
+            const reps = (rotina.responsavel || "").split(",").map(s => s.trim());
+            document.querySelectorAll('.resp-checkbox').forEach(cb => {
+                if (reps.includes(cb.value)) cb.checked = true;
+            });
+
             currentChecklistBuilder = [...(rotina.checklistPadrao || [])];
 
             // Check the clients that have this routine
@@ -1529,7 +1556,9 @@ async function handleSaveRotina(e) {
     const setor = document.getElementById('rotina-setor').value;
     const frequencia = document.getElementById('rotina-frequencia').value;
     let prazo = document.getElementById('rotina-prazo').value;
-    const responsavel = document.getElementById('rotina-responsavel').value;
+
+    const selectedResps = Array.from(document.querySelectorAll('input[name="responsavel-sel"]:checked')).map(cb => cb.value);
+    const responsavel = selectedResps.join(", ");
 
     const selectedClientIds = Array.from(document.querySelectorAll('input[name="cliente-sel"]:checked')).map(cb => parseInt(cb.value));
 

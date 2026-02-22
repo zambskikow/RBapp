@@ -71,7 +71,8 @@ window.Store = {
                 setor: r.setor,
                 frequencia: r.frequencia,
                 diaPrazoPadrao: r.dia_prazo_padrao,
-                checklistPadrao: typeof r.checklist_padrao === 'string' ? JSON.parse(r.checklist_padrao) : r.checklist_padrao
+                checklistPadrao: typeof r.checklist_padrao === 'string' ? JSON.parse(r.checklist_padrao) : r.checklist_padrao,
+                responsavel: r.responsavel || ""
             }));
 
             db.clientes = db.clientes.map(c => ({
@@ -277,7 +278,11 @@ window.Store = {
         });
 
         if (userFilter !== 'All') {
-            execs = execs.filter(e => e.responsavel === userFilter);
+            execs = execs.filter(e => {
+                if (!e.responsavel) return false;
+                const names = e.responsavel.split(",").map(n => n.trim());
+                return names.includes(userFilter);
+            });
         }
 
         return execs;
