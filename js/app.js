@@ -326,6 +326,41 @@ async function initApp() {
     document.getElementById('add-rotina-form').addEventListener('submit', handleSaveRotina);
     document.getElementById('btn-add-checklist-item').addEventListener('click', handleAddChecklistItem);
 
+    // Rotinas Clients Search
+    const btnToggleClientSearch = document.getElementById('btn-toggle-client-search');
+    const inputClientSearch = document.getElementById('filter-clientes-rotina');
+    if (btnToggleClientSearch && inputClientSearch) {
+        btnToggleClientSearch.addEventListener('click', () => {
+            const isClosed = inputClientSearch.style.pointerEvents === 'none';
+            if (isClosed) {
+                inputClientSearch.style.width = '200px';
+                inputClientSearch.style.opacity = '1';
+                inputClientSearch.style.padding = '0 0.8rem';
+                inputClientSearch.style.pointerEvents = 'auto';
+                inputClientSearch.focus();
+            } else {
+                inputClientSearch.style.width = '0';
+                inputClientSearch.style.opacity = '0';
+                inputClientSearch.style.padding = '0';
+                inputClientSearch.style.pointerEvents = 'none';
+                inputClientSearch.value = '';
+                inputClientSearch.dispatchEvent(new Event('input'));
+            }
+        });
+
+        inputClientSearch.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const labels = document.querySelectorAll('#clientes-checkbox-grid label');
+            labels.forEach(lbl => {
+                if (lbl.textContent.toLowerCase().includes(val)) {
+                    lbl.style.display = 'flex';
+                } else {
+                    lbl.style.display = 'none';
+                }
+            });
+        });
+    }
+
     // 9. Mensagens Modal Events
     document.getElementById('btn-nova-mensagem').addEventListener('click', openNovaMensagemModal);
     document.getElementById('close-mensagem-modal').addEventListener('click', closeNovaMensagemModal);
@@ -1286,6 +1321,16 @@ function openRotinaModal(id = null) {
     form.reset();
     currentChecklistBuilder = []; // Reset builder
     document.getElementById('new-checklist-item').value = '';
+
+    // Reset Search
+    const filterInput = document.getElementById('filter-clientes-rotina');
+    if (filterInput) {
+        filterInput.value = '';
+        filterInput.style.width = '0';
+        filterInput.style.opacity = '0';
+        filterInput.style.padding = '0';
+        filterInput.style.pointerEvents = 'none';
+    }
 
     const updateUIForFreq = (freq) => {
         if (freq === 'Mensal') {

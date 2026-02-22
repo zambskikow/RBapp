@@ -529,12 +529,25 @@
                                 <!-- Right Column: Linked Clients -->
                                 <div
                                     style="background: rgba(0,0,0,0.1); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
-                                    <h3 style="margin-bottom: 0.5rem; color: var(--text-main); font-size: 1.1rem;"><i
-                                            class="fa-solid fa-users"></i> Clientes Vinculados</h3>
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                        <h3 style="margin: 0; color: var(--text-main); font-size: 1.1rem;"><i
+                                                class="fa-solid fa-users"></i> Clientes Vinculados</h3>
+                                        <div
+                                            style="display: flex; align-items: center; gap: 0.5rem; justify-content: flex-end;">
+                                            <input type="text" id="filter-clientes-rotina"
+                                                placeholder="Buscar cliente..." class="glass-input"
+                                                style="width: 0; opacity: 0; padding: 0; border: none; height: 32px; transition: all 0.3s ease-in-out; pointer-events: none;">
+                                            <button type="button" class="btn btn-secondary"
+                                                id="btn-toggle-client-search" title="Buscar Clientes"
+                                                style="padding: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                     <p
                                         style="font-weight:400; font-size:0.85rem; color:var(--text-muted); margin-bottom: 1rem;">
-                                        Marque os clientes que devem realizar esta rotina (A busca pode ser adicionada
-                                        futuramente).</p>
+                                        Marque os clientes que devem realizar esta rotina.</p>
 
                                     <div class="form-group">
                                         <div id="clientes-checkbox-grid" class="form-grid"
