@@ -45,7 +45,6 @@ async function initApp() {
             renderDashboard();
             renderOperacional();
             renderClientes();
-            renderEquipe();
             renderRotinas();
             renderMensagens();
             renderAuditoria();
@@ -224,7 +223,6 @@ function handleLogin(e) {
             renderDashboard();
             renderOperacional();
             renderClientes();
-            renderEquipe();
             renderRotinas();
             renderMensagens();
             renderAuditoria();
@@ -328,7 +326,6 @@ function setupNavigation() {
                 if (targetView === 'meu-desempenho') renderMeuDesempenho();
                 if (targetView === 'operacional') renderOperacional();
                 if (targetView === 'clientes') renderClientes();
-                if (targetView === 'equipe') renderEquipe();
                 if (targetView === 'rotinas') renderRotinas();
                 if (targetView === 'mensagens') renderMensagens();
                 if (targetView === 'settings') {
@@ -1894,4 +1891,59 @@ function checkAndRunAutoBackup() {
         Store.saveToStorage();
         renderBackupView();
     }
+}
+ 
+ 
+
+// ==========================================
+// Settings Hub Tabs Initialization
+// ==========================================
+let settingsInitDone = false;
+function initSettingsTabs() {
+    if (settingsInitDone) return;
+    const tabs = document.querySelectorAll(".settings-tab-btn");
+    
+    tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            // Remove active classes
+            tabs.forEach(t => {
+                t.classList.remove("active");
+                t.style.background = "transparent";
+                t.style.color = "var(--text-muted)";
+            });
+            document.querySelectorAll(".settings-pane").forEach(pane => {
+                pane.style.display = "none";
+                pane.classList.remove("active");
+            });
+
+            // Set active class to clicked tab
+            tab.classList.add("active");
+            tab.style.background = "rgba(99, 102, 241, 0.2)";
+            tab.style.color = "var(--text-main)";
+
+            const targetId = tab.getAttribute("data-target");
+            const targetPane = document.getElementById(targetId);
+            if (targetPane) {
+                targetPane.style.display = "block";
+                setTimeout(() => targetPane.classList.add("active"), 10);
+            }
+
+            // Fire Specific Tab Renders
+            if (targetId === "set-rbac") {
+                renderAdminPanel();
+            } else if (targetId === "set-setores") {
+                renderSetoresSettings();
+            } else if (targetId === "set-backup") {
+                renderBackupView();
+            } else if (targetId === "set-auditoria") {
+                renderAuditoria();
+            } else if (targetId === "set-auditoria-comp") {
+                renderAuditoriaCompetencia();
+            } else if (targetId === "set-equipe") {
+                renderEquipe();
+            }
+        });
+    });
+
+    settingsInitDone = true;
 }

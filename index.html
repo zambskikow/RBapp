@@ -67,10 +67,7 @@
                     <i class="fa-solid fa-users"></i>
                     <span>Gestão de Clientes</span>
                 </a>
-                <a href="#" class="nav-item" data-view="equipe">
-                    <i class="fa-solid fa-user-tie"></i>
-                    <span>Gestão de Equipe</span>
-                </a>
+
                 <a href="#" class="nav-item" data-view="meu-desempenho">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Meu Desempenho</span>
@@ -405,66 +402,6 @@
                 </div>
             </div>
 
-            <!-- Equipe Management View -->
-            <div id="view-equipe" class="view-section" style="display: none;">
-                <header class="section-header">
-                    <div>
-                        <h1>Gestão de Equipe</h1>
-                        <p class="subtitle">Administração de funcionários, setores e permissões de acesso</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" id="btn-add-equipe">
-                            <i class="fa-solid fa-user-plus"></i> Novo Funcionário
-                        </button>
-                    </div>
-                </header>
-
-                <div class="kpi-grid">
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary);"><i
-                                class="fa-solid fa-users-viewfinder"></i></div>
-                        <div class="kpi-data">
-                            <h3>Total Equipe</h3>
-                            <p class="kpi-value" id="kpi-total-equipe">0</p>
-                        </div>
-                    </div>
-                    <div class="glass-card kpi-card status-success">
-                        <div class="kpi-icon"><i class="fa-solid fa-user-check"></i></div>
-                        <div class="kpi-data">
-                            <h3>Contas Ativas</h3>
-                            <p class="kpi-value" id="kpi-equipe-ativos">0</p>
-                        </div>
-                    </div>
-                    <div class="glass-card kpi-card status-danger">
-                        <div class="kpi-icon"><i class="fa-solid fa-user-xmark"></i></div>
-                        <div class="kpi-data">
-                            <h3>Contas Inativas</h3>
-                            <p class="kpi-value" id="kpi-equipe-inativos">0</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card full-table-container">
-                    <div class="table-responsive">
-                        <table class="data-table" id="equipe-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nome</th>
-                                    <th>Setor</th>
-                                    <th>Permissão</th>
-                                    <th>Status Conta</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
             <!-- Rotinas Base Management View -->
             <div id="view-rotinas" class="view-section" style="display: none;">
                 <header class="section-header">
@@ -541,6 +478,10 @@
                                 style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: rgba(99, 102, 241, 0.2); color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 500; transition: all 0.3s ease;">
                                 <i class="fa-solid fa-shield-halved" style="width: 20px;"></i> Segurança e Acessos
                             </button>
+                            <button class="settings-tab-btn" data-target="set-equipe"
+                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
+                                <i class="fa-solid fa-users" style="width: 20px;"></i> Contas e Equipe
+                            </button>
                             <button class="settings-tab-btn" data-target="set-setores"
                                 style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
                                 <i class="fa-solid fa-building" style="width: 20px;"></i> Gestão de Setores
@@ -586,6 +527,69 @@
                                                 <th>Cód.</th>
                                                 <th>Nome do Cargo</th>
                                                 <th>Telas Permitidas</th>
+                                                <th style="text-align: right;">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Populated by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: Gestão de Equipe -->
+                        <div class="settings-pane fade-in" id="set-equipe" style="display: none;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <div>
+                                    <h2 style="font-size: 1.25rem;">Gestão de Contas (Equipe)</h2>
+                                    <p style="color: var(--text-muted); font-size: 0.9rem;">Crie, inative e edite
+                                        funcionários do sistema.</p>
+                                </div>
+                                <button class="btn btn-primary" id="btn-add-equipe">
+                                    <i class="fa-solid fa-user-plus"></i> Nova Conta
+                                </button>
+                            </div>
+
+                            <div class="kpi-grid" style="margin-bottom: 1.5rem;">
+                                <div class="glass-card kpi-card" style="padding: 1rem;">
+                                    <div class="kpi-icon"
+                                        style="background: rgba(99, 102, 241, 0.15); color: var(--primary); font-size: 1.2rem; width: 40px; height: 40px;">
+                                        <i class="fa-solid fa-users-viewfinder"></i></div>
+                                    <div class="kpi-data">
+                                        <h3 style="font-size: 0.8rem;">Total Equipe</h3>
+                                        <p class="kpi-value" id="kpi-total-equipe" style="font-size: 1.5rem;">0</p>
+                                    </div>
+                                </div>
+                                <div class="glass-card kpi-card status-success" style="padding: 1rem;">
+                                    <div class="kpi-icon" style="font-size: 1.2rem; width: 40px; height: 40px;"><i
+                                            class="fa-solid fa-user-check"></i></div>
+                                    <div class="kpi-data">
+                                        <h3 style="font-size: 0.8rem;">Contas Ativas</h3>
+                                        <p class="kpi-value" id="kpi-equipe-ativos" style="font-size: 1.5rem;">0</p>
+                                    </div>
+                                </div>
+                                <div class="glass-card kpi-card status-danger" style="padding: 1rem;">
+                                    <div class="kpi-icon" style="font-size: 1.2rem; width: 40px; height: 40px;"><i
+                                            class="fa-solid fa-user-xmark"></i></div>
+                                    <div class="kpi-data">
+                                        <h3 style="font-size: 0.8rem;">Contas Inativas</h3>
+                                        <p class="kpi-value" id="kpi-equipe-inativos" style="font-size: 1.5rem;">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="glass-card full-table-container">
+                                <div class="table-responsive">
+                                    <table class="data-table" id="equipe-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Nome</th>
+                                                <th>Setor</th>
+                                                <th>Permissão (Perfil)</th>
+                                                <th>Status</th>
                                                 <th style="text-align: right;">Ações</th>
                                             </tr>
                                         </thead>
