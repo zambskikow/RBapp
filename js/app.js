@@ -2987,6 +2987,22 @@ function handleSendMensagem(e) {
 
 // ==========================================
 
+// MODAL CONTROLLERS & CHECKLISTS
+
+// ==========================================
+
+function fireConfetti() {
+    if (typeof confetti === 'function') {
+        confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 },
+            zIndex: 9999,
+            colors: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
+        });
+    }
+}
+
 let currentOpenTask = null;
 
 
@@ -3060,10 +3076,14 @@ function openTaskModal(taskId) {
     newToggle.addEventListener('change', (e) => {
 
         const checked = e.target.checked;
+        const wasDone = task.feito;
 
         Store.toggleExecucaoFeito(task.id, checked);
 
-
+        if (checked && !wasDone) {
+            fireConfetti();
+        }
+        task.feito = checked;
 
         // Refresh views natively
 
@@ -3147,6 +3167,8 @@ function renderChecklist() {
 
         chk.addEventListener('change', (e) => {
 
+            const wasDone = task.feito;
+
             Store.updateChecklist(task.id, sub.id, e.target.checked);
 
 
@@ -3164,6 +3186,10 @@ function renderChecklist() {
             // Re-sync header if state changed due to all checks
 
             const refreshedTask = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
+
+            if (!wasDone && refreshedTask.feito) {
+                fireConfetti();
+            }
 
             document.getElementById('modal-status').innerHTML = refreshedTask.feito
 
