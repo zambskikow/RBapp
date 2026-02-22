@@ -37,6 +37,14 @@ class ClienteCreate(BaseModel):
     rotinas_selecionadas: list = []
     drive_link: str = ""
 
+class ClienteUpdate(BaseModel):
+    razao_social: str | None = None
+    cnpj: str | None = None
+    regime: str | None = None
+    responsavel_fiscal: str | None = None
+    rotinas_selecionadas: list | None = None
+    drive_link: str | None = None
+
 class SetorCreate(BaseModel):
     nome: str
 
@@ -84,6 +92,13 @@ class RotinaBaseCreate(BaseModel):
     frequencia: str
     dia_prazo_padrao: str
     checklist_padrao: list = []
+
+class RotinaBaseUpdate(BaseModel):
+    nome: str | None = None
+    setor: str | None = None
+    frequencia: str | None = None
+    dia_prazo_padrao: str | None = None
+    checklist_padrao: list | None = None
 
 class ExecucaoUpdate(BaseModel):
     feito: bool
@@ -138,6 +153,11 @@ def get_clientes():
 def create_cliente(cliente: ClienteCreate):
     data = cliente.model_dump()
     response = supabase.table("clientes").insert(data).execute()
+    return response.data
+
+@app.put("/api/clientes/{cliente_id}")
+def update_cliente(cliente_id: int, updates: ClienteUpdate):
+    response = supabase.table("clientes").update(updates.model_dump(exclude_unset=True)).eq("id", cliente_id).execute()
     return response.data
 
 @app.delete("/api/clientes/{cliente_id}")
@@ -202,6 +222,11 @@ def get_rotinas_base():
 @app.post("/api/rotinas_base")
 def create_rotina(rotina: RotinaBaseCreate):
     response = supabase.table("rotinas_base").insert(rotina.model_dump()).execute()
+    return response.data
+
+@app.put("/api/rotinas_base/{rotina_id}")
+def update_rotina_put(rotina_id: int, updates: RotinaBaseUpdate):
+    response = supabase.table("rotinas_base").update(updates.model_dump(exclude_unset=True)).eq("id", rotina_id).execute()
     return response.data
 
 @app.delete("/api/rotinas_base/{rotina_id}")
