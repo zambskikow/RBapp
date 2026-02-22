@@ -613,38 +613,44 @@ window.Store = {
         return false;
     },
 
+    getAuthBySession(sessionId) {
+        if (!sessionId) return null;
+        if (sessionId === '999' || sessionId === 999) {
+            return { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'settings'] };
+        }
+
+        const tempAuth = db.funcionarios.find(f => f.id === parseInt(sessionId));
+        if (!tempAuth || tempAuth.ativo === false) return null;
+
+        let auth = { ...tempAuth };
+        auth.telas_permitidas = [];
+
+        if (db.cargos && db.cargos.length > 0) {
+            const cargo = db.cargos.find(c => c.id === auth.cargo_id || c.nome_cargo === auth.permissao);
+            if (cargo && cargo.telas_permitidas) {
+                auth.telas_permitidas = cargo.telas_permitidas;
+            }
+        }
+
+        if (auth.telas_permitidas.length === 0) {
+            if (auth.permissao === 'Gerente') {
+                auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'settings'];
+            } else {
+                auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
+            }
+        }
+
+        return auth;
+    },
+
     login(username, password) {
         let auth = null;
         if (username === 'Manager' && password === '123') {
-            auth = { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'auditoria', 'backup', 'admin-panel'] };
+            auth = this.getAuthBySession('999');
         } else {
             const tempAuth = db.funcionarios.find(f => f.nome === username && f.senha === password);
             if (tempAuth) {
-                // If the employee is inactive, deny login
-                if (tempAuth.ativo === false) return null;
-
-                auth = { ...tempAuth }; // copy object
-
-                // Add permissions logic based on Cargo or Fallback
-                auth.telas_permitidas = [];
-
-                // Real DB query logic goes here if the SQL tables exist
-                if (db.cargos && db.cargos.length > 0) {
-                    const cargo = db.cargos.find(c => c.id === auth.cargo_id || c.nome_cargo === auth.permissao);
-                    if (cargo && cargo.telas_permitidas) {
-                        auth.telas_permitidas = cargo.telas_permitidas;
-                    }
-                }
-
-                // Fallback hardcoded if no cargo was found or table is pending setup
-                if (auth.telas_permitidas.length === 0) {
-                    if (auth.permissao === 'Gerente') {
-                        auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'auditoria', 'backup', 'admin-panel'];
-                    } else {
-                        // Default Operacional
-                        auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
-                    }
-                }
+                auth = this.getAuthBySession(tempAuth.id);
             }
         }
 

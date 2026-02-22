@@ -23,7 +23,7 @@ async function initApp() {
     const storedSession = localStorage.getItem('fiscalapp_session');
     if (storedSession) {
         // Find user
-        const auth = Store.getData().funcionarios.find(f => f.id === parseInt(storedSession));
+        const auth = Store.getAuthBySession(storedSession);
         if (auth) {
             LOGGED_USER = auth;
             document.getElementById('login-overlay').style.display = 'none';
@@ -37,6 +37,9 @@ async function initApp() {
             loadSetoresSelects();
 
             const savedView = localStorage.getItem('fiscalapp_current_view') || 'dashboard';
+
+            // Apply permissions to Navbar BEFORE clicking!
+            applyUserPermissions(auth);
 
             // Render everything invisibly first
             renderDashboard();
@@ -229,47 +232,13 @@ function handleLogin(e) {
             updateMensagensBadges();
 
             // Execute Dynamic Authorization on Navbar (RBAC)
-            const permitidas = auth.telas_permitidas || [];
-
-            // Loop through all navigation links and show/hide based on array
-            document.querySelectorAll('.nav-item').forEach(navItem => {
-                const view = navItem.getAttribute('data-view');
-                if (!view) return; // Skip non-view links like logout
-
-                if (permitidas.includes(view)) {
-                    // Specific exception for flex links vs standard block links
-                    if (view === 'dashboard' || view === 'auditoria' || view === 'backup' || view === 'admin-panel' || view === 'settings') {
-                        navItem.style.display = 'flex';
-                    } else {
-                        navItem.style.display = 'flex'; // our UI uses flex for all nav-items
-                    }
-                } else {
-                    navItem.style.display = 'none';
-                }
-            });
+            applyUserPermissions(auth);
 
             // Re-route user to their first available view if they don't have access to Dashboard
-            if (!permitidas.includes('dashboard') && permitidas.length > 0) {
-                const firstView = permitidas[0];
+            if (!auth.telas_permitidas.includes('dashboard') && auth.telas_permitidas.length > 0) {
+                const firstView = auth.telas_permitidas[0];
                 const firstNav = document.querySelector(`.nav-item[data-view="${firstView}"]`);
                 if (firstNav) firstNav.click();
-            }
-
-            // Hide/Show specific inner buttons based on permissions
-            const btnSetores = document.getElementById('btn-manage-setores');
-            if (btnSetores) {
-                if (auth.permissao === 'Gerente' || auth.telas_permitidas.includes('settings')) {
-                    btnSetores.style.display = 'inline-block';
-                } else {
-                    btnSetores.style.display = 'none';
-                }
-            }
-
-            const adminNavDivider = document.getElementById('admin-nav-divider');
-            if (adminNavDivider) {
-                if (auth.permissao === 'Gerente' || auth.telas_permitidas.includes('settings')) {
-                    adminNavDivider.style.display = 'block';
-                }
             }
 
             localStorage.setItem('fiscalapp_session', auth.id);
@@ -283,16 +252,50 @@ function handleLogin(e) {
 }
 
 function handleLogout() {
-    localStorage.removeItem('fiscalapp_session');
+    Store.registerLog("Acesso", `${LOGGED_USER ? LOGGED_USER.nome : 'Usuário'} saiu do sistema.`);
     LOGGED_USER = null;
-    document.getElementById('main-app-container').style.display = 'none';
-    document.getElementById('login-overlay').style.display = 'flex';
-    document.getElementById('login-overlay').classList.add('active');
-    document.getElementById('login-form').reset();
-    document.getElementById('login-error').style.display = 'none';
-    // Clear selections so another user gets clean view next login
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.querySelector('[data-view="dashboard"]').classList.add('active');
+    localStorage.removeItem('fiscalapp_session');
+
+    // Smooth transition
+    document.getElementById('main-app-container').classList.add('fade-out');
+    setTimeout(() => {
+        window.location.reload();
+    }, 300);
+}
+
+function applyUserPermissions(auth) {
+    const permitidas = auth.telas_permitidas || [];
+
+    // Loop through all navigation links and show/hide based on array
+    document.querySelectorAll('.nav-item').forEach(navItem => {
+        const view = navItem.getAttribute('data-view');
+        if (!view) return; // Skip non-view links like logout
+
+        if (permitidas.includes(view)) {
+            navItem.style.display = 'flex'; // our UI uses flex for all nav-items
+        } else {
+            navItem.style.display = 'none';
+        }
+    });
+
+    // Hide/Show specific inner buttons based on permissions
+    const btnSetores = document.getElementById('btn-manage-setores');
+    if (btnSetores) {
+        if (auth.permissao === 'Gerente' || permitidas.includes('settings')) {
+            btnSetores.style.display = 'inline-block';
+        } else {
+            btnSetores.style.display = 'none';
+        }
+    }
+
+    const adminNavDivider = document.getElementById('admin-nav-divider');
+    if (adminNavDivider) {
+        if (auth.permissao === 'Gerente' || permitidas.includes('settings')) {
+            adminNavDivider.style.display = 'block';
+        } else {
+            adminNavDivider.style.display = 'none';
+        }
+    }
 }
 
 function setupNavigation() {
@@ -1687,7 +1690,7 @@ function renderAdminPanel() {
         if (cargo.telas_permitidas && cargo.telas_permitidas.length > 0) {
             cargo.telas_permitidas.forEach(tela => {
                 let badgeClass = 'badge ';
-                if (tela === 'auditoria' || tela === 'backup' || tela === 'admin-panel') {
+                if (tela === 'settings') {
                     badgeClass += 'danger';
                 } else if (tela === 'dashboard' || tela === 'operacional') {
                     badgeClass += 'primary';
