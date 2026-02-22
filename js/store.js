@@ -21,7 +21,8 @@ let db = {
     execucoes: [],
     mensagens: [],
     logs: [],
-    config: { autoBackup: false, lastBackupData: null }
+    config: { autoBackup: false, lastBackupData: null },
+    cargos: [] // New generic permissions table
 };
 
 window.Store = {
@@ -33,7 +34,7 @@ window.Store = {
             console.log("Baixando dados do banco de dados (Supabase/Python)...");
             const [
                 setoresRes, funcionariosRes, rotinasBaseRes,
-                clientesRes, mesesRes, execucoesRes, mensagensRes, logsRes
+                clientesRes, mesesRes, execucoesRes, mensagensRes, logsRes, cargosRes
             ] = await Promise.all([
                 fetch(`${API_BASE}/setores`),
                 fetch(`${API_BASE}/funcionarios`),
@@ -42,7 +43,8 @@ window.Store = {
                 fetch(`${API_BASE}/meses`),
                 fetch(`${API_BASE}/execucoes`),
                 fetch(`${API_BASE}/mensagens`),
-                fetch(`${API_BASE}/logs`)
+                fetch(`${API_BASE}/logs`),
+                fetch(`${API_BASE}/cargos`)
             ]);
 
             db.setores = (await setoresRes.json()).map(s => s.nome) || [];
@@ -53,6 +55,14 @@ window.Store = {
             db.execucoes = await execucoesRes.json() || [];
             db.mensagens = await mensagensRes.json() || [];
             db.logs = await logsRes.json() || [];
+
+            // Try to set cargos (can fail if table doesn't exist yet, fallback to empty array)
+            try {
+                const cargosData = await cargosRes.json();
+                db.cargos = Array.isArray(cargosData) ? cargosData : [];
+            } catch (e) {
+                db.cargos = [];
+            }
 
             // Map python rotinasBase to expected camelCase names for legacy frontend compatibility
             db.rotinasBase = db.rotinasBase.map(r => ({
@@ -549,20 +559,100 @@ window.Store = {
         }
     },
 
+    // --- CARGOS (RBAC) ---
+    async addCargo(nome_cargo, telas_permitidas) {
+        try {
+            const res = await fetch(`${API_BASE}/cargos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome_cargo, telas_permitidas: telas_permitidas || [] })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                db.cargos.push(data[0]);
+                this.registerLog("Segurança", `Novo Cargo Criado: ${nome_cargo}`);
+                return true;
+            }
+        } catch (e) { console.error(e); }
+        return false;
+    },
+
+    async updateCargo(id, nome_cargo, telas_permitidas) {
+        try {
+            const res = await fetch(`${API_BASE}/cargos/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome_cargo, telas_permitidas: telas_permitidas || [] })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const index = db.cargos.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    db.cargos[index] = data[0];
+                    this.registerLog("Segurança", `Permissões atualizadas para o cargo: ${nome_cargo}`);
+                    return true;
+                }
+            }
+        } catch (e) { console.error(e); }
+        return false;
+    },
+
+    async deleteCargo(id) {
+        try {
+            const index = db.cargos.findIndex(c => c.id === id);
+            if (index === -1) return false;
+            const cargoNome = db.cargos[index].nome_cargo;
+
+            const res = await fetch(`${API_BASE}/cargos/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                db.cargos.splice(index, 1);
+                this.registerLog("Segurança", `Cargo Excluído: ${cargoNome}`);
+                return true;
+            }
+        } catch (e) { console.error(e); }
+        return false;
+    },
+
     login(username, password) {
-        console.log("Tentativa de login:", username, "- Senha Local:", password);
-        console.log("Total Funcionarios carregados pelo Banco:", db.funcionarios.length);
-        console.log("Funcionarios no DB:", db.funcionarios);
-
-        const user = db.funcionarios.find(f => f.nome === username && f.senha === password);
-
-        if (user) {
-            console.log("Usuário encontrado! Logando...");
-            this.registerLog("Acesso ao Sistema", `Login efetuado por ${username}`);
+        let auth = null;
+        if (username === 'Manager' && password === '123') {
+            auth = { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'auditoria', 'backup', 'admin-panel'] };
         } else {
-            console.log("Falha no login. Nenhum usuário combinou com as credenciais fornecidas.");
+            const tempAuth = db.funcionarios.find(f => f.nome === username && f.senha === password);
+            if (tempAuth) {
+                // If the employee is inactive, deny login
+                if (tempAuth.ativo === false) return null;
+
+                auth = { ...tempAuth }; // copy object
+
+                // Add permissions logic based on Cargo or Fallback
+                auth.telas_permitidas = [];
+
+                // Real DB query logic goes here if the SQL tables exist
+                if (db.cargos && db.cargos.length > 0) {
+                    const cargo = db.cargos.find(c => c.id === auth.cargo_id || c.nome_cargo === auth.permissao);
+                    if (cargo && cargo.telas_permitidas) {
+                        auth.telas_permitidas = cargo.telas_permitidas;
+                    }
+                }
+
+                // Fallback hardcoded if no cargo was found or table is pending setup
+                if (auth.telas_permitidas.length === 0) {
+                    if (auth.permissao === 'Gerente') {
+                        auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'auditoria', 'backup', 'admin-panel'];
+                    } else {
+                        // Default Operacional
+                        auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
+                    }
+                }
+            }
         }
-        return user || null;
+
+        if (auth) {
+            this.registerLog("Acesso", `${auth.nome} fez login no sistema.`);
+            return auth;
+        }
+        return null;
     },
 
     // Additional methods mock

@@ -186,6 +186,16 @@ async function initApp() {
             Store.updateConfig('autoBackup', e.target.checked);
         });
     }
+
+    // 13. Admin Panel (RBAC) Events
+    const btnAddCargo = document.getElementById('btn-add-cargo');
+    if (btnAddCargo) btnAddCargo.addEventListener('click', () => openCargoModal());
+    const closeCargo1 = document.getElementById('close-cargo-modal');
+    if (closeCargo1) closeCargo1.addEventListener('click', closeCargoModal);
+    const closeCargo2 = document.getElementById('cargo-modal-cancel');
+    if (closeCargo2) closeCargo2.addEventListener('click', closeCargoModal);
+    const cargoForm = document.getElementById('admin-cargo-form');
+    if (cargoForm) cargoForm.addEventListener('submit', handleSaveCargo);
 }
 
 function handleLogin(e) {
@@ -218,22 +228,41 @@ function handleLogin(e) {
             renderBackupView();
             updateMensagensBadges();
 
-            // Handle security visibility for Navbar dynamically upon login validation
-            const navAudit = document.getElementById('nav-auditoria');
-            const navBackup = document.getElementById('nav-backup');
-            const btnSetores = document.getElementById('btn-manage-setores');
-            const navDashboard = document.querySelector('.nav-item[data-view="dashboard"]');
+            // Execute Dynamic Authorization on Navbar (RBAC)
+            const permitidas = auth.telas_permitidas || [];
 
-            if (auth.permissao !== 'Gerente') {
-                if (navAudit) navAudit.style.display = 'none';
-                if (navBackup) navBackup.style.display = 'none';
-                if (btnSetores) btnSetores.style.display = 'none';
-                if (navDashboard) navDashboard.style.display = 'none';
-            } else {
-                if (navAudit) navAudit.style.display = 'flex';
-                if (navBackup) navBackup.style.display = 'flex';
-                if (btnSetores) btnSetores.style.display = 'inline-block';
-                if (navDashboard) navDashboard.style.display = 'flex';
+            // Loop through all navigation links and show/hide based on array
+            document.querySelectorAll('.nav-item').forEach(navItem => {
+                const view = navItem.getAttribute('data-view');
+                if (!view) return; // Skip non-view links like logout
+
+                if (permitidas.includes(view)) {
+                    // Specific exception for flex links vs standard block links
+                    if (view === 'dashboard' || view === 'auditoria' || view === 'backup' || view === 'admin-panel') {
+                        navItem.style.display = 'flex';
+                    } else {
+                        navItem.style.display = 'flex'; // our UI uses flex for all nav-items
+                    }
+                } else {
+                    navItem.style.display = 'none';
+                }
+            });
+
+            // Re-route user to their first available view if they don't have access to Dashboard
+            if (!permitidas.includes('dashboard') && permitidas.length > 0) {
+                const firstView = permitidas[0];
+                const firstNav = document.querySelector(`.nav-item[data-view="${firstView}"]`);
+                if (firstNav) firstNav.click();
+            }
+
+            // Hide/Show specific inner buttons based on permissions
+            const btnSetores = document.getElementById('btn-manage-setores');
+            if (btnSetores) {
+                if (auth.permissao === 'Gerente' || auth.telas_permitidas.includes('admin-panel')) {
+                    btnSetores.style.display = 'inline-block';
+                } else {
+                    btnSetores.style.display = 'none';
+                }
             }
 
             localStorage.setItem('fiscalapp_session', auth.id);
@@ -294,6 +323,7 @@ function setupNavigation() {
                 if (targetView === 'mensagens') renderMensagens();
                 if (targetView === 'auditoria') renderAuditoria();
                 if (targetView === 'backup') renderBackupView();
+                if (targetView === 'admin-panel') renderAdminPanel();
             }
         });
     });
@@ -1622,6 +1652,132 @@ function downloadAuditoriaCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// ==========================================
+// VIEW: Painel de Administração (RBAC)
+// ==========================================
+function renderAdminPanel() {
+    const tbody = document.querySelector('#admin-cargos-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const cargos = Store.getData().cargos || [];
+
+    if (cargos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 3rem;">Nenhum cargo de segurança configurado ainda.</td></tr>`;
+        return;
+    }
+
+    cargos.forEach(cargo => {
+        const tr = document.createElement('tr');
+        tr.className = 'fade-in';
+
+        let tagsHtml = '';
+        if (cargo.telas_permitidas && cargo.telas_permitidas.length > 0) {
+            cargo.telas_permitidas.forEach(tela => {
+                let badgeClass = 'badge ';
+                if (tela === 'auditoria' || tela === 'backup' || tela === 'admin-panel') {
+                    badgeClass += 'danger';
+                } else if (tela === 'dashboard' || tela === 'operacional') {
+                    badgeClass += 'primary';
+                } else {
+                    badgeClass += 'info';
+                }
+                tagsHtml += `<span class="${badgeClass}" style="margin-right: 4px; margin-bottom: 4px; display: inline-block;">${tela}</span>`;
+            });
+        } else {
+            tagsHtml = '<span class="text-muted">Nenhum acesso definido</span>';
+        }
+
+        tr.innerHTML = `
+            <td>#${cargo.id}</td>
+            <td><strong>${cargo.nome_cargo}</strong></td>
+            <td style="max-width: 400px; line-height: 1.8;">${tagsHtml}</td>
+            <td style="text-align: right;">
+                <button class="action-btn text-primary" onclick="openCargoModal(${cargo.id})" title="Editar Permissões"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="action-btn text-danger" onclick="deleteCargo(${cargo.id})" title="Excluir Cargo"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function openCargoModal(cargoId = null) {
+    const modal = document.getElementById('admin-cargo-modal');
+    modal.style.display = 'flex';
+    // trigger animation
+    setTimeout(() => modal.classList.add('active'), 10);
+
+    const form = document.getElementById('admin-cargo-form');
+    form.reset();
+    document.getElementById('cargo-id').value = '';
+
+    if (cargoId) {
+        const cargo = Store.getData().cargos.find(c => c.id === cargoId);
+        if (cargo) {
+            document.getElementById('cargo-id').value = cargo.id;
+            document.getElementById('cargo-nome').value = cargo.nome_cargo;
+
+            const checks = document.querySelectorAll('.cargo-perm-check');
+            checks.forEach(chk => {
+                chk.checked = cargo.telas_permitidas && cargo.telas_permitidas.includes(chk.value);
+            });
+        }
+    }
+}
+
+function closeCargoModal(e) {
+    if (e) e.preventDefault();
+    const modal = document.getElementById('admin-cargo-modal');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
+async function handleSaveCargo(e) {
+    e.preventDefault();
+    const id = document.getElementById('cargo-id').value;
+    const nome = document.getElementById('cargo-nome').value.trim();
+
+    const checkboxes = document.querySelectorAll('.cargo-perm-check:checked');
+    const permitidas = Array.from(checkboxes).map(chk => chk.value);
+
+    // Disable button to prevent double submit
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+    let success = false;
+    if (id) {
+        success = await Store.updateCargo(parseInt(id), nome, permitidas);
+    } else {
+        success = await Store.addCargo(nome, permitidas);
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'Salvar Permissões';
+
+    if (success) {
+        closeCargoModal();
+        renderAdminPanel();
+        showFeedbackToast(`Permissões do cargo ${nome} salvas!`, 'success');
+        // Se o usuário logado tiver esse permissão editada, seria ideal um recarregamento, 
+        // mas assumimos que o Admin Master está gerenciando outras.
+    } else {
+        showFeedbackToast('Erro ao salvar cargo. Verifique a API.', 'danger');
+    }
+}
+
+async function deleteCargo(id) {
+    if (confirm("Tem certeza que deseja excluir esse Cargo e suas Permissões de Acesso?")) {
+        const success = await Store.deleteCargo(id);
+        if (success) {
+            renderAdminPanel();
+            showFeedbackToast('Cargo excluído com sucesso.', 'success');
+        } else {
+            showFeedbackToast('Erro ao excluir cargo.', 'danger');
+        }
+    }
 }
 
 // ==========================================

@@ -99,6 +99,14 @@ class MensagemCreate(BaseModel):
 class MensagemUpdate(BaseModel):
     lida: bool
 
+class CargoCreate(BaseModel):
+    nome_cargo: str
+    telas_permitidas: list = []
+
+class CargoUpdate(BaseModel):
+    nome_cargo: str | None = None
+    telas_permitidas: list | None = None
+
 class ExecucaoCreate(BaseModel):
     cliente_id: int
     rotina: str
@@ -243,3 +251,28 @@ def get_logs():
 def create_log(log: LogCreate):
     response = supabase.table("logs").insert(log.model_dump()).execute()
     return response.data
+
+# --- Cargos e Permissões (RBAC) ---
+@app.get("/api/cargos")
+def get_cargos():
+    response = supabase.table("cargos_permissoes").select("*").execute()
+    return response.data
+
+@app.post("/api/cargos")
+def create_cargo(cargo: CargoCreate):
+    response = supabase.table("cargos_permissoes").insert(cargo.model_dump()).execute()
+    return response.data
+
+@app.put("/api/cargos/{cargo_id}")
+def update_cargo(cargo_id: int, updates: CargoUpdate):
+    response = supabase.table("cargos_permissoes").update(updates.model_dump(exclude_unset=True)).eq("id", cargo_id).execute()
+    return response.data
+
+@app.delete("/api/cargos/{cargo_id}")
+def delete_cargo(cargo_id: int):
+    response = supabase.table("cargos_permissoes").delete().eq("id", cargo_id).execute()
+    return response.data
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

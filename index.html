@@ -95,6 +95,12 @@
                     <i class="fa-solid fa-cloud-arrow-down"></i>
                     <span>Backup e Segurança</span>
                 </a>
+
+                <!-- Novo Botão de Controle de Acessos -->
+                <a href="#" class="nav-item" data-view="admin-panel" id="nav-admin-panel" style="display: none;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Painel de Segurança</span>
+                </a>
             </nav>
             <div class="user-profile">
                 <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Avatar"
@@ -104,10 +110,6 @@
                     <span class="user-role">Setor Fiscal</span>
                 </div>
             </div>
-
-            <a href="#" class="nav-item" id="btn-logout" style="margin-top: 10px; color: var(--danger);">
-                <i class="fa-solid fa-power-off"></i> Sair
-            </a>
         </aside>
 
         <!-- Main Content Area -->
@@ -121,6 +123,10 @@
                         <span class="badge" id="topbar-badge-msg" style="display:none;">0</span>
                     </button>
                     <div class="date-display" id="currentDate">--/--/----</div>
+                    <button id="btn-logout" class="btn btn-outline"
+                        style="border-color: var(--danger); color: var(--danger); font-size: 0.85rem; padding: 0.4rem 1rem;">
+                        <i class="fa-solid fa-power-off"></i> Sair
+                    </button>
                 </div>
             </header>
 
@@ -929,6 +935,74 @@
 
             <footer class="modal-footer">
                 <button class="btn btn-secondary" id="setores-modal-close-btn">Fechar</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Admin Cargo Modal (RBAC) -->
+    <div class="modal-overlay" id="admin-cargo-modal">
+        <div class="glass-card modal-content" style="max-width: 500px;">
+            <header class="modal-header">
+                <h2><i class="fa-solid fa-shield-halved highlight-text"></i> Configurar Cargo</h2>
+                <button class="close-btn" id="close-cargo-modal"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+
+            <div class="modal-body">
+                <form id="admin-cargo-form">
+                    <input type="hidden" id="cargo-id">
+                    <div class="form-group">
+                        <label>Nome do Cargo</label>
+                        <input type="text" id="cargo-nome" class="glass-input" placeholder="Ex: Analista Fiscal Jr"
+                            required>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <label style="margin-bottom: 1rem;">Módulos Permitidos (Telas)</label>
+                        <div id="cargo-permissions-list"
+                            style="display: flex; flex-direction: column; gap: 0.8rem; background: rgba(15, 23, 42, 0.4); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" value="dashboard" class="cargo-perm-check"> Manager Dashboard
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" value="operacional" class="cargo-perm-check"> Painel Operacional
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" value="meu-desempenho" class="cargo-perm-check"> Meu Desempenho
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" value="clientes" class="cargo-perm-check"> Gestão de Clientes
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" value="equipe" class="cargo-perm-check"> Gestão de Equipe
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" value="rotinas" class="cargo-perm-check"> Gestão de Rotinas
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" value="mensagens" class="cargo-perm-check"> Mensagens (Inbox)
+                            </label>
+                            <div class="nav-divider" style="margin: 0.5rem 0;"></div>
+                            <label
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--danger);">
+                                <input type="checkbox" value="auditoria" class="cargo-perm-check"> Logs (Auditoria)
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--danger);">
+                                <input type="checkbox" value="backup" class="cargo-perm-check"> Backup e Segurança
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--danger);">
+                                <input type="checkbox" value="admin-panel" class="cargo-perm-check"> Painel de Segurança
+                                (Admin)
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" id="cargo-modal-cancel">Cancelar</button>
+                <button class="btn btn-primary" form="admin-cargo-form" type="submit">Salvar Permissões</button>
             </footer>
         </div>
     </div>
