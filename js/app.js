@@ -317,1421 +317,713 @@ async function initApp() {
     document.getElementById('close-equipe-modal').addEventListener('click', closeEquipeModal);
 
     document.getElementById('equipe-modal-cancel').addEventListener('click', closeEquipeModal);
-
     document.getElementById('add-equipe-form').addEventListener('submit', handleAddFuncionario);
 
-
-
-    // 8. Rotinas Base Modal Events
-
+    // 8. Rotinas Base View Events
     document.getElementById('btn-add-rotina').addEventListener('click', () => openRotinaModal());
-
-    document.getElementById('close-rotina-modal').addEventListener('click', closeRotinaModal);
-
-    document.getElementById('rotina-modal-cancel').addEventListener('click', closeRotinaModal);
-
+    const btnBackRotinas = document.getElementById('btn-back-rotinas-list');
+    if (btnBackRotinas) btnBackRotinas.addEventListener('click', closeRotinaModal);
     document.getElementById('add-rotina-form').addEventListener('submit', handleSaveRotina);
-
     document.getElementById('btn-add-checklist-item').addEventListener('click', handleAddChecklistItem);
 
-
-
     // 9. Mensagens Modal Events
-
     document.getElementById('btn-nova-mensagem').addEventListener('click', openNovaMensagemModal);
-
     document.getElementById('close-mensagem-modal').addEventListener('click', closeNovaMensagemModal);
-
     document.getElementById('mensagem-modal-cancel').addEventListener('click', closeNovaMensagemModal);
-
     document.getElementById('nova-mensagem-form').addEventListener('submit', handleSendMensagem);
 
-
-
     // 10. Manage Setores Modal Events
-
     const btnManageSetores = document.getElementById('btn-manage-setores');
-
     if (btnManageSetores) btnManageSetores.addEventListener('click', openSetoresModal);
-
     const closeSetores1 = document.getElementById('close-setores-modal');
-
     if (closeSetores1) closeSetores1.addEventListener('click', closeSetoresModal);
-
     const closeSetores2 = document.getElementById('setores-modal-close-btn');
-
     if (closeSetores2) closeSetores2.addEventListener('click', closeSetoresModal);
-
     const btnAddSetor = document.getElementById('btn-add-setor-submit');
-
     if (btnAddSetor) btnAddSetor.addEventListener('click', handleAddSetor);
 
-
-
     // 11. Auditoria Export Event
-
     const btnExportLogs = document.getElementById('btn-export-logs');
-
     if (btnExportLogs) btnExportLogs.addEventListener('click', downloadAuditoriaCSV);
 
-
-
     // 12. Backup Events
-
     const btnExportBackup = document.getElementById('btn-export-backup');
-
     if (btnExportBackup) btnExportBackup.addEventListener('click', downloadBackupFile);
 
-
-
     const btnRestoreBackup = document.getElementById('btn-restore-backup');
-
     if (btnRestoreBackup) btnRestoreBackup.addEventListener('click', restoreBackupFile);
 
-
-
     const toggleAutoBackup = document.getElementById('toggle-auto-backup');
-
     if (toggleAutoBackup) {
-
         toggleAutoBackup.addEventListener('change', (e) => {
-
             Store.updateConfig('autoBackup', e.target.checked);
-
         });
-
     }
 
-
-
     // 13. Admin Panel (RBAC) Events
-
     const btnAddCargo = document.getElementById('btn-add-cargo');
-
     if (btnAddCargo) btnAddCargo.addEventListener('click', () => openCargoModal());
-
     const closeCargo1 = document.getElementById('close-cargo-modal');
-
     if (closeCargo1) closeCargo1.addEventListener('click', closeCargoModal);
-
     const closeCargo2 = document.getElementById('cargo-modal-cancel');
-
     if (closeCargo2) closeCargo2.addEventListener('click', closeCargoModal);
-
     const cargoForm = document.getElementById('admin-cargo-form');
-
     if (cargoForm) cargoForm.addEventListener('submit', handleSaveCargo);
-
 }
 
-
-
 function handleLogin(e) {
-
     e.preventDefault();
-
     const user = document.getElementById('login-username').value.trim();
-
     const pass = document.getElementById('login-password').value.trim();
-
     const errorMsg = document.getElementById('login-error');
 
-
-
     const auth = Store.login(user, pass);
-
     if (auth) {
-
         LOGGED_USER = auth;
-
         document.getElementById('login-overlay').classList.remove('active');
-
         setTimeout(() => {
-
             document.getElementById('login-overlay').style.display = 'none';
-
             document.getElementById('main-app-container').style.display = 'flex';
 
-
-
             // Apply User info to sidebar
-
             document.querySelector('.sidebar .user-name').textContent = auth.nome;
-
             document.querySelector('.sidebar .user-role').textContent = auth.permissao;
 
-
-
             // Trigger renders since we now have contextual access
-
             loadSetoresSelects();
-
             renderDashboard();
-
             renderOperacional();
-
             renderClientes();
-
             renderRotinas();
-
             renderMensagens();
-
             renderAuditoria();
-
             renderBackupView();
-
             updateMensagensBadges();
 
-
-
             // Execute Dynamic Authorization on Navbar (RBAC)
-
             applyUserPermissions(auth);
 
-
-
             // Re-route user to their first available view if they don't have access to Dashboard
-
             if (!auth.telas_permitidas.includes('dashboard') && auth.telas_permitidas.length > 0) {
-
                 const firstView = auth.telas_permitidas[0];
-
                 const firstNav = document.querySelector(`.nav-item[data-view="${firstView}"]`);
-
                 if (firstNav) firstNav.click();
-
             }
-
-
 
             localStorage.setItem('fiscalapp_session', auth.id);
 
-
-
             // Execute Auto-Backup if enabled
-
             checkAndRunAutoBackup();
-
         }, 300); // Wait for fade out
-
     } else {
-
         errorMsg.style.display = 'block';
-
     }
-
 }
-
-
 
 function handleLogout() {
-
     Store.registerLog("Acesso", `${LOGGED_USER ? LOGGED_USER.nome : 'Usuário'} saiu do sistema.`);
-
     LOGGED_USER = null;
-
     localStorage.removeItem('fiscalapp_session');
 
-
-
     // Smooth transition
-
     document.getElementById('main-app-container').classList.add('fade-out');
-
     setTimeout(() => {
-
         window.location.reload();
-
     }, 300);
-
 }
-
-
 
 function applyUserPermissions(auth) {
-
     const permitidas = auth.telas_permitidas || [];
 
-
-
     // Loop through all navigation links and show/hide based on array
-
     document.querySelectorAll('.nav-item').forEach(navItem => {
-
         const view = navItem.getAttribute('data-view');
-
         if (!view) return; // Skip non-view links like logout
 
-
-
         if (permitidas.includes(view)) {
-
             navItem.style.display = 'flex'; // our UI uses flex for all nav-items
-
         } else {
-
             navItem.style.display = 'none';
-
         }
-
     });
-
-
 
     // Hide/Show specific inner buttons based on permissions
-
     const btnSetores = document.getElementById('btn-manage-setores');
-
     if (btnSetores) {
-
         if (auth.permissao === 'Gerente' || permitidas.includes('settings')) {
-
             btnSetores.style.display = 'inline-block';
-
         } else {
-
             btnSetores.style.display = 'none';
-
         }
-
     }
-
-
 
     const adminNavDivider = document.getElementById('admin-nav-divider');
-
     if (adminNavDivider) {
-
         if (auth.permissao === 'Gerente' || permitidas.includes('settings')) {
-
             adminNavDivider.style.display = 'block';
-
         } else {
-
             adminNavDivider.style.display = 'none';
-
         }
-
     }
-
 }
-
-
 
 function setupNavigation() {
-
     const navItems = document.querySelectorAll('.nav-item');
-
     navItems.forEach(link => {
-
         if (link.id === 'btn-logout') return; // Handled separately
 
-
-
         link.addEventListener('click', (e) => {
-
             e.preventDefault();
-
             // Update active state
-
             navItems.forEach(nav => nav.classList.remove('active'));
-
             link.classList.add('active');
 
-
-
             // Switch views globally
-
             const targetView = link.getAttribute('data-view');
-
             localStorage.setItem('fiscalapp_current_view', targetView);
-
             document.querySelectorAll('.view-section').forEach(view => {
-
                 view.style.display = 'none';
-
                 view.classList.remove('active');
-
             });
 
-
-
             const viewEl = document.getElementById(`view-${targetView}`);
-
             if (viewEl) {
-
                 viewEl.style.display = 'block';
-
                 // Small delay to trigger CSS animation
-
                 setTimeout(() => viewEl.classList.add('active'), 10);
 
-
-
                 // Refresh data based on view
-
                 if (targetView === 'dashboard') renderDashboard();
-
                 if (targetView === 'meu-desempenho') renderMeuDesempenho();
-
                 if (targetView === 'operacional') renderOperacional();
-
                 if (targetView === 'clientes') renderClientes();
-
                 if (targetView === 'rotinas') renderRotinas();
-
                 if (targetView === 'mensagens') renderMensagens();
-
                 if (targetView === 'settings') {
-
                     // Trigger the first tab by default or re-render active
-
                     initSettingsTabs();
-
                     const activeTab = document.querySelector('.settings-tab-btn.active');
-
                     if (activeTab) activeTab.click();
-
                 }
-
             }
-
         });
-
     });
-
-
 
     document.getElementById('btn-logout').addEventListener('click', (e) => {
-
         e.preventDefault();
-
         handleLogout();
-
     });
-
 }
-
-
 
 function populateDashboardSelects() {
-
     const dashUserFilter = document.getElementById('dash-user-filter');
-
     const dashClientFilter = document.getElementById('dash-client-filter');
 
-
-
     // Users
-
     dashUserFilter.innerHTML = '<option value="All">Todos Analistas</option>';
-
     Store.getData().funcionarios.forEach(f => {
-
         dashUserFilter.innerHTML += `<option value="${f.nome}">${f.nome} - ${f.setor}</option>`;
-
     });
-
-
 
     // Clients
-
     dashClientFilter.innerHTML = '<option value="All">Todos Clientes</option>';
-
     Store.getData().clientes.forEach(c => {
-
         dashClientFilter.innerHTML += `<option value="${c.id}">${c.razaoSocial}</option>`;
-
     });
-
 }
 
-
-
 // ==========================================
-
 // VIEW: Dashboard Manager
-
 // ==========================================
-
 function renderDashboard() {
-
     const dashUser = document.getElementById('dash-user-filter').value;
-
     const dashClient = document.getElementById('dash-client-filter').value;
-
-
 
     let execsAll = Store.getExecucoesWithDetails(dashUser);
 
-
-
     // Filter by Competencia
-
     if (currentCompetencia) {
-
         execsAll = execsAll.filter(e => e.competencia === currentCompetencia);
-
     }
-
-
 
     // Filter by Client
-
     if (dashClient !== 'All') {
-
         const clientId = parseInt(dashClient);
-
         execsAll = execsAll.filter(e => e.clienteId === clientId);
-
     }
-
-
 
     // Recalculate KPIs based on filtered array
-
     const kpis = {
-
         total: execsAll.length,
-
         concluidos: execsAll.filter(e => e.feito).length,
-
         emAndamento: execsAll.filter(e => !e.feito).length,
-
         vencendo: execsAll.filter(e => !e.feito && e.semaforo === 'yellow').length,
-
         atrasados: execsAll.filter(e => !e.feito && e.semaforo === 'red').length
-
     };
-
-
 
     // Counters Animation
-
     animateValue('kpi-total', parseInt(document.getElementById('kpi-total').innerText) || 0, kpis.total, 800);
-
     animateValue('kpi-done', parseInt(document.getElementById('kpi-done').innerText) || 0, kpis.concluidos, 800);
-
     animateValue('kpi-andamento', parseInt(document.getElementById('kpi-andamento').innerText) || 0, kpis.emAndamento, 800);
-
     animateValue('kpi-warning', parseInt(document.getElementById('kpi-warning').innerText) || 0, kpis.vencendo, 800);
-
     animateValue('kpi-late', parseInt(document.getElementById('kpi-late').innerText) || 0, kpis.atrasados, 800);
 
-
-
     // Chart.js initialization
-
     renderChart(kpis);
 
-
-
     // Render Bottlenecks table
-
     const critical = Store.getCriticalBottlenecks(currentCompetencia);
-
     const tbody = document.querySelector('#critical-table tbody');
-
     tbody.innerHTML = '';
-
-
 
     if (critical.length === 0) {
-
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem; color: var(--success);"><i class="fa-solid fa-face-smile fa-2x mb-3"></i><br/>Tudo sob controle! Nenhum gargalo encontrado.</td></tr>`;
-
     } else {
-
         critical.forEach(c => {
-
             const tr = document.createElement('tr');
-
             tr.innerHTML = `
-
                 <td><strong>${c.clientName}</strong></td>
-
                 <td><span class="resp-tag">${c.rotina}</span></td>
-
                 <td><i class="fa-solid fa-user-circle" style="color:var(--text-muted)"></i> ${c.responsavel}</td>
-
                 <td>${formatDate(c.diaPrazo)}</td>
-
                 <td><span class="status-badge atrasado">${c.statusAuto}</span></td>
-
             `;
-
             tbody.appendChild(tr);
-
         });
-
     }
-
-
 
     // Render Team Performance
-
     let execsTeam = Store.getExecucoesWithDetails('All');
-
     if (currentCompetencia) {
-
         execsTeam = execsTeam.filter(e => e.competencia === currentCompetencia);
-
     }
-
     const teamStats = {};
-
     execsTeam.forEach(ex => {
-
         if (!teamStats[ex.responsavel]) {
-
             teamStats[ex.responsavel] = { total: 0, concluidas: 0, hoje: 0, atrasadas: 0 };
-
         }
-
         teamStats[ex.responsavel].total++;
-
         if (ex.feito) teamStats[ex.responsavel].concluidas++;
-
         else if (ex.semaforo === 'red') teamStats[ex.responsavel].atrasadas++;
-
         else if (ex.semaforo === 'yellow') teamStats[ex.responsavel].hoje++;
-
     });
-
-
 
     const ptbody = document.querySelector('#team-performance-table tbody');
-
     ptbody.innerHTML = '';
-
     if (Object.keys(teamStats).length === 0) {
-
         ptbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem;">Sem dados de equipe.</td></tr>`;
-
     } else {
-
         Object.keys(teamStats).forEach(resp => {
-
             const st = teamStats[resp];
-
             const pct = st.total > 0 ? Math.round((st.concluidas / st.total) * 100) : 0;
-
             let pctBadge = 'noprazo';
-
             if (pct < 50) pctBadge = 'atrasado';
-
             else if (pct < 80) pctBadge = 'vencendo';
 
-
-
             let progressHtml = `
-
                 <div style="display:flex; align-items:center; gap:10px;">
-
                     <div class="progress-container" style="flex:1; margin:0;"><div class="progress-bar" style="width:${pct}%"></div></div>
-
                     <span class="status-badge ${pctBadge}">${pct}%</span>
-
                 </div>
-
             `;
-
-
 
             const tr = document.createElement('tr');
-
             tr.innerHTML = `
-
                 <td><span class="resp-tag"><i class="fa-solid fa-user-circle"></i> ${resp}</span></td>
-
                 <td>${st.total}</td>
-
                 <td><span style="color:var(--success); font-weight:bold;">${st.concluidas}</span></td>
-
                 <td><span style="color:var(--warning);">${st.hoje}</span></td>
-
                 <td><span style="color:var(--danger);">${st.atrasadas}</span></td>
-
                 <td style="width:200px;">${progressHtml}</td>
-
             `;
-
             ptbody.appendChild(tr);
-
         });
-
     }
-
 }
-
-
 
 function renderChart(kpis) {
-
     const ctx = document.getElementById('semaforoChart');
-
     if (currentSemaforoChart) {
-
         currentSemaforoChart.destroy();
-
     }
-
-
 
     const data = [kpis.concluidos, kpis.emAndamento, kpis.vencendo, kpis.atrasados];
-
     // Dummy state so it looks like a ring
-
     if (data.every(d => d === 0)) data[0] = 0.1;
-
-
 
     currentSemaforoChart = new Chart(ctx, {
-
         type: 'doughnut',
-
         data: {
-
             labels: ['Concluído', 'Em Andamento', 'Vencendo Hoje', 'Atrasado'],
-
             datasets: [{
-
                 data: data,
-
                 backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
-
                 borderWidth: 0,
-
                 hoverOffset: 6
-
             }]
-
         },
-
         options: {
-
             cutout: '75%',
-
             responsive: true,
-
             maintainAspectRatio: false,
-
             animation: { animateScale: true, animateRotate: true },
-
             plugins: {
-
                 legend: {
-
                     position: 'bottom',
-
                     labels: { color: '#F8FAFC', padding: 20, font: { family: 'Inter', size: 13 } }
-
                 }
-
             }
-
         }
-
     });
-
 }
 
-
-
 // ==========================================
-
 // VIEW: Meu Desempenho
-
 // ==========================================
-
 let currentMeuSemaforoChart = null;
 
-
-
 function renderMeuDesempenho() {
-
     if (!LOGGED_USER) return;
 
-
-
     let myExecs = Store.getExecucoesWithDetails(LOGGED_USER.nome);
-
     if (currentCompetencia) {
-
         myExecs = myExecs.filter(e => e.competencia === currentCompetencia);
-
     }
-
-
 
     const kpis = {
-
         total: myExecs.length,
-
         concluidas: myExecs.filter(e => e.feito).length,
-
         vencendo: myExecs.filter(e => !e.feito && e.semaforo === 'yellow').length,
-
         atrasadas: myExecs.filter(e => !e.feito && e.semaforo === 'red').length
-
     };
 
-
-
     animateValue('kpi-meu-total', parseInt(document.getElementById('kpi-meu-total').innerText) || 0, kpis.total, 800);
-
     animateValue('kpi-meu-done', parseInt(document.getElementById('kpi-meu-done').innerText) || 0, kpis.concluidas, 800);
-
     animateValue('kpi-meu-warning', parseInt(document.getElementById('kpi-meu-warning').innerText) || 0, kpis.vencendo, 800);
-
     animateValue('kpi-meu-late', parseInt(document.getElementById('kpi-meu-late').innerText) || 0, kpis.atrasadas, 800);
 
-
-
     // Chart
-
     const ctx = document.getElementById('meuSemaforoChart');
-
     if (currentMeuSemaforoChart) {
-
         currentMeuSemaforoChart.destroy();
-
     }
-
-
 
     const andamento = kpis.total - kpis.concluidas - kpis.vencendo - kpis.atrasadas;
-
     const data = [kpis.concluidas, andamento > 0 ? andamento : 0, kpis.vencendo, kpis.atrasadas];
-
     if (data.every(d => d === 0)) data[0] = 0.1;
 
-
-
     currentMeuSemaforoChart = new Chart(ctx, {
-
         type: 'doughnut',
-
         data: {
-
             labels: ['Concluída', 'No Prazo', 'Vencendo Hoje', 'Atrasada'],
-
             datasets: [{
-
                 data: data,
-
                 backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
-
                 borderWidth: 0,
-
                 hoverOffset: 6
-
             }]
-
         },
-
         options: {
-
             cutout: '70%',
-
             responsive: true,
-
             maintainAspectRatio: false,
-
             plugins: {
-
                 legend: { position: 'bottom', labels: { color: '#F8FAFC', padding: 15, font: { family: 'Inter', size: 12 } } }
-
             }
-
         }
-
     });
-
-
 
     // Minhas Próximas Entregas (Prioridade)
-
     const pending = myExecs.filter(e => !e.feito).sort((a, b) => new Date(a.diaPrazo) - new Date(b.diaPrazo)).slice(0, 10);
-
     const tbody = document.querySelector('#minhas-proximas-table tbody');
-
     tbody.innerHTML = '';
-
-
 
     if (pending.length === 0) {
-
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--success);"><i class="fa-solid fa-hands-clapping fa-2x mb-3"></i><br/>Todas as entregas em dia!</td></tr>`;
-
     } else {
-
         pending.forEach(p => {
-
             const tr = document.createElement('tr');
-
             tr.innerHTML = `
-
                 <td><strong>${p.clientName}</strong></td>
-
                 <td><span class="resp-tag">${p.rotina}</span></td>
-
                 <td>${formatDate(p.diaPrazo)}</td>
-
                 <td><span class="status-badge ${p.semaforo === 'red' ? 'atrasado' : (p.semaforo === 'yellow' ? 'vencendo' : 'noprazo')}">${p.statusAuto}</span></td>
-
             `;
-
             tbody.appendChild(tr);
-
         });
-
     }
-
 }
 
-
-
 // ==========================================
-
 // VIEW: Painel Operacional
-
 // ==========================================
-
 function renderOperacional() {
-
     let tasks = Store.getExecucoesWithDetails(currentOperacionalUser);
 
-
-
     // Filter by selected Competencia (History/Auditing)
-
     if (currentCompetencia) {
-
         tasks = tasks.filter(t => t.competencia && t.competencia.startsWith(currentCompetencia));
-
     }
-
-
 
     const container = document.getElementById('operacional-groups-container');
-
     container.innerHTML = '';
 
-
-
     if (tasks.length === 0) {
-
         container.innerHTML = `<div class="glass-card" style="text-align:center; padding: 3rem;">Nenhuma tarefa encontrada para este filtro.</div>`;
-
         return;
-
     }
-
-
 
     // Group tasks by 'rotina'
-
     const grouped = {};
-
     tasks.forEach(t => {
-
         if (!grouped[t.rotina]) grouped[t.rotina] = [];
-
         grouped[t.rotina].push(t);
-
     });
-
-
 
     Object.keys(grouped).forEach(rotinaName => {
-
         const groupTasks = grouped[rotinaName];
 
-
-
         // Sort inside group: Atrasados -> Vencendo Hoje -> No Prazo -> Concluido
-
         groupTasks.sort((a, b) => {
-
             if (a.feito && !b.feito) return 1;
-
             if (!a.feito && b.feito) return -1;
-
             return new Date(a.diaPrazo) - new Date(b.diaPrazo);
-
         });
-
-
 
         // Create Group Wrapper
-
         const groupDiv = document.createElement('div');
-
         groupDiv.className = 'routine-group fade-in';
 
-
-
         // Count done vs total
-
         const doneCount = groupTasks.filter(t => t.feito).length;
 
-
-
         // Build HTML
-
         let tableHtml = `
-
             <div class="routine-group-header">
-
                 <h2><i class="fa-solid fa-layer-group"></i> ${rotinaName}</h2>
-
                 <span class="routine-group-badge">${doneCount}/${groupTasks.length} Entregues</span>
-
             </div>
-
             <div class="table-responsive">
-
                 <table class="data-table selectable-rows">
-
                     <thead>
-
                         <tr>
-
                             <th>Status Geral</th>
-
                             <th>Sinalização</th>
-
                             <th>Cliente</th>
-
                             <th>Prazo</th>
-
                             <th>Responsável</th>
-
                             <th>Status Auto</th>
-
                             <th>Ações</th>
-
                         </tr>
-
                     </thead>
-
                     <tbody>
-
         `;
-
-
 
         groupTasks.forEach(t => {
-
             let badgeClass = 'noprazo';
-
             if (t.statusAuto.includes('Atrasado')) badgeClass = 'atrasado';
-
             else if (t.statusAuto.includes('Hoje')) badgeClass = 'hoje';
-
             else if (t.statusAuto === 'Concluído') badgeClass = 'concluido';
-
             else if (t.statusAuto.includes('Em Andamento')) badgeClass = 'andamento';
-
             else if (t.statusAuto.includes('Vence')) badgeClass = 'vencendo';
 
-
-
             let driveBtnHtml = t.driveLink && t.driveLink !== "#" && t.driveLink.trim() !== ""
-
                 ? `<a href="${t.driveLink}" target="_blank" class="btn btn-small btn-secondary" style="margin-right: 4px; padding: 0.25rem 0.5rem; font-size: 0.8rem;" title="Abrir Google Drive do Cliente"><i class="fa-brands fa-google-drive"></i></a>`
-
                 : '';
 
-
-
             tableHtml += `
-
                 <tr data-id="${t.id}" style="cursor: pointer;">
-
                     <td style="text-align: center;">
-
                         ${t.feito ? '<i class="fa-solid fa-circle-check fa-lg" style="color:var(--success)"></i>' : '<i class="fa-regular fa-circle fa-lg" style="color:var(--text-muted)"></i>'}
-
                     </td>
-
                     <td>
-
                         <div class="status-indicator">
-
                             <span class="orb ${t.semaforo}"></span>
-
                         </div>
-
                     </td>
-
                     <td><strong>${t.clientName}</strong></td>
-
                     <td>${formatDate(t.diaPrazo)}</td>
-
                     <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${t.responsavel}</span></td>
-
                     <td><span class="status-badge ${badgeClass}">${t.statusAuto}</span></td>
-
                     <td style="white-space: nowrap;">
-
                         ${driveBtnHtml}
-
                         <button class="btn btn-small btn-secondary open-task-btn" data-id="${t.id}">
-
                             Abrir <i class="fa-solid fa-arrow-right"></i>
-
                         </button>
-
                     </td>
-
                 </tr>
-
             `;
-
         });
 
-
-
         tableHtml += `
-
                     </tbody>
-
                 </table>
-
             </div>
-
         `;
 
-
-
         groupDiv.innerHTML = tableHtml;
-
         container.appendChild(groupDiv);
-
     });
-
-
 
     // Attach click events for both row and button
-
     document.querySelectorAll('#operacional-groups-container tr[data-id]').forEach(tr => {
-
         const taskId = parseInt(tr.getAttribute('data-id'));
-
         // Row click
-
         tr.addEventListener('click', () => openTaskModal(taskId));
 
-
-
         // Prevent bubble on internal button
-
         const btn = tr.querySelector('.open-task-btn');
-
         if (btn) {
-
             btn.addEventListener('click', (e) => {
-
                 e.stopPropagation();
-
                 openTaskModal(taskId);
-
             });
-
         }
-
     });
-
 }
 
-
-
 // ==========================================
-
 // VIEW: Gestão de Clientes
-
 // ==========================================
-
 function renderClientes() {
-
     const clients = Store.getData().clientes;
-
     const stats = Store.getClientStats();
 
-
-
     // Update KPI Cards
-
     animateValue('kpi-total-clientes', 0, stats.total, 600);
-
     animateValue('kpi-simples', 0, stats.simples, 600);
-
     animateValue('kpi-outros-regimes', 0, stats.outros, 600);
 
-
-
     const tbody = document.querySelector('#clients-table tbody');
-
     tbody.innerHTML = '';
 
-
-
     if (clients.length === 0) {
-
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 3rem;">Nenhum cliente cadastrado.</td></tr>`;
-
         return;
-
     }
 
-
-
     // Sort by ID descending (newest first)
-
     const sorted = [...clients].sort((a, b) => b.id - a.id);
 
-
-
     sorted.forEach(c => {
-
         const tr = document.createElement('tr');
-
         tr.className = 'fade-in';
-
-
 
         const isSimples = c.regime === 'Simples Nacional' || c.regime === 'MEI';
 
-
-
         let tagsHtml = '';
-
         if (c.rotinasSelecionadas) {
-
             c.rotinasSelecionadas.forEach(rotId => {
-
                 const rName = Store.getData().rotinasBase.find(r => r.id === rotId)?.nome || 'Rotina';
-
                 tagsHtml += `<span class="rotina-mini-tag">${rName}</span>`;
-
             });
-
         }
 
-
-
         tr.innerHTML = `
-
             <td style="text-align: center;">
-
                 <input type="checkbox" class="client-checkbox custom-checkbox" value="${c.id}">
-
             </td>
-
             <td><strong>${c.codigo}</strong></td>
-
             <td>${c.razaoSocial}</td>
-
             <td>${c.cnpj}</td>
-
             <td>${c.regime}</td>
-
             <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${c.responsavelFiscal}</span></td>
-
             <td><div style="display:flex; gap:4px; flex-wrap:wrap; max-width:200px;">${tagsHtml}</div></td>
-
             <td style="white-space: nowrap;">
-
                 <button class="btn btn-small btn-secondary" onclick="openClientModal(${c.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-right: 4px;">
-
                     <i class="fa-solid fa-pen"></i> Editar
-
                 </button>
-
                 <button class="btn btn-small btn-secondary btn-delete-single-client" data-id="${c.id}" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-
                     <i class="fa-solid fa-trash"></i> Excluir
-
                 </button>
-
             </td>
-
         `;
 
-
-
         tbody.appendChild(tr);
-
     });
-
-
 
     setupClientCheckboxes();
 
-
-
     // Add single delete events
-
     document.querySelectorAll('.btn-delete-single-client').forEach(btn => {
-
         btn.addEventListener('click', async (e) => {
-
             const id = parseInt(e.currentTarget.getAttribute('data-id'));
-
             const c = Store.getData().clientes.find(x => x.id === id);
-
             if (c && confirm(`Atenção: Tem certeza que deseja excluir o cliente '${c.razaoSocial}' e TUDO que estiver atrelado a ele?`)) {
-
                 await Store.deleteClient(id);
-
                 renderClientes();
-
                 renderOperacional();
-
                 renderDashboard();
-
             }
-
         });
-
     });
-
 }
-
-
 
 function setupClientCheckboxes() {
-
     const selectAllCb = document.getElementById('select-all-clients');
-
     const checkboxes = document.querySelectorAll('.client-checkbox');
-
     const deleteBtn = document.getElementById('btn-delete-clients');
-
     const badge = document.getElementById('delete-clients-badge');
 
-
-
     const updateDeleteBtnVisibility = () => {
-
         const checkedCount = document.querySelectorAll('.client-checkbox:checked').length;
-
         if (checkedCount > 0) {
-
             deleteBtn.style.display = 'inline-block';
-
             badge.textContent = checkedCount;
-
             // Uncheck "select all" if not all are checked
-
             if (checkedCount < checkboxes.length && selectAllCb) selectAllCb.checked = false;
-
             else if (selectAllCb) selectAllCb.checked = true;
-
         } else {
-
             deleteBtn.style.display = 'none';
-
             if (selectAllCb) selectAllCb.checked = false;
-
         }
-
     };
 
-
-
     if (selectAllCb) {
-
         selectAllCb.checked = false;
-
         // Need to replace the element to prevent duplicate event listeners since renderClientes is called repeatedly
-
         const newSelectAll = selectAllCb.cloneNode(true);
-
         selectAllCb.parentNode.replaceChild(newSelectAll, selectAllCb);
 
-
-
         newSelectAll.addEventListener('change', (e) => {
-
             const isChecked = e.target.checked;
-
             checkboxes.forEach(cb => cb.checked = isChecked);
-
             updateDeleteBtnVisibility();
-
         });
-
     }
-
-
 
     checkboxes.forEach(cb => {
-
         cb.addEventListener('change', updateDeleteBtnVisibility);
-
     });
 
-
-
     // Handle bulk delete click
-
     if (deleteBtn) {
-
         // Remove old listeners to prevent duplicates
-
         const newDeleteBtn = deleteBtn.cloneNode(true);
-
         deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
 
-
-
         newDeleteBtn.addEventListener('click', async () => {
-
             const selectedIds = Array.from(document.querySelectorAll('.client-checkbox:checked')).map(cb => parseInt(cb.value));
-
             if (selectedIds.length === 0) return;
 
-
-
             if (confirm(`Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados?`)) {
-
                 newDeleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
-
                 for (let id of selectedIds) {
-
                     await Store.deleteClient(id);
-
                 }
-
                 newDeleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir Selecionados <span class="badge" id="delete-clients-badge">0</span>';
-
                 newDeleteBtn.style.display = 'none';
 
-
-
                 const currentSelectAll = document.getElementById('select-all-clients');
-
                 if (currentSelectAll) currentSelectAll.checked = false;
 
-
-
                 renderClientes();
-
                 renderOperacional();
-
                 renderDashboard();
-
             }
-
         });
-
     }
-
 }
-
 function openClientModal(id = null) {
     document.getElementById('add-client-form').reset();
 
@@ -1762,15 +1054,9 @@ function openClientModal(id = null) {
     document.getElementById('add-client-modal').classList.add('active');
 }
 
-
-
 function closeClientModal() {
-
     document.getElementById('add-client-modal').classList.remove('active');
-
 }
-
-
 
 function handleAddClient(e) {
     e.preventDefault();
@@ -1798,373 +1084,188 @@ function handleAddClient(e) {
     closeClientModal();
 }
 
-
-
 // ==========================================
-
 // VIEW: Gestão de Equipe
-
 // ==========================================
-
 function renderEquipe() {
-
     const tbody = document.querySelector('#equipe-table tbody');
-
     tbody.innerHTML = '';
-
-
 
     const func = Store.getData().funcionarios;
 
-
-
     // Restrict UI for non-managers
-
     const btnNovoMembro = document.getElementById('btn-add-equipe');
-
     if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() !== 'gerente') {
-
         btnNovoMembro.style.display = 'none';
-
     } else {
-
         btnNovoMembro.style.display = 'inline-block';
-
     }
-
-
 
     const ativos = func.filter(f => f.ativo !== false).length;
-
     const inativos = func.length - ativos;
 
-
-
     animateValue('kpi-total-equipe', 0, func.length, 600);
-
     animateValue('kpi-equipe-ativos', 0, ativos, 600);
-
     animateValue('kpi-equipe-inativos', 0, inativos, 600);
 
-
-
     if (func.length === 0) {
-
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 3rem;">Nenhum funcionário cadastrado.</td></tr>`;
-
         return;
-
     }
-
-
 
     func.forEach(f => {
-
         const tr = document.createElement('tr');
-
         tr.className = 'fade-in';
 
-
-
         const badgeColor = f.permissao === 'Gerente' ? 'var(--primary)' : 'var(--success)';
-
         const isAtivo = f.ativo !== false; // default true
 
-
-
         let statusHtml = '';
-
         if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'gerente') {
-
             statusHtml = `
-
                 <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: flex-start;">
-
                     <label class="custom-toggle" style="margin: 0;">
-
                         <input type="checkbox" ${isAtivo ? 'checked' : ''} onchange="toggleFuncionarioStatus('${f.id}')">
-
                         <span class="toggle-slider"></span>
-
                     </label>
-
                     <span style="font-size: 0.8rem; font-weight: 500; color: ${isAtivo ? 'var(--success)' : 'var(--danger)'};">
-
                         ${isAtivo ? 'Ativo' : 'Inativo'}
-
                     </span>
-
                 </div>
-
             `;
-
         } else {
-
             statusHtml = isAtivo
-
                 ? `<span class="status-badge noprazo"><i class="fa-solid fa-check-circle"></i> Ativo</span>`
-
                 : `<span class="status-badge atrasado"><i class="fa-solid fa-xmark-circle"></i> Inativo</span>`;
-
         }
 
-
-
         tr.innerHTML = `
-
             <td><strong>#${f.id.toString().padStart(3, '0')}</strong></td>
-
             <td>${f.nome}</td>
-
             <td>${f.setor}</td>
-
             <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${f.permissao}</span></td>
-
             <td>${statusHtml}</td>
-
             <td>
-
                 <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-
                     <i class="fa-solid fa-pen"></i> Editar
-
                 </button>
-
             </td>
-
         `;
 
-
-
         tbody.appendChild(tr);
-
     });
-
 }
-
-
 
 function openEquipeModal() {
-
     document.getElementById('add-equipe-form').reset();
-
     document.getElementById('equipe-id').value = '';
-
     document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Novo Funcionário';
-
     document.getElementById('equipe-status-container').style.display = 'none';
-
     document.getElementById('add-equipe-modal').classList.add('active');
-
 }
-
-
 
 function openEditEquipeModal(id) {
-
     const f = Store.getData().funcionarios.find(x => x.id === id);
-
     if (!f) return;
-
-
 
     document.getElementById('add-equipe-form').reset();
-
     document.getElementById('equipe-id').value = f.id;
-
     document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Editar Funcionário';
 
-
-
     document.getElementById('equipe-nome').value = f.nome;
-
     document.getElementById('equipe-setor').value = f.setor;
-
     document.getElementById('equipe-permissao').value = f.permissao;
-
     document.getElementById('equipe-senha').value = f.senha;
 
-
-
     document.getElementById('equipe-ativo').checked = f.ativo !== false;
-
     document.getElementById('equipe-status-container').style.display = 'block';
 
-
-
     document.getElementById('add-equipe-modal').classList.add('active');
-
 }
-
-
 
 function closeEquipeModal() {
-
     document.getElementById('add-equipe-modal').classList.remove('active');
-
 }
-
-
 
 function handleAddFuncionario(e) {
-
     if (e) e.preventDefault();
-
     const id = document.getElementById('equipe-id').value;
-
     const nome = document.getElementById('equipe-nome').value;
-
     const setor = document.getElementById('equipe-setor').value;
-
     const permissao = document.getElementById('equipe-permissao').value;
-
     const senha = document.getElementById('equipe-senha').value;
 
-
-
     // Status is only used if editing, or defaults to true for new ones
-
     const isEditing = !!id;
-
     const ativo = isEditing ? document.getElementById('equipe-ativo').checked : true;
 
-
-
     if (isEditing) {
-
         Store.editFuncionario(id, nome, setor, permissao, senha, ativo);
-
     } else {
-
         Store.addFuncionario(nome, setor, permissao, senha, ativo);
-
     }
 
-
-
     closeEquipeModal();
-
     renderEquipe();
-
 }
 
-
-
 async function toggleFuncionarioStatus(id) {
-
     const stringId = id.toString();
-
     const f = Store.getData().funcionarios.find(x => x.id.toString() === stringId);
-
     if (!f) return;
-
-
 
     const novoStatus = f.ativo === false ? true : false;
 
-
-
     // Optimistic UI update
-
     f.ativo = novoStatus;
-
     renderEquipe();
 
-
-
     // Push backend change
-
     await Store.editFuncionario(f.id, f.nome, f.setor, f.permissao, f.senha, novoStatus);
-
 }
 
-
-
 // ==========================================
-
 // VIEW: Gestão de Rotinas Base
-
 // ==========================================
-
 function renderRotinas() {
-
     const rotinas = Store.getData().rotinasBase;
-
     const tbody = document.querySelector('#rotinas-table tbody');
-
     tbody.innerHTML = '';
 
-
-
     if (rotinas.length === 0) {
-
         tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 3rem;">Nenhuma rotina base cadastrada.</td></tr>`;
-
         return;
-
     }
 
-
-
     rotinas.forEach(r => {
-
         let badgeClass = "noprazo";
-
         if (r.frequencia === 'Anual') badgeClass = 'hoje';
-
         else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Using red to highlight
 
-
-
         const diaText = r.frequencia === 'Mensal' ? `Dia ${r.diaPrazoPadrao} do mês base` :
-
             (r.frequencia === 'Anual' ? `Todo ${r.diaPrazoPadrao}` : `Em ${r.diaPrazoPadrao} dia(s) úteis`);
 
-
-
         const tr = document.createElement('tr');
-
         tr.className = 'fade-in';
-
         tr.innerHTML = `
-
             <td><strong>${r.nome}</strong></td>
-
             <td><span class="status-badge ${badgeClass}">${r.frequencia || 'Mensal'}</span></td>
-
             <td><span class="resp-tag" style="background: rgba(255,255,255,0.05); color: var(--text-main);">${r.setor || '-'}</span></td>
-
             <td>${diaText}</td>
-
             <td>
-
                 <button class="btn btn-small btn-secondary" onclick="openRotinaModal(${r.id})" style="margin-right: 4px;">
-
                     <i class="fa-solid fa-pen"></i> Editar
-
                 </button>
-
                 <button class="btn btn-small btn-secondary" onclick="handleDeleteRotina(${r.id})" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);">
-
                     <i class="fa-solid fa-trash"></i> Excluir
-
                 </button>
-
             </td>
-
         `;
-
         tbody.appendChild(tr);
-
     });
-
 }
 
-
-
 let currentChecklistBuilder = [];
-
-
 
 function openRotinaModal(id = null) {
     const form = document.getElementById('add-rotina-form');
@@ -2247,23 +1348,20 @@ function openRotinaModal(id = null) {
     updateUIForFreq(document.getElementById('rotina-frequencia').value);
 
     renderChecklistBuilderPreview();
-    document.getElementById('add-rotina-modal').classList.add('active');
+    document.getElementById('rotinas-list-panel').style.display = 'none';
+    document.getElementById('rotinas-detail-panel').style.display = 'block';
 }
-
-
 
 function closeRotinaModal() {
-
-    document.getElementById('add-rotina-modal').classList.remove('active');
-
+    document.getElementById('rotinas-detail-panel').style.display = 'none';
+    document.getElementById('rotinas-list-panel').style.display = 'block';
+    const form = document.getElementById('add-rotina-form');
+    if (form) form.reset();
+    currentChecklistBuilder = [];
 }
 
-
-
 function handleAddChecklistItem() {
-
     const input = document.getElementById('new-checklist-item');
-
     const val = input.value.trim();
 
     if (val) {
