@@ -1065,6 +1065,20 @@ function openClientModal(id = null) {
     const title = document.getElementById('modal-client-title');
     const submitBtn = document.getElementById('client-modal-submit-btn');
 
+    // Load Rotinas for checklist
+    const rotinasGrid = document.getElementById('rotinas-checkbox-grid');
+    if (rotinasGrid) {
+        rotinasGrid.innerHTML = '';
+        Store.getData().rotinasBase.forEach(r => {
+            rotinasGrid.innerHTML += `
+                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
+                    <input type="checkbox" name="rotina-sel" id="rotina-cb-${r.id}" value="${r.id}" class="custom-checkbox client-rotina-checkbox">
+                    ${r.nome}
+                </label>
+            `;
+        });
+    }
+
     if (id) {
         // Edit Mode
         const cliente = Store.getData().clientes.find(c => c.id === id);
@@ -1077,6 +1091,14 @@ function openClientModal(id = null) {
             document.getElementById('client-cnpj').value = cliente.cnpj;
             document.getElementById('client-regime').value = cliente.regime;
             document.getElementById('client-drive').value = cliente.driveLink || '';
+
+            // Check rotinas
+            if (cliente.rotinasSelecionadas) {
+                cliente.rotinasSelecionadas.forEach(rId => {
+                    const cb = document.getElementById(`rotina-cb-${rId}`);
+                    if (cb) cb.checked = true;
+                });
+            }
         }
     } else {
         // Add Mode
@@ -1102,12 +1124,12 @@ function handleAddClient(e) {
     const regime = document.getElementById('client-regime').value;
     const drive = document.getElementById('client-drive').value;
 
+    const selectedRotinas = Array.from(document.querySelectorAll('.client-rotina-checkbox:checked')).map(cb => parseInt(cb.value));
+
     if (id) {
-        const cliente = Store.getData().clientes.find(c => c.id === parseInt(id));
-        const rotinasSalvas = cliente ? cliente.rotinasSelecionadas || [] : [];
-        Store.editClient(id, razao, cnpj, regime, null, rotinasSalvas, drive);
+        Store.editClient(id, razao, cnpj, regime, null, selectedRotinas, drive);
     } else {
-        Store.addClient(razao, cnpj, regime, null, [], drive);
+        Store.addClient(razao, cnpj, regime, null, selectedRotinas, drive);
     }
 
     // Refresh lists

@@ -1024,6 +1024,17 @@
                             </select>
                         </div>
                     </div>
+                    <div class="form-group"
+                        style="margin-top: 1.5rem; background: rgba(0,0,0,0.1); padding: 1rem; border-radius: var(--radius-md);">
+                        <label style="margin-bottom: 0.5rem; display:block;"><i class="fa-solid fa-layer-group"></i>
+                            Rotinas Aplicáveis (Opcional)</label>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">Marque as rotinas
+                            que este cliente deve realizar (também pode ser feito pelo menu de Rotinas).</p>
+                        <div id="rotinas-checkbox-grid" class="form-grid"
+                            style="gap: 0.5rem; grid-template-columns: 1fr 1fr; max-height: 200px; overflow-y: auto;">
+                            <!-- Checkboxes injected by app.js -->
+                        </div>
+                    </div>
                     <div class="form-group" style="margin-top: 1rem;">
                         <label><i class="fa-brands fa-google-drive"></i> Link da Pasta no Drive</label>
                         <input type="url" id="client-drive" class="glass-input"
