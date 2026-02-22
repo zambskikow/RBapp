@@ -33,7 +33,7 @@ class ClienteCreate(BaseModel):
     cnpj: str
     codigo: str
     regime: str
-    responsavel_fiscal: str
+    responsavel_fiscal: str | None = None
     rotinas_selecionadas: list = []
     drive_link: str = ""
 
@@ -92,12 +92,15 @@ class RotinaBaseCreate(BaseModel):
     frequencia: str
     dia_prazo_padrao: str
     checklist_padrao: list = []
+    responsavel: str | None = None
 
 class RotinaBaseUpdate(BaseModel):
     nome: str | None = None
     setor: str | None = None
     frequencia: str | None = None
     dia_prazo_padrao: str | None = None
+    checklist_padrao: list | None = None
+    responsavel: str | None = None
     checklist_padrao: list | None = None
 
 class ExecucaoUpdate(BaseModel):

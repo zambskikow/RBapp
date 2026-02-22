@@ -372,7 +372,7 @@ window.Store = {
                 cnpj,
                 codigo,
                 regime,
-                responsavel_fiscal: responsavelFiscal,
+                responsavel_fiscal: responsavelFiscal || "",
                 rotinas_selecionadas: rotinasSelecionadasIds || [],
                 drive_link: driveLink
             })
@@ -443,7 +443,7 @@ window.Store = {
         }
     },
 
-    async addRotinaBase(nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = []) {
+    async addRotinaBase(nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = [], responsavel = "") {
         try {
             const res = await fetch(`${API_BASE}/rotinas_base`, {
                 method: 'POST',
@@ -451,13 +451,14 @@ window.Store = {
                 body: JSON.stringify({
                     nome, setor, frequencia,
                     dia_prazo_padrao: diaPrazoPadrao,
-                    checklist_padrao: checklistPadrao || []
+                    checklist_padrao: checklistPadrao || [],
+                    responsavel
                 })
             });
             if (res.ok) {
                 const data = await res.json();
                 db.rotinasBase.push({
-                    id: data[0].id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
+                    id: data[0].id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, responsavel
                 });
                 this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome}`);
                 this.updateClientesDaRotina(data[0].id, selectedClientIds);
@@ -465,7 +466,7 @@ window.Store = {
                 console.warn('API POST endpoint falhou. Fallback local.', res.status);
                 const localId = Date.now();
                 db.rotinasBase.push({
-                    id: localId, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
+                    id: localId, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, responsavel
                 });
                 this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome} (Offline)`);
                 this.updateClientesDaRotina(localId, selectedClientIds);
@@ -474,7 +475,7 @@ window.Store = {
             console.error("Erro ao adicionar rotina base via API:", e);
             const localId = Date.now();
             db.rotinasBase.push({
-                id: localId, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
+                id: localId, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, responsavel
             });
             this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome} (Offline)`);
             this.updateClientesDaRotina(localId, selectedClientIds);
@@ -569,7 +570,7 @@ window.Store = {
         }
     },
 
-    async editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = []) {
+    async editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = [], responsavel = "") {
         const r = db.rotinasBase.find(x => x.id === parseInt(id));
         if (r) {
             r.nome = nome;
@@ -577,6 +578,7 @@ window.Store = {
             r.frequencia = frequencia;
             r.diaPrazoPadrao = diaPrazoPadrao;
             r.checklistPadrao = checklistPadrao;
+            r.responsavel = responsavel;
 
             try {
                 const res = await fetch(`${API_BASE}/rotinas_base/${id}`, {
@@ -587,7 +589,8 @@ window.Store = {
                         setor,
                         frequencia,
                         dia_prazo_padrao: diaPrazoPadrao,
-                        checklist_padrao: checklistPadrao
+                        checklist_padrao: checklistPadrao,
+                        responsavel
                     })
                 });
                 if (!res.ok) console.warn('API PUT rotinas_base falhou.', res.status);
@@ -790,7 +793,7 @@ window.Store = {
                     competencia: currentComp,
                     dia_prazo: dateStr,
                     drive_link: cliente.driveLink,
-                    responsavel: cliente.responsavelFiscal,
+                    responsavel: rotina.responsavel || "Automático",
                     subitems: subitems,
                     eh_pai: true,
                     feito: false,
@@ -809,7 +812,7 @@ window.Store = {
                         driveLink: cliente.driveLink,
                         feito: false,
                         feitoEm: null,
-                        responsavel: cliente.responsavelFiscal,
+                        responsavel: rotina.responsavel || "Automático",
                         iniciadoEm: new Date().toISOString().split('T')[0],
                         checklistGerado: true,
                         ehPai: true,

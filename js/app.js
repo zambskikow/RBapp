@@ -1735,13 +1735,6 @@ function setupClientCheckboxes() {
 function openClientModal(id = null) {
     document.getElementById('add-client-form').reset();
 
-    // Dynamic loading of Employees (Responsáveis)
-    const respSelect = document.getElementById('client-responsavel');
-    respSelect.innerHTML = '';
-    Store.getData().funcionarios.forEach(f => {
-        respSelect.innerHTML += `<option value="${f.nome}">${f.nome} (${f.permissao})</option>`;
-    });
-
     const title = document.getElementById('modal-client-title');
     const submitBtn = document.getElementById('client-modal-submit-btn');
 
@@ -1756,7 +1749,6 @@ function openClientModal(id = null) {
             document.getElementById('client-razao').value = cliente.razaoSocial;
             document.getElementById('client-cnpj').value = cliente.cnpj;
             document.getElementById('client-regime').value = cliente.regime;
-            document.getElementById('client-responsavel').value = cliente.responsavelFiscal;
             document.getElementById('client-drive').value = cliente.driveLink || '';
         }
     } else {
@@ -1787,15 +1779,14 @@ function handleAddClient(e) {
     const razao = document.getElementById('client-razao').value;
     const cnpj = document.getElementById('client-cnpj').value;
     const regime = document.getElementById('client-regime').value;
-    const resp = document.getElementById('client-responsavel').value;
     const drive = document.getElementById('client-drive').value;
 
     if (id) {
         const cliente = Store.getData().clientes.find(c => c.id === parseInt(id));
         const rotinasSalvas = cliente ? cliente.rotinasSelecionadas || [] : [];
-        Store.editClient(id, razao, cnpj, regime, resp, rotinasSalvas, drive);
+        Store.editClient(id, razao, cnpj, regime, null, rotinasSalvas, drive);
     } else {
-        Store.addClient(razao, cnpj, regime, resp, [], drive);
+        Store.addClient(razao, cnpj, regime, null, [], drive);
     }
 
     // Refresh lists
@@ -2182,6 +2173,15 @@ function openRotinaModal(id = null) {
     const inputPrazo = document.getElementById('rotina-prazo');
     const selectFreq = document.getElementById('rotina-frequencia');
 
+    // Dynamic loading of Employees (Responsáveis)
+    const respSelect = document.getElementById('rotina-responsavel');
+    if (respSelect) {
+        respSelect.innerHTML = '';
+        Store.getData().funcionarios.forEach(f => {
+            respSelect.innerHTML += `<option value="${f.nome}">${f.nome} (${f.permissao})</option>`;
+        });
+    }
+
     form.reset();
     currentChecklistBuilder = []; // Reset builder
     document.getElementById('new-checklist-item').value = '';
@@ -2224,6 +2224,7 @@ function openRotinaModal(id = null) {
             document.getElementById('rotina-frequencia').value = rotina.frequencia || 'Mensal';
             document.getElementById('rotina-setor').value = rotina.setor || '';
             document.getElementById('rotina-prazo').value = rotina.diaPrazoPadrao;
+            document.getElementById('rotina-responsavel').value = rotina.responsavel || '';
             currentChecklistBuilder = [...(rotina.checklistPadrao || [])];
 
             // Check the clients that have this routine
@@ -2349,6 +2350,7 @@ function handleSaveRotina(e) {
     const setor = document.getElementById('rotina-setor').value;
     const frequencia = document.getElementById('rotina-frequencia').value;
     let prazo = document.getElementById('rotina-prazo').value;
+    const responsavel = document.getElementById('rotina-responsavel').value;
 
     const selectedClientIds = Array.from(document.querySelectorAll('input[name="cliente-sel"]:checked')).map(cb => parseInt(cb.value));
 
@@ -2363,9 +2365,9 @@ function handleSaveRotina(e) {
     }
 
     if (id) {
-        Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds);
+        Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
     } else {
-        Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds);
+        Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
     }
 
     renderRotinas();
