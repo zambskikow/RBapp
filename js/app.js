@@ -1129,7 +1129,7 @@ function closeClientModal() {
     document.getElementById('add-client-modal').classList.remove('active');
 }
 
-function handleAddClient(e) {
+async function handleAddClient(e) {
     e.preventDefault();
 
     const id = document.getElementById('client-id').value;
@@ -1141,9 +1141,9 @@ function handleAddClient(e) {
     const selectedRotinas = Array.from(document.querySelectorAll('.client-rotina-checkbox:checked')).map(cb => parseInt(cb.value));
 
     if (id) {
-        Store.editClient(id, razao, cnpj, regime, null, selectedRotinas, drive);
+        await Store.editClient(id, razao, cnpj, regime, null, selectedRotinas, drive);
     } else {
-        Store.addClient(razao, cnpj, regime, null, selectedRotinas, drive);
+        await Store.addClient(razao, cnpj, regime, null, selectedRotinas, drive);
     }
 
     // Refresh lists
@@ -1258,7 +1258,7 @@ function closeEquipeModal() {
     document.getElementById('add-equipe-modal').classList.remove('active');
 }
 
-function handleAddFuncionario(e) {
+async function handleAddFuncionario(e) {
     if (e) e.preventDefault();
     const id = document.getElementById('equipe-id').value;
     const nome = document.getElementById('equipe-nome').value;
@@ -1271,9 +1271,9 @@ function handleAddFuncionario(e) {
     const ativo = isEditing ? document.getElementById('equipe-ativo').checked : true;
 
     if (isEditing) {
-        Store.editFuncionario(id, nome, setor, permissao, senha, ativo);
+        await Store.editFuncionario(id, nome, setor, permissao, senha, ativo);
     } else {
-        Store.addFuncionario(nome, setor, permissao, senha, ativo);
+        await Store.addFuncionario(nome, setor, permissao, senha, ativo);
     }
 
     closeEquipeModal();

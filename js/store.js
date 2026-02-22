@@ -395,7 +395,7 @@ window.Store = {
                 id: newClient.id, razaoSocial, cnpj, codigo, regime,
                 responsavelFiscal, rotinasSelecionadas: rotinasSelecionadasIds, driveLink
             });
-            this.engineRotinas(db.clientes[db.clientes.length - 1]);
+            await this.engineRotinas(db.clientes[db.clientes.length - 1]);
             this.sendMensagem("Sistema", responsavelFiscal, `Novo cliente cadastrado: ${razaoSocial}.`);
             this.registerLog("Cadastrou Cliente", razaoSocial);
         }
@@ -470,7 +470,7 @@ window.Store = {
                     id: data[0].id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, responsavel
                 });
                 this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome}`);
-                this.updateClientesDaRotina(data[0].id, selectedClientIds);
+                await this.updateClientesDaRotina(data[0].id, selectedClientIds);
                 return data[0];
             } else {
                 const errorData = await res.json().catch(() => ({}));
@@ -483,7 +483,7 @@ window.Store = {
                 };
                 db.rotinasBase.push(newRot);
                 this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome} (Offline)`);
-                this.updateClientesDaRotina(localId, selectedClientIds);
+                await this.updateClientesDaRotina(localId, selectedClientIds);
                 return newRot;
             }
         } catch (e) {
@@ -532,26 +532,32 @@ window.Store = {
     async editClient(id, razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink = "") {
         const c = db.clientes.find(x => x.id === parseInt(id));
         if (c) {
-            const oldRotinas = c.oldRotinasBackup || c.rotinasSelecionadas || [];
-            const newRotinas = rotinasSelecionadasIds.filter(rId => !oldRotinas.includes(rId));
-            const removedRotinas = oldRotinas.filter(rId => !rotinasSelecionadasIds.includes(rId));
+            // Determine added and removed routines BEFORE updating c.rotinasSelecionadas
+            const oldRotinas = c.rotinasSelecionadas || [];
+            const newRotinasIds = rotinasSelecionadasIds.filter(rId => !oldRotinas.includes(rId));
+            const removedRotinasIds = oldRotinas.filter(rId => !rotinasSelecionadasIds.includes(rId));
 
-            if (removedRotinas.length > 0) {
+            console.log(`[Store] Editando cliente ${razaoSocial}. Adicionadas: ${newRotinasIds}, Removidas: ${removedRotinasIds}`);
+
+            // 1. Handle Removals
+            if (removedRotinasIds.length > 0) {
                 const month = db.meses.find(m => m.ativo);
                 if (month) {
                     const currentComp = month.id;
-                    removedRotinas.forEach(rotId => {
+                    for (const rotId of removedRotinasIds) {
                         const rotina = db.rotinasBase.find(r => r.id === rotId);
                         if (rotina) {
                             const taskToDelete = db.execucoes.find(e => e.clienteId === c.id && e.rotina === rotina.nome && e.competencia === currentComp);
                             if (taskToDelete) {
-                                this.deleteExecucao(taskToDelete.id);
+                                console.log(`[Store] Excluindo tarefa vinculada à rotina removida: ${rotina.nome}`);
+                                await this.deleteExecucao(taskToDelete.id);
                             }
                         }
-                    });
+                    }
                 }
             }
 
+            // Update local object
             c.razaoSocial = razaoSocial;
             c.cnpj = cnpj;
             c.regime = regime;
@@ -559,6 +565,7 @@ window.Store = {
             c.rotinasSelecionadas = rotinasSelecionadasIds;
             c.driveLink = driveLink;
 
+            // 2. Persist Client Changes
             try {
                 const res = await fetch(`${API_BASE}/clientes/${id}`, {
                     method: 'PUT',
@@ -572,16 +579,18 @@ window.Store = {
                         drive_link: driveLink
                     })
                 });
-                if (!res.ok) console.warn('API PUT falhou.', res.status);
+                if (!res.ok) console.warn('API PUT cliente falhou.', res.status);
             } catch (e) {
                 console.error("Erro ao editar cliente via API:", e);
             }
 
             this.registerLog("Editou Cliente", razaoSocial);
 
-            if (newRotinas.length > 0) {
-                const tempClient = { ...c, rotinasSelecionadas: newRotinas };
-                this.engineRotinas(tempClient);
+            // 3. Handle Additions (Generate new tasks)
+            if (newRotinasIds.length > 0) {
+                console.log(`[Store] Gearando novas tarefas para rotinas adicionadas: ${newRotinasIds}`);
+                const tempClient = { ...c, rotinasSelecionadas: newRotinasIds };
+                await this.engineRotinas(tempClient);
             }
         }
     },
@@ -637,28 +646,28 @@ window.Store = {
             }
 
             this.registerLog("Editou Rotina Base", nome);
-            this.updateClientesDaRotina(parseInt(id), selectedClientIds);
+            await this.updateClientesDaRotina(parseInt(id), selectedClientIds);
             return true;
         }
         return false;
     },
 
-    updateClientesDaRotina(rotinaId, selectedClientIds) {
-        db.clientes.forEach(cliente => {
+    async updateClientesDaRotina(rotinaId, selectedClientIds) {
+        for (const cliente of db.clientes) {
             const rotinasAtual = cliente.rotinasSelecionadas || [];
             const hasRotina = rotinasAtual.includes(rotinaId);
             const shouldHaveRotina = selectedClientIds.includes(cliente.id);
 
             if (hasRotina && !shouldHaveRotina) {
                 const novasRotinas = rotinasAtual.filter(id => id !== rotinaId);
-                // Trigger removal logic in editClient
-                cliente.oldRotinasBackup = [...rotinasAtual];
-                this.editClient(cliente.id, cliente.razaoSocial, cliente.cnpj, cliente.regime, cliente.responsavelFiscal, novasRotinas, cliente.driveLink);
+                console.log(`[Store] Removendo rotina ${rotinaId} do cliente ${cliente.razaoSocial}`);
+                await this.editClient(cliente.id, cliente.razaoSocial, cliente.cnpj, cliente.regime, cliente.responsavelFiscal, novasRotinas, cliente.driveLink);
             } else if (!hasRotina && shouldHaveRotina) {
                 const novasRotinas = [...rotinasAtual, rotinaId];
-                this.editClient(cliente.id, cliente.razaoSocial, cliente.cnpj, cliente.regime, cliente.responsavelFiscal, novasRotinas, cliente.driveLink);
+                console.log(`[Store] Adicionando rotina ${rotinaId} ao cliente ${cliente.razaoSocial}`);
+                await this.editClient(cliente.id, cliente.razaoSocial, cliente.cnpj, cliente.regime, cliente.responsavelFiscal, novasRotinas, cliente.driveLink);
             }
-        });
+        }
     },
 
     // --- CARGOS (RBAC) ---
@@ -794,7 +803,7 @@ window.Store = {
         }
     },
 
-    engineRotinas(cliente) {
+    async engineRotinas(cliente) {
         // Build routines for the active month
         const month = db.meses.find(m => m.ativo);
         if (!month) {
@@ -803,11 +812,14 @@ window.Store = {
         }
 
         const currentComp = month.id; // e.g. "2026-02"
-        if (!cliente.rotinasSelecionadas || cliente.rotinasSelecionadas.length === 0) return;
+        const routinesToProcess = cliente.rotinasSelecionadas || [];
+        if (routinesToProcess.length === 0) return;
 
-        cliente.rotinasSelecionadas.forEach(rotId => {
+        console.log(`[Engine] Processando ${routinesToProcess.length} rotinas para o cliente ${cliente.razaoSocial}`);
+
+        for (const rotId of routinesToProcess) {
             const rotina = db.rotinasBase.find(r => r.id === rotId);
-            if (!rotina) return;
+            if (!rotina) continue;
 
             // Format deadline date for PostgreSQL (YYYY-MM-DD)
             let [y, mStr] = currentComp.split('-');
@@ -825,7 +837,7 @@ window.Store = {
             });
 
             // Verify if task already exists to avoid duplication
-            const exists = db.execucoes.some(e =>
+            const exists = db.execucoes.find(e =>
                 e.clienteId === cliente.id &&
                 e.rotina === rotina.nome &&
                 e.competencia === currentComp
@@ -833,31 +845,34 @@ window.Store = {
 
             if (exists) {
                 console.log(`[Engine] Tarefa já existe: ${cliente.razaoSocial} - ${rotina.nome} (${currentComp})`);
-                return;
+                continue;
             }
 
-            // Dispatch task to API asynchronously
-            fetch(`${API_BASE}/execucoes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    cliente_id: cliente.id,
-                    rotina: rotina.nome,
-                    competencia: currentComp,
-                    dia_prazo: dateStr,
-                    drive_link: cliente.driveLink,
-                    responsavel: rotina.responsavel || "Automático",
-                    subitems: subitems,
-                    eh_pai: true,
-                    feito: false,
-                    iniciado_em: new Date().toISOString().split('T')[0],
-                    checklist_gerado: true
-                })
-            }).then(async (res) => {
+            // Dispatch task to API
+            try {
+                const res = await fetch(`${API_BASE}/execucoes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cliente_id: cliente.id,
+                        rotina: rotina.nome,
+                        competencia: currentComp,
+                        dia_prazo: dateStr,
+                        drive_link: cliente.driveLink,
+                        responsavel: rotina.responsavel || "Automático",
+                        subitems: subitems,
+                        eh_pai: true,
+                        feito: false,
+                        iniciado_em: new Date().toISOString().split('T')[0],
+                        checklist_gerado: true
+                    })
+                });
+
                 if (res.ok) {
                     const data = await res.json();
+                    const newId = data[0] ? data[0].id : Date.now();
                     db.execucoes.push({
-                        id: data[0].id,
+                        id: newId,
                         clienteId: cliente.id,
                         rotina: rotina.nome,
                         competencia: currentComp,
@@ -871,8 +886,13 @@ window.Store = {
                         ehPai: true,
                         subitems: subitems
                     });
+                    console.log(`[Engine] Tarefa criada com sucesso: ${rotina.nome} (ID: ${newId})`);
+                } else {
+                    console.warn(`[Engine] Falha ao criar tarefa para ${rotina.nome}. Status: ${res.status}`);
                 }
-            }).catch(e => console.error("Falha na geracao engineRotinas para", rotina.nome, e));
-        });
+            } catch (e) {
+                console.error(`[Engine] Erro de rede ao criar tarefa para ${rotina.nome}:`, e);
+            }
+        }
     }
 };
