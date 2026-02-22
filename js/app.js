@@ -808,8 +808,12 @@ function renderOperacional() {
         return;
     }
 
-    // Group tasks by 'rotina'
+    // Group tasks by 'rotina', initializing with all base routines
     const grouped = {};
+    Store.getData().rotinasBase.forEach(rb => {
+        grouped[rb.nome] = [];
+    });
+
     tasks.forEach(t => {
         if (!grouped[t.rotina]) grouped[t.rotina] = [];
         grouped[t.rotina].push(t);
@@ -854,41 +858,51 @@ function renderOperacional() {
                     <tbody>
         `;
 
-        groupTasks.forEach(t => {
-            let badgeClass = 'noprazo';
-            if (t.statusAuto.includes('Atrasado')) badgeClass = 'atrasado';
-            else if (t.statusAuto.includes('Hoje')) badgeClass = 'hoje';
-            else if (t.statusAuto === 'Concluído') badgeClass = 'concluido';
-            else if (t.statusAuto.includes('Em Andamento')) badgeClass = 'andamento';
-            else if (t.statusAuto.includes('Vence')) badgeClass = 'vencendo';
-
-            let driveBtnHtml = t.driveLink && t.driveLink !== "#" && t.driveLink.trim() !== ""
-                ? `<a href="${t.driveLink}" target="_blank" class="btn btn-small btn-secondary" style="margin-right: 4px; padding: 0.25rem 0.5rem; font-size: 0.8rem;" title="Abrir Google Drive do Cliente"><i class="fa-brands fa-google-drive"></i></a>`
-                : '';
-
+        if (groupTasks.length === 0) {
             tableHtml += `
-                <tr data-id="${t.id}" style="cursor: pointer;">
-                    <td style="text-align: center;">
-                        ${t.feito ? '<i class="fa-solid fa-circle-check fa-lg" style="color:var(--success)"></i>' : '<i class="fa-regular fa-circle fa-lg" style="color:var(--text-muted)"></i>'}
-                    </td>
-                    <td>
-                        <div class="status-indicator">
-                            <span class="orb ${t.semaforo}"></span>
-                        </div>
-                    </td>
-                    <td><strong>${t.clientName}</strong></td>
-                    <td>${formatDate(t.diaPrazo)}</td>
-                    <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${t.responsavel}</span></td>
-                    <td><span class="status-badge ${badgeClass}">${t.statusAuto}</span></td>
-                    <td style="white-space: nowrap;">
-                        ${driveBtnHtml}
-                        <button class="btn btn-small btn-secondary open-task-btn" data-id="${t.id}">
-                            Abrir <i class="fa-solid fa-arrow-right"></i>
-                        </button>
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted); font-style: italic;">
+                        <i class="fa-solid fa-circle-info"></i> Nenhuma execução pendente. Vincule clientes ou aguarde o ciclo de geração.
                     </td>
                 </tr>
             `;
-        });
+        } else {
+            groupTasks.forEach(t => {
+                let badgeClass = 'noprazo';
+                if (t.statusAuto.includes('Atrasado')) badgeClass = 'atrasado';
+                else if (t.statusAuto.includes('Hoje')) badgeClass = 'hoje';
+                else if (t.statusAuto === 'Concluído') badgeClass = 'concluido';
+                else if (t.statusAuto.includes('Em Andamento')) badgeClass = 'andamento';
+                else if (t.statusAuto.includes('Vence')) badgeClass = 'vencendo';
+
+                let driveBtnHtml = t.driveLink && t.driveLink !== "#" && t.driveLink.trim() !== ""
+                    ? `<a href="${t.driveLink}" target="_blank" class="btn btn-small btn-secondary" style="margin-right: 4px; padding: 0.25rem 0.5rem; font-size: 0.8rem;" title="Abrir Google Drive do Cliente"><i class="fa-brands fa-google-drive"></i></a>`
+                    : '';
+
+                tableHtml += `
+                    <tr data-id="${t.id}" style="cursor: pointer;">
+                        <td style="text-align: center;">
+                            ${t.feito ? '<i class="fa-solid fa-circle-check fa-lg" style="color:var(--success)"></i>' : '<i class="fa-regular fa-circle fa-lg" style="color:var(--text-muted)"></i>'}
+                        </td>
+                        <td>
+                            <div class="status-indicator">
+                                <span class="orb ${t.semaforo}"></span>
+                            </div>
+                        </td>
+                        <td><strong>${t.clientName}</strong></td>
+                        <td>${formatDate(t.diaPrazo)}</td>
+                        <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${t.responsavel}</span></td>
+                        <td><span class="status-badge ${badgeClass}">${t.statusAuto}</span></td>
+                        <td style="white-space: nowrap;">
+                            ${driveBtnHtml}
+                            <button class="btn btn-small btn-secondary open-task-btn" data-id="${t.id}">
+                                Abrir <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
 
         tableHtml += `
                     </tbody>

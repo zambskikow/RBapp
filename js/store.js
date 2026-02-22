@@ -336,6 +336,15 @@ window.Store = {
         }
     },
 
+    async deleteExecucao(id) {
+        db.execucoes = db.execucoes.filter(e => e.id !== id);
+        try {
+            await fetch(`${API_BASE}/execucoes/${id}`, { method: 'DELETE' });
+        } catch (e) {
+            console.error("Erro ao excluir execução via API:", e);
+        }
+    },
+
     async updateChecklist(execId, subId, isDone) {
         const ex = db.execucoes.find(e => e.id === execId);
         if (ex) {
@@ -464,7 +473,10 @@ window.Store = {
                 this.updateClientesDaRotina(data[0].id, selectedClientIds);
                 return data[0];
             } else {
-                console.warn('API POST endpoint falhou. Fallback local.', res.status);
+                const errorData = await res.json().catch(() => ({}));
+                console.error('API POST erro:', res.status, errorData);
+                alert(`Erro ao salvar rotina no banco de dados (${res.status}). Verifique se as colunas necessárias existem.`);
+
                 const localId = Date.now();
                 const newRot = {
                     id: localId, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, responsavel
@@ -520,8 +532,25 @@ window.Store = {
     async editClient(id, razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink = "") {
         const c = db.clientes.find(x => x.id === parseInt(id));
         if (c) {
-            const oldRotinas = c.rotinasSelecionadas || [];
+            const oldRotinas = c.oldRotinasBackup || c.rotinasSelecionadas || [];
             const newRotinas = rotinasSelecionadasIds.filter(rId => !oldRotinas.includes(rId));
+            const removedRotinas = oldRotinas.filter(rId => !rotinasSelecionadasIds.includes(rId));
+
+            if (removedRotinas.length > 0) {
+                const month = db.meses.find(m => m.ativo);
+                if (month) {
+                    const currentComp = month.id;
+                    removedRotinas.forEach(rotId => {
+                        const rotina = db.rotinasBase.find(r => r.id === rotId);
+                        if (rotina) {
+                            const taskToDelete = db.execucoes.find(e => e.clienteId === c.id && e.rotina === rotina.nome && e.competencia === currentComp);
+                            if (taskToDelete) {
+                                this.deleteExecucao(taskToDelete.id);
+                            }
+                        }
+                    });
+                }
+            }
 
             c.razaoSocial = razaoSocial;
             c.cnpj = cnpj;
@@ -598,7 +627,11 @@ window.Store = {
                         responsavel
                     })
                 });
-                if (!res.ok) console.warn('API PUT rotinas_base falhou.', res.status);
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    console.error('API PUT erro:', res.status, errorData);
+                    alert(`Erro ao atualizar rotina no banco de dados (${res.status}).`);
+                }
             } catch (e) {
                 console.error("Erro ao editar rotina base via API:", e);
             }
@@ -618,7 +651,8 @@ window.Store = {
 
             if (hasRotina && !shouldHaveRotina) {
                 const novasRotinas = rotinasAtual.filter(id => id !== rotinaId);
-                // Call editClient locally so it persists to DB
+                // Trigger removal logic in editClient
+                cliente.oldRotinasBackup = [...rotinasAtual];
                 this.editClient(cliente.id, cliente.razaoSocial, cliente.cnpj, cliente.regime, cliente.responsavelFiscal, novasRotinas, cliente.driveLink);
             } else if (!hasRotina && shouldHaveRotina) {
                 const novasRotinas = [...rotinasAtual, rotinaId];

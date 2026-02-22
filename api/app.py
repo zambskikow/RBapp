@@ -101,7 +101,6 @@ class RotinaBaseUpdate(BaseModel):
     dia_prazo_padrao: str | None = None
     checklist_padrao: list | None = None
     responsavel: str | None = None
-    checklist_padrao: list | None = None
 
 class ExecucaoUpdate(BaseModel):
     feito: bool
@@ -251,6 +250,11 @@ def create_execucao(execucao: ExecucaoCreate):
 @app.put("/api/execucoes/{exec_id}")
 def update_execucao(exec_id: int, updates: ExecucaoUpdate):
     response = supabase.table("execucoes").update(updates.model_dump(exclude_unset=True)).eq("id", exec_id).execute()
+    return response.data
+
+@app.delete("/api/execucoes/{exec_id}")
+def delete_execucao(exec_id: int):
+    response = supabase.table("execucoes").delete().eq("id", exec_id).execute()
     return response.data
 
 # --- Mensagens ---
