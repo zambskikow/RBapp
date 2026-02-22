@@ -355,6 +355,45 @@ body {
     border: 2px solid var(--bg-base);
 }
 
+.table-badge {
+    position: relative;
+    top: auto;
+    right: auto;
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    width: auto;
+    height: auto;
+    border: none;
+}
+
+.table-badge.primary {
+    background: rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+}
+
+.table-badge.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.table-badge.danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.table-badge.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+.table-badge.info {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+}
+
 .date-display {
     font-weight: 500;
     color: var(--text-main);

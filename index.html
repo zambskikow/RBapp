@@ -482,10 +482,6 @@
                                 style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
                                 <i class="fa-solid fa-users" style="width: 20px;"></i> Contas e Equipe
                             </button>
-                            <button class="settings-tab-btn" data-target="set-setores"
-                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
-                                <i class="fa-solid fa-building" style="width: 20px;"></i> Gestão de Setores
-                            </button>
                             <button class="settings-tab-btn" data-target="set-backup"
                                 style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
                                 <i class="fa-solid fa-cloud-arrow-down" style="width: 20px;"></i> Backups de Sistema
@@ -556,7 +552,8 @@
                                 <div class="glass-card kpi-card" style="padding: 1rem;">
                                     <div class="kpi-icon"
                                         style="background: rgba(99, 102, 241, 0.15); color: var(--primary); font-size: 1.2rem; width: 40px; height: 40px;">
-                                        <i class="fa-solid fa-users-viewfinder"></i></div>
+                                        <i class="fa-solid fa-users-viewfinder"></i>
+                                    </div>
                                     <div class="kpi-data">
                                         <h3 style="font-size: 0.8rem;">Total Equipe</h3>
                                         <p class="kpi-value" id="kpi-total-equipe" style="font-size: 1.5rem;">0</p>
@@ -601,30 +598,6 @@
                             </div>
                         </div>
 
-                        <!-- TAB: Setores -->
-                        <div class="settings-pane fade-in" id="set-setores" style="display: none;">
-                            <div style="margin-bottom: 1.5rem;">
-                                <h2 style="font-size: 1.25rem;">Departamentos da Empresa</h2>
-                                <p style="color: var(--text-muted); font-size: 0.9rem;">Gerencie os setores (Ex:
-                                    Contábil, Fiscal, Legalização).</p>
-                            </div>
-                            <div class="glass-card table-container" style="max-width: 600px;">
-                                <div class="form-group" style="margin-bottom: 2rem;">
-                                    <label>Adicionar Novo Setor</label>
-                                    <div style="display:flex; gap:0.5rem;">
-                                        <input type="text" id="new-setor-name-hub" class="glass-input"
-                                            placeholder="Ex: RH">
-                                        <button type="button" class="btn btn-primary" id="btn-add-setor-hub"><i
-                                                class="fa-solid fa-plus"></i> Adicionar</button>
-                                    </div>
-                                </div>
-                                <label>Setores Existentes</label>
-                                <ul id="setores-list-hub"
-                                    style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.5rem; max-height: 400px; overflow-y: auto;">
-                                    <!-- Injetado por JS -->
-                                </ul>
-                            </div>
-                        </div>
 
                         <!-- TAB: Backup -->
                         <div class="settings-pane fade-in" id="set-backup" style="display: none;">
