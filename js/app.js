@@ -1732,120 +1732,42 @@ function setupClientCheckboxes() {
 
 }
 
-
-
 function openClientModal(id = null) {
-
     document.getElementById('add-client-form').reset();
 
-
-
-    // Dynamic loading of Checkboxes (Rotinas)
-
-    const grid = document.getElementById('rotinas-checkbox-grid');
-
-    grid.innerHTML = '';
-
-    Store.getData().rotinasBase.forEach(rb => {
-
-        grid.innerHTML += `
-
-            <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
-
-                <input type="checkbox" name="rotina-sel" id="rotina-cb-${rb.id}" value="${rb.id}" class="custom-checkbox">
-
-                ${rb.nome} (Dia ${rb.diaPrazoPadrao})
-
-            </label>
-
-        `;
-
-    });
-
-
-
     // Dynamic loading of Employees (Responsáveis)
-
     const respSelect = document.getElementById('client-responsavel');
-
     respSelect.innerHTML = '';
-
     Store.getData().funcionarios.forEach(f => {
-
         respSelect.innerHTML += `<option value="${f.nome}">${f.nome} (${f.permissao})</option>`;
-
     });
-
-
 
     const title = document.getElementById('modal-client-title');
-
     const submitBtn = document.getElementById('client-modal-submit-btn');
 
-
-
     if (id) {
-
         // Edit Mode
-
         const cliente = Store.getData().clientes.find(c => c.id === id);
-
         if (cliente) {
-
             title.innerHTML = '<i class="fa-solid fa-user-pen highlight-text"></i> Editar Cliente';
-
             submitBtn.innerHTML = 'Salvar Alterações';
 
-
-
             document.getElementById('client-id').value = cliente.id;
-
             document.getElementById('client-razao').value = cliente.razaoSocial;
-
             document.getElementById('client-cnpj').value = cliente.cnpj;
-
             document.getElementById('client-regime').value = cliente.regime;
-
             document.getElementById('client-responsavel').value = cliente.responsavelFiscal;
-
             document.getElementById('client-drive').value = cliente.driveLink || '';
-
-
-
-            // Check the routines the client already has
-
-            if (cliente.rotinasSelecionadas) {
-
-                cliente.rotinasSelecionadas.forEach(rotId => {
-
-                    const cb = document.getElementById(`rotina-cb-${rotId}`);
-
-                    if (cb) cb.checked = true;
-
-                });
-
-            }
-
         }
-
     } else {
-
         // Add Mode
-
         title.innerHTML = '<i class="fa-solid fa-user-plus highlight-text"></i> Novo Cliente';
-
-        submitBtn.innerHTML = 'Cadastrar e Gerar Rotinas';
-
+        submitBtn.innerHTML = 'Cadastrar Novo Cliente';
         document.getElementById('client-id').value = '';
-
         document.getElementById('client-drive').value = '';
-
     }
 
-
-
     document.getElementById('add-client-modal').classList.add('active');
-
 }
 
 
@@ -1859,67 +1781,30 @@ function closeClientModal() {
 
 
 function handleAddClient(e) {
-
     e.preventDefault();
 
-
-
     const id = document.getElementById('client-id').value;
-
     const razao = document.getElementById('client-razao').value;
-
     const cnpj = document.getElementById('client-cnpj').value;
-
     const regime = document.getElementById('client-regime').value;
-
     const resp = document.getElementById('client-responsavel').value;
-
     const drive = document.getElementById('client-drive').value;
 
-
-
-    // Collect specific checked routines
-
-    const selectedRotinas = Array.from(document.querySelectorAll('input[name="rotina-sel"]:checked')).map(cb => parseInt(cb.value));
-
-
-
-    if (selectedRotinas.length === 0) {
-
-        alert("Atenção: Você precisa selecionar ao menos UMA rotina para este cliente.");
-
-        return;
-
-    }
-
-
-
     if (id) {
-
-        Store.editClient(id, razao, cnpj, regime, resp, selectedRotinas, drive);
-
+        const cliente = Store.getData().clientes.find(c => c.id === parseInt(id));
+        const rotinasSalvas = cliente ? cliente.rotinasSelecionadas || [] : [];
+        Store.editClient(id, razao, cnpj, regime, resp, rotinasSalvas, drive);
     } else {
-
-        Store.addClient(razao, cnpj, regime, resp, selectedRotinas, drive);
-
+        Store.addClient(razao, cnpj, regime, resp, [], drive);
     }
-
-
 
     // Refresh lists
-
     renderClientes();
-
     renderOperacional();
-
     renderDashboard();
 
-
-
     // Close modal
-
     closeClientModal();
-
 }
 
 
@@ -2291,105 +2176,77 @@ let currentChecklistBuilder = [];
 
 
 function openRotinaModal(id = null) {
-
     const form = document.getElementById('add-rotina-form');
-
     const title = document.getElementById('modal-rotina-title');
-
     const labelPrazo = document.getElementById('label-rotina-prazo');
-
     const inputPrazo = document.getElementById('rotina-prazo');
-
     const selectFreq = document.getElementById('rotina-frequencia');
 
-
-
     form.reset();
-
     currentChecklistBuilder = []; // Reset builder
-
     document.getElementById('new-checklist-item').value = '';
 
-
-
     const updateUIForFreq = (freq) => {
-
         if (freq === 'Mensal') {
-
             labelPrazo.innerHTML = 'Dia de Vencimento Padrão (Fixo num mês)';
-
             inputPrazo.placeholder = 'Ex: 15';
-
         } else if (freq === 'Anual') {
-
             labelPrazo.innerHTML = 'Dia e Mês Específico (Fixo no Ano)';
-
             inputPrazo.placeholder = 'Ex: 30/04';
-
         } else if (freq === 'Eventual') {
-
             labelPrazo.innerHTML = 'Prazo em Dias (SLA após evento)';
-
             inputPrazo.placeholder = 'Ex: 5';
-
         }
-
     };
-
-
 
     selectFreq.onchange = (e) => updateUIForFreq(e.target.value);
 
-
-
-    if (id) {
-
-        const rotina = Store.getData().rotinasBase.find(r => r.id === id);
-
-        if (rotina) {
-
-            title.innerHTML = '<i class="fa-solid fa-pen highlight-text"></i> Editar Rotina';
-
-            document.getElementById('rotina-id').value = rotina.id;
-
-            document.getElementById('rotina-nome').value = rotina.nome;
-
-            document.getElementById('rotina-frequencia').value = rotina.frequencia || 'Mensal';
-
-            document.getElementById('rotina-setor').value = rotina.setor || '';
-
-            document.getElementById('rotina-prazo').value = rotina.diaPrazoPadrao;
-
-            currentChecklistBuilder = [...(rotina.checklistPadrao || [])];
-
-        }
-
-    } else {
-
-        title.innerHTML = '<i class="fa-solid fa-layer-group highlight-text"></i> Nova Rotina';
-
-        document.getElementById('rotina-id').value = '';
-
-        if (Store.getData().setores.length > 0) {
-
-            document.getElementById('rotina-setor').value = Store.getData().setores[0];
-
-        }
-
-        document.getElementById('rotina-frequencia').value = 'Mensal';
-
+    // Dynamic loading of Clientes checkboxes
+    const clientesGrid = document.getElementById('clientes-checkbox-grid');
+    if (clientesGrid) {
+        clientesGrid.innerHTML = '';
+        Store.getData().clientes.forEach(c => {
+            clientesGrid.innerHTML += `
+                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
+                    <input type="checkbox" name="cliente-sel" id="cliente-cb-${c.id}" value="${c.id}" class="custom-checkbox">
+                    ${c.razaoSocial}
+                </label>
+            `;
+        });
     }
 
+    if (id) {
+        const rotina = Store.getData().rotinasBase.find(r => r.id === id);
+        if (rotina) {
+            title.innerHTML = '<i class="fa-solid fa-pen highlight-text"></i> Editar Rotina';
+            document.getElementById('rotina-id').value = rotina.id;
+            document.getElementById('rotina-nome').value = rotina.nome;
+            document.getElementById('rotina-frequencia').value = rotina.frequencia || 'Mensal';
+            document.getElementById('rotina-setor').value = rotina.setor || '';
+            document.getElementById('rotina-prazo').value = rotina.diaPrazoPadrao;
+            currentChecklistBuilder = [...(rotina.checklistPadrao || [])];
 
+            // Check the clients that have this routine
+            Store.getData().clientes.forEach(c => {
+                if (c.rotinasSelecionadas && c.rotinasSelecionadas.includes(id)) {
+                    const cb = document.getElementById(`cliente-cb-${c.id}`);
+                    if (cb) cb.checked = true;
+                }
+            });
+        }
+    } else {
+        title.innerHTML = '<i class="fa-solid fa-layer-group highlight-text"></i> Nova Rotina';
+        document.getElementById('rotina-id').value = '';
+        if (Store.getData().setores.length > 0) {
+            document.getElementById('rotina-setor').value = Store.getData().setores[0];
+        }
+        document.getElementById('rotina-frequencia').value = 'Mensal';
+    }
 
     updateUIForFreq(document.getElementById('rotina-frequencia').value);
 
-
-
     renderChecklistBuilderPreview();
-
     document.getElementById('add-rotina-modal').classList.add('active');
-
 }
 
 
@@ -2485,59 +2342,37 @@ function renderChecklistBuilderPreview() {
 
 
 function handleSaveRotina(e) {
-
     e.preventDefault();
 
-
-
     const id = document.getElementById('rotina-id').value;
-
     const nome = document.getElementById('rotina-nome').value;
-
     const setor = document.getElementById('rotina-setor').value;
-
     const frequencia = document.getElementById('rotina-frequencia').value;
-
     let prazo = document.getElementById('rotina-prazo').value;
 
-
+    const selectedClientIds = Array.from(document.querySelectorAll('input[name="cliente-sel"]:checked')).map(cb => parseInt(cb.value));
 
     // Optional validation logic
-
     if (frequencia === 'Mensal' && (isNaN(prazo) || prazo < 1 || prazo > 31)) {
-
         alert("Para rotinas mensais, preencha um dia válido de 1 a 31.");
-
         return;
-
     }
-
     if (frequencia === 'Anual' && !prazo.includes('/')) {
-
         alert("Para rotinas anuais, preencha a data no formato DD/MM.");
-
         return;
-
     }
-
-
 
     if (id) {
-
-        Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder);
-
+        Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds);
     } else {
-
-        Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder);
-
+        Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds);
     }
 
-
-
     renderRotinas();
+    renderOperacional();
+    renderDashboard();
 
     closeRotinaModal();
-
 }
 
 

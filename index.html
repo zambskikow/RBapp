@@ -883,9 +883,6 @@
             </header>
 
             <div class="modal-body" style="padding-bottom: 0;">
-                <p class="subtitle" style="margin-bottom: 1.5rem; font-size: 0.85rem;">
-                    *Selecione explicitamente quais rotinas devem ser geradas mensalmente para este cliente.
-                </p>
                 <form id="add-client-form">
                     <input type="hidden" id="client-id" value="">
                     <div class="form-group">
@@ -914,21 +911,6 @@
                                 <!-- Loaded dynamically via app.js -->
                             </select>
                         </div>
-                    </div>
-                    <div class="form-group" style="margin-top: 0.5rem;">
-                        <label><i class="fa-brands fa-google-drive"></i> Link da Pasta no Drive (Opcional)</label>
-                        <input type="url" id="client-drive" class="glass-input"
-                            placeholder="https://drive.google.com/drive/folders/...">
-                    </div>
-                    <div class="form-group" style="margin-top: 0.5rem;">
-                        <label>Rotinas Aplicáveis <span
-                                style="font-weight:400; font-size:0.75rem; color:var(--text-muted);">(Selecione as
-                                tarefas recorrentes que este cliente exige)</span></label>
-                        <div id="rotinas-checkbox-grid" class="form-grid"
-                            style="gap: 0.5rem; grid-template-columns: 1fr 1fr; margin-top: 0.5rem;">
-                            <!-- Checkboxes injected by app.js -->
-                        </div>
-                    </div>
                 </form>
             </div>
 
@@ -1037,6 +1019,16 @@
                             style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.25rem;">
                             <!-- Injetado por JS -->
                         </ul>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Clientes Vinculados <span
+                                style="font-weight:400; font-size:0.75rem; color:var(--text-muted);">(Selecione os
+                                clientes
+                                que exigem esta rotina)</span></label>
+                        <div id="clientes-checkbox-grid" class="form-grid"
+                            style="gap: 0.5rem; grid-template-columns: 1fr 1fr; margin-top: 0.5rem; max-height: 150px; overflow-y: auto; padding: 0.5rem; border: 1px solid var(--border-glass); border-radius: var(--radius-sm);">
+                            <!-- Checkboxes injected by app.js -->
+                        </div>
                     </div>
                 </form>
             </div>

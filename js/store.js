@@ -443,7 +443,7 @@ window.Store = {
         }
     },
 
-    async addRotinaBase(nome, setor, frequencia, diaPrazoPadrao, checklistPadrao) {
+    async addRotinaBase(nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = []) {
         try {
             const res = await fetch(`${API_BASE}/rotinas_base`, {
                 method: 'POST',
@@ -460,19 +460,24 @@ window.Store = {
                     id: data[0].id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
                 });
                 this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome}`);
+                this.updateClientesDaRotina(data[0].id, selectedClientIds);
             } else {
                 console.warn('API POST endpoint falhou. Fallback local.', res.status);
+                const localId = Date.now();
                 db.rotinasBase.push({
-                    id: Date.now(), nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
+                    id: localId, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
                 });
                 this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome} (Offline)`);
+                this.updateClientesDaRotina(localId, selectedClientIds);
             }
         } catch (e) {
             console.error("Erro ao adicionar rotina base via API:", e);
+            const localId = Date.now();
             db.rotinasBase.push({
-                id: Date.now(), nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
+                id: localId, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao
             });
             this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome} (Offline)`);
+            this.updateClientesDaRotina(localId, selectedClientIds);
         }
     },
 
@@ -506,8 +511,7 @@ window.Store = {
     },
 
     // Mocks for edit - in a full refactor these would be PUT requests
-    editClient(id, razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink = "") {
-        console.warn('API PUT endpoint para clientes ainda não implementado. Crie na V2.');
+    async editClient(id, razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink = "") {
         const c = db.clientes.find(x => x.id === parseInt(id));
         if (c) {
             const oldRotinas = c.rotinasSelecionadas || [];
@@ -519,6 +523,25 @@ window.Store = {
             c.responsavelFiscal = responsavelFiscal;
             c.rotinasSelecionadas = rotinasSelecionadasIds;
             c.driveLink = driveLink;
+
+            try {
+                const res = await fetch(`${API_BASE}/clientes/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razao_social: razaoSocial,
+                        cnpj,
+                        regime,
+                        responsavel_fiscal: responsavelFiscal,
+                        rotinas_selecionadas: rotinasSelecionadasIds,
+                        drive_link: driveLink
+                    })
+                });
+                if (!res.ok) console.warn('API PUT falhou.', res.status);
+            } catch (e) {
+                console.error("Erro ao editar cliente via API:", e);
+            }
+
             this.registerLog("Editou Cliente", razaoSocial);
 
             if (newRotinas.length > 0) {
@@ -546,8 +569,7 @@ window.Store = {
         }
     },
 
-    editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao) {
-        console.warn('API PUT endpoint para rotinas ainda não implementado. Crie na V2.');
+    async editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = []) {
         const r = db.rotinasBase.find(x => x.id === parseInt(id));
         if (r) {
             r.nome = nome;
@@ -555,8 +577,44 @@ window.Store = {
             r.frequencia = frequencia;
             r.diaPrazoPadrao = diaPrazoPadrao;
             r.checklistPadrao = checklistPadrao;
+
+            try {
+                const res = await fetch(`${API_BASE}/rotinas_base/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nome,
+                        setor,
+                        frequencia,
+                        dia_prazo_padrao: diaPrazoPadrao,
+                        checklist_padrao: checklistPadrao
+                    })
+                });
+                if (!res.ok) console.warn('API PUT rotinas_base falhou.', res.status);
+            } catch (e) {
+                console.error("Erro ao editar rotina base via API:", e);
+            }
+
             this.registerLog("Editou Rotina Base", nome);
+            this.updateClientesDaRotina(parseInt(id), selectedClientIds);
         }
+    },
+
+    updateClientesDaRotina(rotinaId, selectedClientIds) {
+        db.clientes.forEach(cliente => {
+            const rotinasAtual = cliente.rotinasSelecionadas || [];
+            const hasRotina = rotinasAtual.includes(rotinaId);
+            const shouldHaveRotina = selectedClientIds.includes(cliente.id);
+
+            if (hasRotina && !shouldHaveRotina) {
+                const novasRotinas = rotinasAtual.filter(id => id !== rotinaId);
+                // Call editClient locally so it persists to DB
+                this.editClient(cliente.id, cliente.razaoSocial, cliente.cnpj, cliente.regime, cliente.responsavelFiscal, novasRotinas, cliente.driveLink);
+            } else if (!hasRotina && shouldHaveRotina) {
+                const novasRotinas = [...rotinasAtual, rotinaId];
+                this.editClient(cliente.id, cliente.razaoSocial, cliente.cnpj, cliente.regime, cliente.responsavelFiscal, novasRotinas, cliente.driveLink);
+            }
+        });
     },
 
     // --- CARGOS (RBAC) ---
