@@ -1095,6 +1095,70 @@ body {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+/* ==========================================
+   GLOBAL SETTINGS HUB (Admin Panel)
+   ========================================== */
+.settings-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .settings-layout {
+        grid-template-columns: 1fr;
+        /* Stack on smaller screens */
+    }
+}
+
+.settings-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.settings-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.settings-tab-btn {
+    text-align: left;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+}
+
+.settings-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+}
+
+.settings-tab-btn.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--text-main);
+    border-left: 3px solid var(--primary-light);
+}
+
+.settings-pane {
+    display: none;
+}
+
+.settings-pane.active {
+    display: block;
+}
+
 /* General animations */
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
@@ -1119,8 +1183,10 @@ body {
         color: #000 !important;
         background-image: none !important;
     }
-    
-    .sidebar, .topbar, .header-actions {
+
+    .sidebar,
+    .topbar,
+    .header-actions {
         display: none !important;
     }
 
@@ -1135,7 +1201,9 @@ body {
         animation: none !important;
     }
 
-    .glass-card, .glass-panel, .glass-bar {
+    .glass-card,
+    .glass-panel,
+    .glass-bar {
         background: none !important;
         backdrop-filter: none !important;
         border: 1px solid #ccc !important;
@@ -1143,10 +1211,14 @@ body {
         color: #000 !important;
     }
 
-    .kpi-value, .kpi-card h3, .section-header h1, .subtitle, .table-header-action h3 {
+    .kpi-value,
+    .kpi-card h3,
+    .section-header h1,
+    .subtitle,
+    .table-header-action h3 {
         color: #000 !important;
     }
-    
+
     .kpi-icon {
         background: #eee !important;
         color: #333 !important;
@@ -1159,7 +1231,8 @@ body {
         color: #000 !important;
     }
 
-    .data-table th, .data-table td {
+    .data-table th,
+    .data-table td {
         border-bottom: 1px solid #ddd !important;
         color: #000 !important;
     }

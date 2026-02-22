@@ -84,22 +84,11 @@
                     <span>Mensagens</span>
                 </a>
 
-                <div class="nav-divider"></div>
+                <div class="nav-divider" id="admin-nav-divider" style="display: none;"></div>
 
-                <a href="#" class="nav-item" data-view="auditoria" id="nav-auditoria">
-                    <i class="fa-solid fa-clipboard-list"></i>
-                    <span>Logs</span>
-                </a>
-
-                <a href="#" class="nav-item" data-view="backup" id="nav-backup">
-                    <i class="fa-solid fa-cloud-arrow-down"></i>
-                    <span>Backup e Segurança</span>
-                </a>
-
-                <!-- Novo Botão de Controle de Acessos -->
-                <a href="#" class="nav-item" data-view="admin-panel" id="nav-admin-panel" style="display: none;">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>Painel de Segurança</span>
+                <a href="#" class="nav-item" data-view="settings" id="nav-settings" style="display: none;">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Painel de Controle</span>
                 </a>
             </nav>
             <div class="user-profile">
@@ -534,117 +523,257 @@
                 </div>
             </div>
 
-            <!-- Auditoria View -->
-            <div id="view-auditoria" class="view-section" style="display: none;">
-                <div class="content-header fade-in">
-                    <div class="header-titles">
-                        <h1>Logs do Sistema</h1>
-                        <p>Registro de atividades e segurança</p>
+            <!-- Global Settings Hub View -->
+            <div id="view-settings" class="view-section" style="display: none;">
+                <header class="section-header">
+                    <div>
+                        <h1><i class="fa-solid fa-gear highlight-text"></i> Painel de Controle Administrativo</h1>
+                        <p class="subtitle">Centro de Comando do Sistema. Acesse as opções pelo menu lateral abaixo.</p>
                     </div>
-                    <div class="header-actions">
-                        <button class="btn btn-secondary" id="btn-export-logs">
-                            <i class="fa-solid fa-download"></i> Exportar Logs CSV
-                        </button>
-                    </div>
-                </div>
+                </header>
 
-                <div class="glass-card fade-in" style="margin-top: 1rem;">
-                    <div class="table-responsive">
-                        <table class="data-table" id="auditoria-table">
-                            <thead>
-                                <tr>
-                                    <th>Data / Hora</th>
-                                    <th>Usuário</th>
-                                    <th>Permissão</th>
-                                    <th>Ação Registrada</th>
-                                    <th>Detalhes Adicionais</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Backup e Segurança View -->
-                <div id="view-backup" class="view-section" style="display: none;">
-                    <header class="section-header">
-                        <div>
-                            <h1>Backup e Segurança</h1>
-                            <p class="subtitle">Faça cópias de segurança de todo o sistema ou restaure um backup antigo
-                            </p>
-                        </div>
-                    </header>
-
-                    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));">
-
-                        <!-- Export Card -->
-                        <div class="glass-card table-container">
-                            <div class="table-header-action" style="margin-bottom: 1rem;">
-                                <h3><i class="fa-solid fa-cloud-arrow-down" style="color:var(--primary)"></i> Fazer
-                                    Backup Manual</h3>
-                            </div>
-                            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem;">
-                                Gere um arquivo ".json" contendo 100% dos dados atuais do sistema, incluindo clientes,
-                                equipe, históricos de logs e senhas criptografadas. Guarde este arquivo em um local
-                                seguro.
-                            </p>
-                            <button class="btn btn-primary" id="btn-export-backup" style="width: 100%;">
-                                <i class="fa-solid fa-file-export"></i> Baixar Base de Dados Agora
+                <div class="settings-layout"
+                    style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem; align-items: start;">
+                    <!-- Settings Left Menu (Tabs) -->
+                    <div class="glass-panel settings-sidebar" style="padding: 1rem; position: sticky; top: 20px;">
+                        <nav class="settings-menu" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <button class="settings-tab-btn active" data-target="set-rbac"
+                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: rgba(99, 102, 241, 0.2); color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 500; transition: all 0.3s ease;">
+                                <i class="fa-solid fa-shield-halved" style="width: 20px;"></i> Segurança e Acessos
                             </button>
-
-                            <hr style="border: 1px solid rgba(255,255,255,0.05); margin: 2rem 0;">
-
-                            <div class="table-header-action" style="margin-bottom: 1rem;">
-                                <h3><i class="fa-solid fa-robot" style="color:var(--success)"></i> Backup Automático
-                                    (Semanal)</h3>
-                            </div>
-                            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem;">
-                                Se ativado, o sistema fará o download de um backup automaticamente no seu primeiro
-                                acesso da semana. Recomendado: configure a pasta de Downloads do seu navegador para
-                                apontar para o <strong>Google Drive Desktop</strong>.
-                            </p>
-                            <div class="form-group"
-                                style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
-                                <label style="margin: 0;">Ativar Auto-Backup</label>
-                                <label class="switch">
-                                    <input type="checkbox" id="toggle-auto-backup">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
-                            <div style="margin-top: 0.5rem; font-size: 0.8em; color: var(--text-muted); text-align: right;"
-                                id="last-backup-text">
-                                Último backup: Nunca
-                            </div>
-                        </div>
-
-                        <!-- Import Card -->
-                        <div class="glass-card table-container" style="border: 1px solid rgba(239, 68, 68, 0.3);">
-                            <div class="table-header-action" style="margin-bottom: 1rem;">
-                                <h3 style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Zona
-                                    de Perigo: Restaurar Sistema</h3>
-                            </div>
-                            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem;">
-                                Faça o upload de um arquivo de backup ".json" gerado anteriormente por este sistema.
-                                <strong>Aviso Categórico:</strong> Restaurar um backup irá <u>esmagar e apagar
-                                    permanentemente</u> todos os dados inseridos desde a data do backup.
-                            </p>
-
-                            <div class="form-group">
-                                <label>Arquivo de Backup (.json)</label>
-                                <input type="file" id="backup-file-input" accept=".json" class="glass-input"
-                                    style="padding: 0.5rem;">
-                            </div>
-
-                            <button class="btn btn-primary" id="btn-restore-backup"
-                                style="width: 100%; background: var(--danger); margin-top: 1rem;">
-                                <i class="fa-solid fa-rotate-left"></i> Esmagar Base Atual e Restaurar
+                            <button class="settings-tab-btn" data-target="set-setores"
+                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
+                                <i class="fa-solid fa-building" style="width: 20px;"></i> Gestão de Setores
                             </button>
+                            <button class="settings-tab-btn" data-target="set-backup"
+                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
+                                <i class="fa-solid fa-cloud-arrow-down" style="width: 20px;"></i> Backups de Sistema
+                            </button>
+                            <div class="nav-divider" style="margin: 0.5rem 0;"></div>
+                            <button class="settings-tab-btn" data-target="set-auditoria"
+                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
+                                <i class="fa-solid fa-clipboard-list" style="width: 20px;"></i> Logs de Atividade
+                            </button>
+                            <button class="settings-tab-btn" data-target="set-auditoria-comp"
+                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
+                                <i class="fa-solid fa-magnifying-glass-chart" style="width: 20px;"></i> Auditoria de
+                                Competência
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Settings Content Panes -->
+                    <div class="settings-content">
+
+                        <!-- TAB: Segurança / Cargos / RBAC -->
+                        <div class="settings-pane active fade-in" id="set-rbac">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <div>
+                                    <h2 style="font-size: 1.25rem;">Cargos e Permissões</h2>
+                                    <p style="color: var(--text-muted); font-size: 0.9rem;">Crie perfis e defina quais
+                                        telas eles podem ver.</p>
+                                </div>
+                                <button class="btn btn-primary" id="btn-add-cargo">
+                                    <i class="fa-solid fa-shield-plus"></i> Novo Cargo
+                                </button>
+                            </div>
+                            <div class="glass-card full-table-container">
+                                <div class="table-responsive">
+                                    <table class="data-table" id="admin-cargos-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Cód.</th>
+                                                <th>Nome do Cargo</th>
+                                                <th>Telas Permitidas</th>
+                                                <th style="text-align: right;">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Populated by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
-                    </div>
-                </div>
+                        <!-- TAB: Setores -->
+                        <div class="settings-pane fade-in" id="set-setores" style="display: none;">
+                            <div style="margin-bottom: 1.5rem;">
+                                <h2 style="font-size: 1.25rem;">Departamentos da Empresa</h2>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Gerencie os setores (Ex:
+                                    Contábil, Fiscal, Legalização).</p>
+                            </div>
+                            <div class="glass-card table-container" style="max-width: 600px;">
+                                <div class="form-group" style="margin-bottom: 2rem;">
+                                    <label>Adicionar Novo Setor</label>
+                                    <div style="display:flex; gap:0.5rem;">
+                                        <input type="text" id="new-setor-name-hub" class="glass-input"
+                                            placeholder="Ex: RH">
+                                        <button type="button" class="btn btn-primary" id="btn-add-setor-hub"><i
+                                                class="fa-solid fa-plus"></i> Adicionar</button>
+                                    </div>
+                                </div>
+                                <label>Setores Existentes</label>
+                                <ul id="setores-list-hub"
+                                    style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.5rem; max-height: 400px; overflow-y: auto;">
+                                    <!-- Injetado por JS -->
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- TAB: Backup -->
+                        <div class="settings-pane fade-in" id="set-backup" style="display: none;">
+                            <div style="margin-bottom: 1.5rem;">
+                                <h2 style="font-size: 1.25rem;">Backup e Recuperação</h2>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Garanta a segurança dos seus
+                                    dados realizando cópias locais.</p>
+                            </div>
+                            <div class="kpi-grid" style="grid-template-columns: 1fr 1fr;">
+                                <div class="glass-card table-container">
+                                    <h3 style="margin-bottom: 1rem; color: var(--primary);"><i
+                                            class="fa-solid fa-download"></i> Fazer Backup</h3>
+                                    <p
+                                        style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem; line-height: 1.5;">
+                                        Faça o download de um arquivo ".json" contendo 100% dos dados atuais do sistema.
+                                    </p>
+                                    <button class="btn btn-primary" id="btn-export-backup" style="width: 100%;"><i
+                                            class="fa-solid fa-file-export"></i> Baixar Base de Dados Agora</button>
+                                    <div
+                                        style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                                        <label>Lembrete de Auto-Backup</label>
+                                        <label class="switch"><input type="checkbox" id="toggle-auto-backup"><span
+                                                class="slider round"></span></label>
+                                    </div>
+                                    <p style="margin-top: 0.5rem; font-size: 0.8em; color: var(--text-muted); text-align: right;"
+                                        id="last-backup-text">Último: Nunca</p>
+                                </div>
+                                <div class="glass-card table-container"
+                                    style="border: 1px solid rgba(239, 68, 68, 0.3);">
+                                    <h3 style="margin-bottom: 1rem; color: var(--danger);"><i
+                                            class="fa-solid fa-upload"></i> Restaurar Sistema</h3>
+                                    <p
+                                        style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem; line-height: 1.5;">
+                                        Suba um backup anterior (isto apagará os dados atuais do momento).</p>
+                                    <input type="file" id="backup-file-input" accept=".json" class="glass-input"
+                                        style="padding: 0.5rem; margin-bottom: 1rem; width: 100%;">
+                                    <button class="btn btn-primary" id="btn-restore-backup"
+                                        style="width: 100%; background: var(--danger);"><i
+                                            class="fa-solid fa-rotate-left"></i> Esmagar Base Atual e Restaurar</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: Logs Auditoria Geral -->
+                        <div class="settings-pane fade-in" id="set-auditoria" style="display: none;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <div>
+                                    <h2 style="font-size: 1.25rem;">Auditoria de Sistema (Logs)</h2>
+                                    <p style="color: var(--text-muted); font-size: 0.9rem;">Rastreador de acessos,
+                                        exclusões e modificações globais na base.</p>
+                                </div>
+                                <button class="btn btn-secondary" id="btn-export-logs">
+                                    <i class="fa-solid fa-file-csv"></i> Exportar CSV
+                                </button>
+                            </div>
+                            <div class="glass-card full-table-container">
+                                <div class="table-responsive">
+                                    <table class="data-table" id="auditoria-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Data / Hora</th>
+                                                <th>Usuário</th>
+                                                <th>Permissão</th>
+                                                <th>Ação Registrada</th>
+                                                <th>Detalhes Adicionais</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Populated by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: Auditoria de Competência O FOCO DA ENTREGA -->
+                        <div class="settings-pane fade-in" id="set-auditoria-comp" style="display: none;">
+                            <div style="margin-bottom: 1.5rem;">
+                                <h2 style="font-size: 1.25rem;">Auditoria de Competência (Histórico Fiel)</h2>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Volte no tempo e descubra como
+                                    foi o desempenho de um funcionário em um mês específico (Data exata de baixa, se
+                                    quebrou o prazo, etc).</p>
+                            </div>
+                            <div class="glass-card table-container" style="margin-bottom: 1rem;">
+                                <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Selecione a Competência (Mês/Ano Passado)</label>
+                                        <select id="audit-comp-mes" class="glass-select" style="width: 100%;"></select>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Selecione o Funcionário a ser Auditado</label>
+                                        <select id="audit-comp-user" class="glass-select" style="width: 100%;"></select>
+                                    </div>
+                                    <button class="btn btn-primary" id="btn-run-audit-comp"
+                                        style="height: 48px; min-width: 150px; justify-content: center;">
+                                        <i class="fa-solid fa-magnifying-glass"></i> Auditar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Resultados da Auditoria de Competência -->
+                            <div class="glass-card full-table-container" id="audit-comp-results" style="display: none;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-glass);">
+                                    <div>
+                                        <h3 style="margin:0; font-size: 1.1rem; color: var(--primary-light);">Relatório
+                                            Fiel de Baixas</h3>
+                                        <p id="audit-comp-subtitle"
+                                            style="margin:0; font-size: 0.85rem; color: var(--text-muted);">Resultados
+                                            para Dandara em Janeiro de 2026</p>
+                                    </div>
+                                    <div style="display: flex; gap: 1rem;">
+                                        <div style="text-align: center;"><span
+                                                style="font-size: 1.2rem; font-weight: bold; color: var(--success);"
+                                                id="audit-comp-noprazo">0</span>
+                                            <div style="font-size:0.7rem; color:var(--text-muted);">No Prazo</div>
+                                        </div>
+                                        <div style="text-align: center;"><span
+                                                style="font-size: 1.2rem; font-weight: bold; color: var(--danger);"
+                                                id="audit-comp-atrasado">0</span>
+                                            <div style="font-size:0.7rem; color:var(--text-muted);">Atrasados</div>
+                                        </div>
+                                        <div style="text-align: center;"><span
+                                                style="font-size: 1.2rem; font-weight: bold; color: var(--warning);"
+                                                id="audit-comp-pendente">0</span>
+                                            <div style="font-size:0.7rem; color:var(--text-muted);">Esquecidos/Pendentes
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" id="audit-comp-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Cliente</th>
+                                                <th>Rotina Auditada</th>
+                                                <th>Prazo Original (Deadline)</th>
+                                                <th>Data Real da Baixa</th>
+                                                <th>Veredito (Status do Mês)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div> <!-- End Settings Content Panes -->
+                </div> <!-- End Settings Layout -->
+            </div>
 
         </main>
     </div>

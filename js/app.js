@@ -238,7 +238,7 @@ function handleLogin(e) {
 
                 if (permitidas.includes(view)) {
                     // Specific exception for flex links vs standard block links
-                    if (view === 'dashboard' || view === 'auditoria' || view === 'backup' || view === 'admin-panel') {
+                    if (view === 'dashboard' || view === 'auditoria' || view === 'backup' || view === 'admin-panel' || view === 'settings') {
                         navItem.style.display = 'flex';
                     } else {
                         navItem.style.display = 'flex'; // our UI uses flex for all nav-items
@@ -258,10 +258,17 @@ function handleLogin(e) {
             // Hide/Show specific inner buttons based on permissions
             const btnSetores = document.getElementById('btn-manage-setores');
             if (btnSetores) {
-                if (auth.permissao === 'Gerente' || auth.telas_permitidas.includes('admin-panel')) {
+                if (auth.permissao === 'Gerente' || auth.telas_permitidas.includes('settings')) {
                     btnSetores.style.display = 'inline-block';
                 } else {
                     btnSetores.style.display = 'none';
+                }
+            }
+
+            const adminNavDivider = document.getElementById('admin-nav-divider');
+            if (adminNavDivider) {
+                if (auth.permissao === 'Gerente' || auth.telas_permitidas.includes('settings')) {
+                    adminNavDivider.style.display = 'block';
                 }
             }
 
@@ -321,9 +328,12 @@ function setupNavigation() {
                 if (targetView === 'equipe') renderEquipe();
                 if (targetView === 'rotinas') renderRotinas();
                 if (targetView === 'mensagens') renderMensagens();
-                if (targetView === 'auditoria') renderAuditoria();
-                if (targetView === 'backup') renderBackupView();
-                if (targetView === 'admin-panel') renderAdminPanel();
+                if (targetView === 'settings') {
+                    // Trigger the first tab by default or re-render active
+                    initSettingsTabs();
+                    const activeTab = document.querySelector('.settings-tab-btn.active');
+                    if (activeTab) activeTab.click();
+                }
             }
         });
     });
@@ -1820,28 +1830,34 @@ function downloadBackupFile() {
 
 function restoreBackupFile() {
     const fileInput = document.getElementById('backup-file-input');
-    if (fileInput.files.length === 0) {
-        alert("Por favor, selecione um arquivo JSON de backup.");
+    const file = fileInput.files[0];
+    if (!file) {
+        alert("Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.");
         return;
     }
 
-    const file = fileInput.files[0];
-    const reader = new FileReader();
+    if (!confirm("⚠️ ATENÇÃO EXTREMA ⚠️\n\nIsso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execuções, mensagens, clientes novos feitos DEPOIS desse backup vão SUMIR para sempre.\n\nVocê tem 100% de certeza absoluta?")) {
+        return;
+    }
 
+    const reader = new FileReader();
     reader.onload = function (e) {
         try {
-            const parsedData = JSON.parse(e.target.result);
-            if (!parsedData.clientes || !parsedData.execucoes || !parsedData.funcionarios) {
-                alert("Arquivo de backup inválido ou corrompido.");
-                return;
+            const rawData = e.target.result;
+            const parsedData = JSON.parse(rawData);
+
+            if (!parsedData.clientes || !parsedData.funcionarios || !parsedData.config || !parsedData.version) {
+                throw new Error("O arquivo selecionado não parece ser um backup válido do FiscalApp.");
             }
-            if (confirm("ATENÇÃO: Você está prestes a substituir toda a base de dados atual. Todas as alterações feitas após este backup serão PERDIDAS. Quer mesmo continuar?")) {
-                Store.restoreDatabase(parsedData);
-                alert("Banco de dados restaurado com sucesso! A página será recarregada.");
-                window.location.reload();
-            }
-        } catch (error) {
-            alert("Erro ao processar o arquivo. Certifique-se de que é um JSON válido.");
+
+            Store.setInitialData(parsedData);
+            alert("✅ SISTEMA RESTAURADO COM SUCESSO!\n\nSeus dados foram alterados. O sistema será recarregado agora para aplicar todas as configurações visuais.");
+            window.location.reload();
+
+        } catch (err) {
+            console.error(err);
+            alert("Erro fatal ao tentar ler o arquivo: " + err.message);
+            Store.registerLog("Aviso/Alerta", `Tentativa falha de restauração de backup.`);
         }
     };
     reader.readAsText(file);
