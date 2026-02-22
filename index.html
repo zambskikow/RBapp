@@ -102,7 +102,12 @@
         <main class="main-content">
             <!-- Top Navigation Bar -->
             <header class="topbar glass-bar">
-                <div style="flex: 1;"></div> <!-- Spacer replacing search bar -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button id="btn-toggle-sidebar" class="action-btn" title="Recolher/Expandir Menu Lateral">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div style="flex: 1;"></div> <!-- Spacer replacing search bar -->
+                </div>
                 <div class="topbar-actions">
                     <button class="action-btn" onclick="document.querySelector('[data-view=mensagens]').click()">
                         <i class="fa-solid fa-bell"></i>
@@ -439,23 +444,84 @@
                 </div>
             </div>
 
-            <!-- Caixa de Mensagens View -->
-            <div id="view-mensagens" class="view-section" style="display: none;">
-                <header class="section-header">
+            <!-- Caixa de Mensagens View (Layout Inbox Email) -->
+            <div id="view-mensagens" class="view-section"
+                style="display: none; padding: 2rem 3rem 0; height: calc(100vh - var(--topbar-height)); overflow: hidden;">
+                <header class="section-header" style="margin-bottom: 1rem;">
                     <div>
-                        <h1>Caixa de Entrada (Inbox)</h1>
-                        <p class="subtitle">Comunicações e Notificações do Sistema</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" id="btn-nova-mensagem">
-                            <i class="fa-solid fa-paper-plane"></i> Nova Mensagem
-                        </button>
+                        <h1>Comunicações</h1>
+                        <p class="subtitle">Caixa de Entrada e Notificações do Sistema</p>
                     </div>
                 </header>
 
-                <div class="glass-card full-table-container">
-                    <div id="mensagens-container" style="padding: 1rem;">
-                        <!-- Populated by JS -->
+                <div class="inbox-layout">
+                    <!-- Inbox Sidebar (Folders) -->
+                    <div class="inbox-sidebar glass-panel">
+                        <button class="btn btn-primary" id="btn-nova-mensagem"
+                            style="width: 100%; margin-bottom: 1.5rem;">
+                            <i class="fa-solid fa-pen-to-square"></i> Nova Mensagem
+                        </button>
+
+                        <nav class="inbox-menu">
+                            <button class="inbox-menu-item active" data-folder="inbox">
+                                <div><i class="fa-solid fa-inbox highlight-text"></i> Caixa de Entrada</div>
+                                <span class="badge" id="inbox-unread-badge"
+                                    style="position:static; padding: 2px 6px;">0</span>
+                            </button>
+                            <button class="inbox-menu-item" data-folder="sent">
+                                <div><i class="fa-solid fa-paper-plane highlight-text"></i> Enviados</div>
+                            </button>
+                            <button class="inbox-menu-item" data-folder="system">
+                                <div><i class="fa-solid fa-robot highlight-text"></i> Alertas do Sistema</div>
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Inbox List View -->
+                    <div class="inbox-list glass-card">
+                        <div class="inbox-list-header">
+                            <h3 id="inbox-current-folder-title">Caixa de Entrada</h3>
+                            <button class="action-btn" id="btn-refresh-inbox"><i
+                                    class="fa-solid fa-rotate-right"></i></button>
+                        </div>
+                        <div id="mensagens-container" class="inbox-scroll-area">
+                            <!-- Lista de mensagens injetada aqui -->
+                        </div>
+                    </div>
+
+                    <!-- Inbox Reading Pane -->
+                    <div class="inbox-reading-pane glass-card" id="inbox-reader">
+                        <div class="empty-reader-state">
+                            <i class="fa-regular fa-envelope-open"
+                                style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                            <p>Selecione uma mensagem para ler</p>
+                        </div>
+                        <div class="reader-content fade-in" style="display: none;">
+                            <!-- Header da mensagem -->
+                            <div class="reader-header">
+                                <h2 id="reader-subject">Assunto da Mensagem</h2>
+                                <div class="reader-meta">
+                                    <div class="reader-sender">
+                                        <div class="avatar-small"><i class="fa-solid fa-user"></i></div>
+                                        <div>
+                                            <strong id="reader-from">Remetente</strong>
+                                            <div id="reader-date" style="font-size: 0.8rem; color: var(--text-muted)">
+                                                Data</div>
+                                        </div>
+                                    </div>
+                                    <div class="reader-actions">
+                                        <button class="btn btn-outline" id="btn-reply-msg"><i
+                                                class="fa-solid fa-reply"></i> Responder</button>
+                                        <button class="action-btn text-danger" id="btn-delete-msg"><i
+                                                class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Corpo da mensagem -->
+                            <div class="reader-body" id="reader-body-content">
+                                <!-- Texto injetado -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

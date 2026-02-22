@@ -184,6 +184,30 @@ async function initApp() {
 
 
 
+    // 2.5 Toggle Sidebar
+
+    const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+
+    const sidebar = document.querySelector('.sidebar');
+
+    if (btnToggleSidebar && sidebar) {
+
+        btnToggleSidebar.addEventListener('click', () => {
+
+            sidebar.classList.toggle('collapsed');
+
+            if (window.innerWidth <= 992) {
+
+                sidebar.classList.toggle('mobile-open');
+
+            }
+
+        });
+
+    }
+
+
+
     // Populate the Dashboard Selects
 
     populateDashboardSelects();
@@ -2720,180 +2744,239 @@ async function handleDeleteSetor(nome) {
 
 
 
+let currentInboxFolder = 'inbox';
+let currentLoadedMessageId = null;
+
 function updateMensagensBadges() {
-
-    // For the UI we show the badge for the logged user
-
     if (!LOGGED_USER) return;
 
+    // Topbar
     const unreadCount = Store.getUnreadCount(LOGGED_USER.nome);
-
-
-
     const topbarBadge = document.getElementById('topbar-badge-msg');
-
-
-
     if (unreadCount > 0) {
-
         topbarBadge.style.display = 'inline-flex';
-
         topbarBadge.textContent = unreadCount;
-
     } else {
-
         topbarBadge.style.display = 'none';
-
     }
 
+    // Sidebar Inbox Badge
+    const inboxBadge = document.getElementById('inbox-unread-badge');
+    if (inboxBadge) {
+        if (unreadCount > 0) {
+            inboxBadge.style.display = 'inline-block';
+            inboxBadge.textContent = unreadCount;
+        } else {
+            inboxBadge.style.display = 'none';
+        }
+    }
 }
 
+function initInboxTabs() {
+    const tabs = document.querySelectorAll('.inbox-menu-item');
+    tabs.forEach(tab => {
+        // Remove existing listeners to avoid doubles
+        const newTab = tab.cloneNode(true);
+        tab.parentNode.replaceChild(newTab, tab);
 
+        newTab.addEventListener('click', (e) => {
+            const folder = e.currentTarget.getAttribute('data-folder');
+            document.querySelectorAll('.inbox-menu-item').forEach(t => t.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+
+            const titles = {
+                'inbox': 'Caixa de Entrada',
+                'sent': 'Itens Enviados',
+                'system': 'Alertas do Sistema'
+            };
+            document.getElementById('inbox-current-folder-title').textContent = titles[folder];
+            currentInboxFolder = folder;
+            renderMensagens();
+            hideInboxReader();
+        });
+    });
+
+    const refreshBtn = document.getElementById('btn-refresh-inbox');
+    if (refreshBtn) {
+        const newRefresh = refreshBtn.cloneNode(true);
+        refreshBtn.parentNode.replaceChild(newRefresh, refreshBtn);
+        newRefresh.addEventListener('click', () => {
+            newRefresh.querySelector('i').classList.add('fa-spin');
+            setTimeout(() => {
+                newRefresh.querySelector('i').classList.remove('fa-spin');
+                renderMensagens();
+            }, 500);
+        });
+    }
+}
 
 function renderMensagens() {
-
+    initInboxTabs();
     const container = document.getElementById('mensagens-container');
-
     if (!LOGGED_USER) return;
 
-    const msgs = Store.getMensagensPara(LOGGED_USER.nome);
-
-
+    let msgs = [];
+    if (currentInboxFolder === 'inbox') {
+        msgs = Store.getMensagensPara(LOGGED_USER.nome).filter(m => m.remetente !== 'Sistema');
+    } else if (currentInboxFolder === 'sent') {
+        msgs = Store.getData().mensagens.filter(m => m.remetente === LOGGED_USER.nome);
+        msgs.sort((a, b) => new Date(b.data) - new Date(a.data));
+    } else if (currentInboxFolder === 'system') {
+        msgs = Store.getMensagensPara(LOGGED_USER.nome).filter(m => m.remetente === 'Sistema');
+    }
 
     container.innerHTML = '';
 
-
-
     if (msgs.length === 0) {
-
-        container.innerHTML = `<p style="text-align:center; padding: 2rem; color: var(--text-muted);">Sua caixa de entrada está vazia.</p>`;
-
+        container.innerHTML = `
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted); display:flex; flex-direction:column; align-items:center; gap: 1rem;">
+                <i class="fa-regular fa-folder-open" style="font-size: 2.5rem;"></i>
+                <span>Nenhuma mensagem nesta pasta.</span>
+            </div>
+        `;
         updateMensagensBadges();
-
         return;
-
     }
 
-
-
     msgs.forEach(m => {
+        const d = new Date(m.data);
+        const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+
+        // Shorten preview text
+        const snippet = m.texto.length > 50 ? m.texto.substring(0, 50) + '...' : m.texto;
+        const subject = m.assunto || 'Sem Assunto';
+        const displayUser = currentInboxFolder === 'sent' ? `Para: ${m.destinatario}` : m.remetente;
 
         const div = document.createElement('div');
-
-        div.className = `glass-card fade-in ${m.lida ? '' : 'unread-msg'}`;
-
-        div.style.marginBottom = '1rem';
-
-        div.style.padding = '1.25rem';
-
-        div.style.borderLeft = m.lida ? '3px solid transparent' : '3px solid var(--primary)';
-
-
+        div.className = `msg-item fade-in ${m.id === currentLoadedMessageId ? 'active' : ''}`;
+        if (!m.lida && currentInboxFolder !== 'sent') {
+            div.classList.add('unread');
+        }
 
         div.innerHTML = `
-
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 0.5rem;">
-
-                <h4 style="margin:0; font-size: 1rem;"><i class="fa-solid fa-user-circle" style="color:var(--text-muted);"></i> De: ${m.remetente}</h4>
-
-                <small style="color:var(--text-muted);">${new Date(m.data).toLocaleString('pt-BR')}</small>
-
+            <div class="msg-header">
+                <span style="font-weight: ${!m.lida && currentInboxFolder !== 'sent' ? '700' : '500'}; color: var(--text-main);">${displayUser}</span>
+                <span>${dateStr}</span>
             </div>
-
-            <p style="margin:0; color:var(--text-main); font-size: 0.95rem; line-height: 1.5;">${m.texto}</p>
-
-            ${!m.lida ? `
-
-                <div style="margin-top: 1rem; text-align:right;">
-
-                    <button class="btn btn-small btn-secondary" onclick="markAsRead(${m.id})">Marcar como Lida</button>
-
-                </div>
-
-            ` : ''}
-
+            <p class="msg-subject">${subject}</p>
+            <p class="msg-preview">${snippet}</p>
         `;
 
-
-
+        div.addEventListener('click', () => loadMessageIntoReader(m.id));
         container.appendChild(div);
-
     });
-
-
 
     updateMensagensBadges();
-
 }
 
+function loadMessageIntoReader(id) {
+    const msg = Store.getData().mensagens.find(m => m.id === id);
+    if (!msg) return;
 
+    currentLoadedMessageId = id;
 
-function markAsRead(id) {
+    // If it's in the inbox, mark as read
+    if (currentInboxFolder === 'inbox' && !msg.lida) {
+        Store.markMensagemLida(id);
+        updateMensagensBadges();
+    }
 
-    Store.markMensagemLida(id);
-
+    // Update active state on list visually without full render to avoid jump
+    document.querySelectorAll('.msg-item').forEach(el => el.classList.remove('active', 'unread'));
     renderMensagens();
 
+    document.querySelector('.empty-reader-state').style.display = 'none';
+    const reader = document.querySelector('.reader-content');
+    reader.style.display = 'flex';
+
+    // Re-trigger animation
+    reader.classList.remove('fade-in');
+    void reader.offsetWidth;
+    reader.classList.add('fade-in');
+
+    const subjectObj = msg.assunto || 'Nova Mensagem Automática';
+    document.getElementById('reader-subject').textContent = subjectObj;
+
+    const displayUser = currentInboxFolder === 'sent' ? `Enviado para: ${msg.destinatario}` : msg.remetente;
+    document.getElementById('reader-from').textContent = displayUser;
+
+    const d = new Date(msg.data);
+    document.getElementById('reader-date').textContent = `${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
+
+    // Format text
+    const paragraphs = msg.texto.split('\n').filter(p => p.trim() !== '').map(p => `<p style="margin-bottom:1rem;">${p}</p>`).join('');
+    document.getElementById('reader-body-content').innerHTML = paragraphs;
+
+    // Actions
+    const btnReply = document.getElementById('btn-reply-msg');
+    const btnDelete = document.getElementById('btn-delete-msg');
+
+    if (currentInboxFolder === 'inbox' || currentInboxFolder === 'system') {
+        btnReply.style.display = currentInboxFolder === 'system' ? 'none' : 'inline-block';
+        btnReply.onclick = () => {
+            openNovaMensagemModal(msg.remetente, `Re: ${subjectObj}`);
+        };
+    } else {
+        btnReply.style.display = 'none';
+    }
+
+    btnDelete.onclick = () => {
+        if (confirm("Deseja mesmo excluir esta mensagem da sua visualização?")) {
+            // Implement delete locally by filtering it out or via Store
+            hideInboxReader();
+            // Store.deleteMensagem(id) -> not fully implemented in Store yet, so we just clear view
+            // Real implementation would delete the row.
+            alert("Ação de apagar ainda não sincronizada com a API neste mock.");
+        }
+    };
 }
 
+function hideInboxReader() {
+    currentLoadedMessageId = null;
+    document.querySelector('.empty-reader-state').style.display = 'flex';
+    document.querySelector('.reader-content').style.display = 'none';
+}
 
-
-function openNovaMensagemModal() {
-
+function openNovaMensagemModal(prefillDest = null, prefillSubj = "") {
     const select = document.getElementById('msg-destinatario');
-
     select.innerHTML = '';
 
-    // Load all users except self
-
     Store.getData().funcionarios.forEach(f => {
-
-        //if (f.nome !== LOGGED_USER) {  // Optional: let them message themselves for testing
-
         select.innerHTML += `<option value="${f.nome}">${f.nome} (${f.setor})</option>`;
-
-        //}
-
     });
-
-
 
     document.getElementById('nova-mensagem-form').reset();
 
+    // Inject custom invisible Subject field logic temporarily or if HTML adds it
+    if (prefillDest) select.value = prefillDest;
+
+    // Notice: there's no subject input in original HTML, so we just pre-fill texto if doing a reply
+    let textArea = document.getElementById('msg-texto');
+    if (prefillSubj) {
+        textArea.value = `--- EM RESPOSTA A: ${prefillSubj} ---\n\n`;
+    }
+
     document.getElementById('nova-mensagem-modal').classList.add('active');
-
 }
-
-
 
 function closeNovaMensagemModal() {
-
     document.getElementById('nova-mensagem-modal').classList.remove('active');
-
 }
 
-
-
 function handleSendMensagem(e) {
-
     e.preventDefault();
-
     const dest = document.getElementById('msg-destinatario').value;
-
     const texto = document.getElementById('msg-texto').value;
-
-
 
     Store.sendMensagem(LOGGED_USER.nome, dest, texto);
 
-
-
     alert(`Mensagem enviada para ${dest}!`);
-
     closeNovaMensagemModal();
 
-    renderMensagens(); // in case they sent it to themselves
-
+    // If we're looking at sent items, refresh
+    if (currentInboxFolder === 'sent') {
+        renderMensagens();
+    }
 }
 
 
