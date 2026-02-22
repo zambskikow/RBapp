@@ -20,7 +20,8 @@ CREATE TABLE rotinas_base (
     setor VARCHAR(100),
     frequencia VARCHAR(50),
     dia_prazo_padrao VARCHAR(50),
-    checklist_padrao JSONB DEFAULT '[]'::jsonb
+    checklist_padrao JSONB DEFAULT '[]'::jsonb,
+    responsavel VARCHAR(100)
 );
 
 CREATE TABLE clientes (

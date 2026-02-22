@@ -1507,7 +1507,7 @@ function renderChecklistBuilderPreview() {
 
 
 
-function handleSaveRotina(e) {
+async function handleSaveRotina(e) {
     e.preventDefault();
 
     const id = document.getElementById('rotina-id').value;
@@ -1530,9 +1530,9 @@ function handleSaveRotina(e) {
     }
 
     if (id) {
-        Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
+        await Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
     } else {
-        Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
+        await Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
     }
 
     renderRotinas();

@@ -462,23 +462,28 @@ window.Store = {
                 });
                 this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome}`);
                 this.updateClientesDaRotina(data[0].id, selectedClientIds);
+                return data[0];
             } else {
                 console.warn('API POST endpoint falhou. Fallback local.', res.status);
                 const localId = Date.now();
-                db.rotinasBase.push({
+                const newRot = {
                     id: localId, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, responsavel
-                });
+                };
+                db.rotinasBase.push(newRot);
                 this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome} (Offline)`);
                 this.updateClientesDaRotina(localId, selectedClientIds);
+                return newRot;
             }
         } catch (e) {
             console.error("Erro ao adicionar rotina base via API:", e);
             const localId = Date.now();
-            db.rotinasBase.push({
+            const newRot = {
                 id: localId, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, responsavel
-            });
+            };
+            db.rotinasBase.push(newRot);
             this.registerLog("Gestão de Rotinas", `Nova rotina base criada: ${nome} (Offline)`);
             this.updateClientesDaRotina(localId, selectedClientIds);
+            return newRot;
         }
     },
 
@@ -600,7 +605,9 @@ window.Store = {
 
             this.registerLog("Editou Rotina Base", nome);
             this.updateClientesDaRotina(parseInt(id), selectedClientIds);
+            return true;
         }
+        return false;
     },
 
     updateClientesDaRotina(rotinaId, selectedClientIds) {
@@ -782,6 +789,18 @@ window.Store = {
                     done: false
                 };
             });
+
+            // Verify if task already exists to avoid duplication
+            const exists = db.execucoes.some(e =>
+                e.clienteId === cliente.id &&
+                e.rotina === rotina.nome &&
+                e.competencia === currentComp
+            );
+
+            if (exists) {
+                console.log(`[Engine] Tarefa já existe: ${cliente.razaoSocial} - ${rotina.nome} (${currentComp})`);
+                return;
+            }
 
             // Dispatch task to API asynchronously
             fetch(`${API_BASE}/execucoes`, {
