@@ -69,7 +69,7 @@ body {
 }
 
 .glass-bar {
-    background: linear-gradient(to bottom, rgba(11, 15, 25, 0.95), rgba(11, 15, 25, 0.6));
+    background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-glass);
@@ -317,6 +317,7 @@ body {
 /* Top Header Bar */
 .topbar {
     height: var(--topbar-height);
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1324,7 +1325,9 @@ body {
     canvas {
         max-height: 300px !important;
     }
-}/* ==========================================
+}
+
+/* ==========================================
    INBOX / MENSAGENS UI 
    ========================================== */
 .inbox-layout {
@@ -1361,15 +1364,18 @@ body {
     transition: all 0.2s;
     text-align: left;
 }
+
 .inbox-menu-item div {
     display: flex;
     align-items: center;
     gap: 10px;
 }
+
 .inbox-menu-item:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--text-main);
 }
+
 .inbox-menu-item.active {
     background: rgba(99, 102, 241, 0.15);
     color: var(--primary-light);
@@ -1412,7 +1418,7 @@ body {
 }
 
 .msg-item:hover {
-    background: rgba(255,255,255,0.02);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .msg-item.active {
@@ -1432,6 +1438,7 @@ body {
     font-size: 0.85rem;
     color: var(--text-muted);
 }
+
 .msg-subject {
     font-size: 1rem;
     color: var(--text-main);
@@ -1440,6 +1447,7 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .msg-preview {
     font-size: 0.85rem;
     color: var(--text-muted);
@@ -1474,6 +1482,7 @@ body {
     padding: 2rem;
     border-bottom: 1px solid var(--border-glass);
 }
+
 .reader-header h2 {
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
@@ -1511,7 +1520,7 @@ body {
     line-height: 1.7;
     color: #e2e8f0;
     font-size: 0.95rem;
-    background: rgba(255,255,255,0.01);
+    background: rgba(255, 255, 255, 0.01);
 }
 
 /* ==========================================
@@ -1533,10 +1542,12 @@ body {
         box-shadow: var(--shadow-glass);
         transform: translateX(-100%);
     }
+
     .sidebar.mobile-open {
         transform: translateX(0);
         width: var(--sidebar-width);
     }
+
     .main-content {
         width: 100%;
     }
@@ -1549,6 +1560,7 @@ body {
         grid-template-columns: 1fr;
         height: auto;
     }
+
     .inbox-reading-pane {
         min-height: 500px;
     }
