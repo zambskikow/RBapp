@@ -189,9 +189,10 @@ def get_clientes():
 @app.post("/api/clientes")
 def create_cliente(cliente: ClienteCreate):
     try:
-        data = cliente.model_dump()
+        data = {k: (v if v != "" else None) for k, v in cliente.model_dump().items()}
         response = supabase.table("clientes").insert(data).execute()
         return response.data
+
     except Exception as e:
 
         print(f"Erro ao criar cliente: {e}")
@@ -202,9 +203,10 @@ def create_cliente(cliente: ClienteCreate):
 @app.put("/api/clientes/{cliente_id}")
 def update_cliente(cliente_id: int, updates: ClienteUpdate):
     try:
-        data = updates.model_dump(exclude_unset=True)
+        data = {k: (v if v != "" else None) for k, v in updates.model_dump(exclude_unset=True).items()}
         response = supabase.table("clientes").update(data).eq("id", cliente_id).execute()
         return response.data
+
     except Exception as e:
 
         print(f"Erro ao atualizar cliente {cliente_id}: {e}")
