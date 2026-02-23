@@ -881,7 +881,7 @@ window.Store = {
     },
 
     async deleteMensagem(id) {
-        const idx = db.mensagens.findIndex(m => m.id === id);
+        const idx = db.mensagens.findIndex(m => m.id == id);
         if (idx !== -1) {
             const m = db.mensagens[idx];
             db.mensagens.splice(idx, 1);
@@ -905,6 +905,14 @@ window.Store = {
 
     getUnreadCount(usuario) {
         return db.mensagens.filter(m => m.destinatario === usuario && !m.lida).length;
+    },
+
+    getUnreadInboxCount(usuario) {
+        return db.mensagens.filter(m => m.destinatario === usuario && !m.lida && m.remetente !== 'Sistema').length;
+    },
+
+    getUnreadSystemCount(usuario) {
+        return db.mensagens.filter(m => m.destinatario === usuario && !m.lida && m.remetente === 'Sistema').length;
     },
 
     async markMensagemLida(id) {

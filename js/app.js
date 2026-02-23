@@ -2141,26 +2141,43 @@ let currentLoadedMessageId = null;
 function updateMensagensBadges() {
     if (!LOGGED_USER) return;
 
-    const unreadCount = Store.getUnreadCount(LOGGED_USER.nome);
-    const badges = document.querySelectorAll('.badge');
+    const unreadTotal = Store.getUnreadCount(LOGGED_USER.nome);
+    const unreadInbox = Store.getUnreadInboxCount(LOGGED_USER.nome);
+    const unreadSystem = Store.getUnreadSystemCount(LOGGED_USER.nome);
 
+    // Global Topbar Badge
+    const badges = document.querySelectorAll('.badge');
     badges.forEach(b => {
-        if (unreadCount > 0) {
-            b.textContent = unreadCount;
-            b.style.display = 'flex';
-        } else {
-            b.style.display = 'none';
+        // Only update the global topbar notification badge here
+        if (b.parentElement.id === 'btn-notification') {
+            if (unreadTotal > 0) {
+                b.textContent = unreadTotal;
+                b.style.display = 'flex';
+            } else {
+                b.style.display = 'none';
+            }
         }
     });
 
-    // Sidebar Inbox Badge (specific element, if it exists)
+    // Sidebar Inbox Badge (Caixa de Entrada)
     const inboxBadge = document.getElementById('inbox-unread-badge');
     if (inboxBadge) {
-        if (unreadCount > 0) {
+        if (unreadInbox > 0) {
             inboxBadge.style.display = 'inline-block';
-            inboxBadge.textContent = unreadCount;
+            inboxBadge.textContent = unreadInbox;
         } else {
             inboxBadge.style.display = 'none';
+        }
+    }
+
+    // Sidebar System Badge (Alertas do Sistema)
+    const systemBadge = document.getElementById('system-unread-badge');
+    if (systemBadge) {
+        if (unreadSystem > 0) {
+            systemBadge.style.display = 'inline-block';
+            systemBadge.textContent = unreadSystem;
+        } else {
+            systemBadge.style.display = 'none';
         }
     }
 }
@@ -2263,7 +2280,7 @@ function renderMensagens() {
 }
 
 function loadMessageIntoReader(id) {
-    const msg = Store.getData().mensagens.find(m => m.id === id);
+    const msg = Store.getData().mensagens.find(m => m.id == id); // Changed to loose comparison as per instruction
     if (!msg) return;
 
     currentLoadedMessageId = id;
@@ -2364,7 +2381,7 @@ function closeNovaMensagemModal() {
 async function handleSendMensagem(e) {
     e.preventDefault();
     const dest = document.getElementById('msg-destinatario').value;
-    const assunto = document.getElementById('msg-assunto').value;
+    const assunto = document.getElementById('msg-assunto').value || 'Sem Assunto';
     const texto = document.getElementById('msg-texto').value;
 
     await Store.sendMensagem(LOGGED_USER.nome, dest, texto, assunto);
