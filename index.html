@@ -301,7 +301,7 @@
                 <header class="section-header">
                     <div>
                         <h1>Meu Desempenho</h1>
-                        <p class="subtitle">Acompanhe suas metas e produtividade individual</p>
+                        <p class="subtitle">Análise avançada de meta e produtividade individual</p>
                     </div>
                     <div class="header-actions" style="display:flex; gap:0.5rem; align-items:center;">
                         <select id="meu-competencia-filter" class="glass-select" style="min-width: 140px;">
@@ -312,48 +312,71 @@
                     </div>
                 </header>
 
-                <div class="glass-card" style="padding: 1rem; margin-bottom: 2rem;">
-                    <h4
-                        style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 1px;">
-                        Metas Individuais</h4>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem;">
-                        <div class="kpi-card"
-                            style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon"><i class="fa-solid fa-bullseye"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-meu-total" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Total Tarefas</h3>
-                            </div>
+                <!-- Expanded KPI Cards -->
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="glass-card kpi-card" style="background: rgba(255,255,255,0.03); border: none;">
+                        <div class="kpi-icon"><i class="fa-solid fa-bullseye"></i></div>
+                        <div class="kpi-data">
+                            <h3 style="font-size: 0.6rem;">Total Tarefas</h3>
+                            <p class="kpi-value" id="kpi-meu-total">0</p>
                         </div>
-                        <div class="kpi-card status-success"
-                            style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon"><i class="fa-solid fa-trophy"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-meu-done" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Concluídas</h3>
-                            </div>
+                    </div>
+                    <div class="glass-card kpi-card status-success"
+                        style="background: rgba(16, 185, 129, 0.05); border: none;">
+                        <div class="kpi-icon"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="kpi-data">
+                            <h3 style="font-size: 0.6rem;">Concluídas</h3>
+                            <p class="kpi-value" id="kpi-meu-done">0</p>
                         </div>
-                        <div class="kpi-card status-warning"
-                            style="background: rgba(245, 158, 11, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-meu-warning" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Vencendo Hoje</h3>
-                            </div>
+                    </div>
+                    <div class="glass-card kpi-card status-info"
+                        style="background: rgba(99, 102, 241, 0.08); border: 1px solid var(--primary-light);">
+                        <div class="kpi-icon"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="kpi-data">
+                            <h3 style="font-size: 0.6rem;">Eficiência</h3>
+                            <p class="kpi-value" id="kpi-meu-score">0%</p>
                         </div>
-                        <div class="kpi-card status-danger"
-                            style="background: rgba(239, 68, 68, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon"><i class="fa-solid fa-skull-crossbones"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-meu-late" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Atrasadas</h3>
-                            </div>
+                    </div>
+                    <div class="glass-card kpi-card status-warning"
+                        style="background: rgba(245, 158, 11, 0.05); border: none;">
+                        <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+                        <div class="kpi-data">
+                            <h3 style="font-size: 0.6rem;">Vencendo Hoje</h3>
+                            <p class="kpi-value" id="kpi-meu-warning">0</p>
+                        </div>
+                    </div>
+                    <div class="glass-card kpi-card status-danger"
+                        style="background: rgba(239, 68, 68, 0.05); border: none;">
+                        <div class="kpi-icon"><i class="fa-solid fa-skull-crossbones"></i></div>
+                        <div class="kpi-data">
+                            <h3 style="font-size: 0.6rem;">Atrasadas</h3>
+                            <p class="kpi-value" id="kpi-meu-late">0</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="charts-grid" style="margin-top: 1.5rem;">
-                    <div class="glass-card table-container" style="flex: 1;">
+                <div class="charts-grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                    <!-- Gráfico Principal: Saúde das Entregas (Rosca) -->
+                    <div class="glass-card chart-container">
+                        <h3><i class="fa-solid fa-heart-pulse" style="color:var(--danger)"></i> Saúde das minhas
+                            Entregas</h3>
+                        <div class="chart-wrapper" style="height: 250px;">
+                            <canvas id="meuSemaforoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico Novo: Mix por Setor (Radar) -->
+                    <div class="glass-card chart-container">
+                        <h3><i class="fa-solid fa-chart-pie" style="color:var(--accent)"></i> Atuação por Setor</h3>
+                        <div class="chart-wrapper" style="height: 250px;">
+                            <canvas id="meuRadarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid" style="grid-template-columns: 1.5fr 1fr; gap: 1.5rem;">
+                    <!-- Lista de Prioridades -->
+                    <div class="glass-card table-container">
                         <div class="table-header-action">
                             <h3>Minhas Próximas Entregas (Prioridade)</h3>
                         </div>
@@ -371,6 +394,14 @@
                                     <!-- Populated by JS -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico Novo: Curva Semanal -->
+                    <div class="glass-card chart-container">
+                        <h3><i class="fa-solid fa-chart-line" style="color:var(--success)"></i> Entrega Semanal</h3>
+                        <div class="chart-wrapper" style="height: 200px;">
+                            <canvas id="meuWeeklyChart"></canvas>
                         </div>
                     </div>
                 </div>

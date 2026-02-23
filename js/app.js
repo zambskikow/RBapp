@@ -959,71 +959,176 @@ function renderSectorLoadChart(execsAll) {
 // ==========================================
 // VIEW: Meu Desempenho
 // ==========================================
-let currentMeuSemaforoChart = null;
+// Global chart instances for individual performance
+let meuSemaforoChartInst = null;
+let meuRadarChartInst = null;
+let meuWeeklyChartInst = null;
 
 function renderMeuDesempenho() {
     if (!LOGGED_USER) return;
+
+    // Personalizar título com nome do usuário para reforçar a identidade visual do painel individual
+    const headerTitle = document.querySelector('#view-meu-desempenho .section-header h1');
+    if (headerTitle) {
+        headerTitle.innerHTML = `Meu Desempenho <span style="font-weight: 300; opacity: 0.6; font-size: 1.1rem; margin-left: 10px;">| ${LOGGED_USER.nome}</span>`;
+    }
 
     let myExecs = Store.getExecucoesWithDetails(LOGGED_USER.nome);
     if (currentCompetencia) {
         myExecs = myExecs.filter(e => e.competencia === currentCompetencia);
     }
 
-    const kpis = {
-        total: myExecs.length,
-        concluidas: myExecs.filter(e => e.feito).length,
-        vencendo: myExecs.filter(e => !e.feito && e.semaforo === 'yellow').length,
-        atrasadas: myExecs.filter(e => !e.feito && e.semaforo === 'red').length
-    };
+    // Cálculos de KPIs
+    const total = myExecs.length;
+    const concluidas = myExecs.filter(e => e.feito).length;
+    const vencendo = myExecs.filter(e => !e.feito && e.semaforo === 'yellow').length;
+    const atrasadas = myExecs.filter(e => !e.feito && e.semaforo === 'red').length;
 
-    animateValue('kpi-meu-total', parseInt(document.getElementById('kpi-meu-total').innerText) || 0, kpis.total, 800);
-    animateValue('kpi-meu-done', parseInt(document.getElementById('kpi-meu-done').innerText) || 0, kpis.concluidas, 800);
-    animateValue('kpi-meu-warning', parseInt(document.getElementById('kpi-meu-warning').innerText) || 0, kpis.vencendo, 800);
-    animateValue('kpi-meu-late', parseInt(document.getElementById('kpi-meu-late').innerText) || 0, kpis.atrasadas, 800);
+    // Novo KPI: Score de Eficiência
+    // Consideramos eficientes as tarefas concluídas (feito === true)
+    // Se quisermos ser mais rigorosos, poderíamos checar se foi feito antes ou no prazo.
+    const scoreEficiencia = total > 0 ? Math.round((concluidas / total) * 100) : 0;
 
-    // Chart
-    const ctx = document.getElementById('meuSemaforoChart');
-    if (currentMeuSemaforoChart) {
-        currentMeuSemaforoChart.destroy();
-    }
+    animateValue('kpi-meu-total', parseInt(document.getElementById('kpi-meu-total').innerText) || 0, total, 800);
+    animateValue('kpi-meu-done', parseInt(document.getElementById('kpi-meu-done').innerText) || 0, concluidas, 800);
+    animateValue('kpi-meu-warning', parseInt(document.getElementById('kpi-meu-warning').innerText) || 0, vencendo, 800);
+    animateValue('kpi-meu-late', parseInt(document.getElementById('kpi-meu-late').innerText) || 0, atrasadas, 800);
+    animateValue('kpi-meu-score', parseInt(document.getElementById('kpi-meu-score').innerText) || 0, scoreEficiencia, 800);
+    document.getElementById('kpi-meu-score').innerHTML = scoreEficiencia + '<span style="font-size:0.8rem; margin-left:2px;">%</span>';
 
-    const andamento = kpis.total - kpis.concluidas - kpis.vencendo - kpis.atrasadas;
-    const data = [kpis.concluidas, andamento > 0 ? andamento : 0, kpis.vencendo, kpis.atrasadas];
-    if (data.every(d => d === 0)) data[0] = 0.1;
+    // 1. Gráfico de Saúde (Doughnut)
+    const ctxSemaforo = document.getElementById('meuSemaforoChart');
+    if (meuSemaforoChartInst) meuSemaforoChartInst.destroy();
 
-    currentMeuSemaforoChart = new Chart(ctx, {
+    const noPrazo = total - concluidas - vencendo - atrasadas;
+    const semaforoData = [concluidas, noPrazo > 0 ? noPrazo : 0, vencendo, atrasadas];
+    if (semaforoData.every(d => d === 0)) semaforoData[0] = 0.1;
+
+    meuSemaforoChartInst = new Chart(ctxSemaforo, {
         type: 'doughnut',
         data: {
             labels: ['Concluída', 'No Prazo', 'Vencendo Hoje', 'Atrasada'],
             datasets: [{
-                data: data,
+                data: semaforoData,
                 backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
                 borderWidth: 0,
-                hoverOffset: 6
+                hoverOffset: 10
             }]
         },
         options: {
-            cutout: '70%',
+            cutout: '75%',
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { color: '#F8FAFC', padding: 15, font: { family: 'Inter', size: 12 } } },
-                datalabels: {
-                    color: '#fff',
-                    font: { weight: 'bold', size: 12 },
-                    formatter: (value) => value > 0 ? Math.round(value) : ''
-                }
+                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 11 } } },
+                datalabels: { display: false }
             }
         }
     });
 
-    // Minhas Próximas Entregas (Prioridade)
+    // 2. Gráfico de Setores (Radar)
+    const ctxRadar = document.getElementById('meuRadarChart');
+    if (meuRadarChartInst) meuRadarChartInst.destroy();
+
+    const setoresMap = {};
+    myExecs.forEach(e => {
+        const s = e.setor || "Geral";
+        setoresMap[s] = (setoresMap[s] || 0) + 1;
+    });
+
+    const radarLabels = Object.keys(setoresMap);
+    const radarValues = Object.values(setoresMap);
+
+    meuRadarChartInst = new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+            labels: radarLabels,
+            datasets: [{
+                label: 'Carga por Setor',
+                data: radarValues,
+                fill: true,
+                backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                borderColor: '#8B5CF6',
+                pointBackgroundColor: '#8B5CF6',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#8B5CF6'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255,255,255,0.1)' },
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    pointLabels: { color: '#94A3B8', font: { size: 10 } },
+                    ticks: { display: false, stepSize: 1 }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                datalabels: { display: false }
+            }
+        }
+    });
+
+    // 3. Gráfico Semanal (Line)
+    const ctxWeekly = document.getElementById('meuWeeklyChart');
+    if (meuWeeklyChartInst) meuWeeklyChartInst.destroy();
+
+    // Mock/Cálculo de produtividade dos últimos 7 dias
+    const last7Days = [];
+    const last7DaysLabels = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        last7DaysLabels.push(d.toLocaleDateString('pt-BR', { weekday: 'short' }));
+
+        const dStr = d.toISOString().split('T')[0];
+        const count = myExecs.filter(e => e.feito && e.feitoEm === dStr).length;
+        last7Days.push(count);
+    }
+
+    meuWeeklyChartInst = new Chart(ctxWeekly, {
+        type: 'line',
+        data: {
+            labels: last7DaysLabels,
+            datasets: [{
+                label: 'Entregas',
+                data: last7Days,
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: '#10B981'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10 } } },
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', font: { size: 10 }, stepSize: 1 } }
+            },
+            plugins: {
+                legend: { display: false },
+                datalabels: { display: false }
+            }
+        }
+    });
+
+    // 4. Minhas Próximas Entregas (Prioridade)
     const pending = myExecs.filter(e => !e.feito).sort((a, b) => new Date(a.diaPrazo) - new Date(b.diaPrazo)).slice(0, 10);
     const tbody = document.querySelector('#minhas-proximas-table tbody');
     tbody.innerHTML = '';
 
     if (pending.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--success);"><i class="fa-solid fa-hands-clapping fa-2x mb-3"></i><br/>Todas as entregas em dia!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2.5rem; color: var(--success);">
+            <i class="fa-solid fa-circle-check fa-3x" style="margin-bottom:1rem; opacity:0.5;"></i><br/>
+            Excelente! Você não tem pendências para este período.
+        </td></tr>`;
     } else {
         pending.forEach(p => {
             const tr = document.createElement('tr');
@@ -1031,7 +1136,7 @@ function renderMeuDesempenho() {
                 <td><strong>${p.clientName}</strong></td>
                 <td><span class="resp-tag">${p.rotina}</span></td>
                 <td>${formatDate(p.diaPrazo)}</td>
-                <td><span class="status-badge ${p.semaforo === 'red' ? 'atrasado' : (p.semaforo === 'yellow' ? 'vencendo' : 'noprazo')}">${p.statusAuto}</span></td>
+                <td><span class="status-badge ${p.semaforo === 'red' ? 'atrasado' : (p.semaforo === 'yellow' ? 'hoje' : 'noprazo')}">${p.statusAuto}</span></td>
             `;
             tbody.appendChild(tr);
         });
