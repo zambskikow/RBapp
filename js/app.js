@@ -2981,7 +2981,7 @@ function renderAuditoria() {
 
         const d = new Date(log.timestamp);
 
-        const formatData = d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR');
+        const formatData = d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + ' às ' + d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 
 
 

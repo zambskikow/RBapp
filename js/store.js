@@ -240,7 +240,9 @@ window.Store = {
                 })
             });
             // Also add locally for instant UI update
-            db.logs.push({ timestamp: new Date().toISOString(), user_name: username, permissao, action, details });
+            const now = new Date();
+            const timestamp = now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+            db.logs.push({ timestamp, user_name: username, permissao, action, details });
         } catch (e) {
             console.error(e);
         }
