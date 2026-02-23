@@ -190,9 +190,10 @@ def get_clientes():
 def create_cliente(cliente: ClienteCreate):
     try:
         data = cliente.model_dump()
-        response = supabase.table("clientes").insert(data).select().execute()
+        response = supabase.table("clientes").insert(data).execute()
         return response.data
     except Exception as e:
+
         print(f"Erro ao criar cliente: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -202,9 +203,10 @@ def create_cliente(cliente: ClienteCreate):
 def update_cliente(cliente_id: int, updates: ClienteUpdate):
     try:
         data = updates.model_dump(exclude_unset=True)
-        response = supabase.table("clientes").update(data).eq("id", cliente_id).select().execute()
+        response = supabase.table("clientes").update(data).eq("id", cliente_id).execute()
         return response.data
     except Exception as e:
+
         print(f"Erro ao atualizar cliente {cliente_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
