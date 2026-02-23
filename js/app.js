@@ -12,6 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let currentSemaforoChart = null;
 
+// Register DataLabels plugin globally
+if (typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+}
+
 let currentOperacionalUser = 'All';
 
 let currentCompetencia = '2026-02';
@@ -825,7 +830,12 @@ function renderHealthChart(kpis) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 } } }
+                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 } } },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 12 },
+                    formatter: (value) => value > 0 ? value : ''
+                }
             }
         }
     });
@@ -857,7 +867,14 @@ function renderTeamProductivityChart(teamStats) {
                 y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', font: { size: 10 } } }
             },
             plugins: {
-                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 } } }
+                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 } } },
+                datalabels: {
+                    color: '#fff',
+                    anchor: 'center',
+                    align: 'center',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => value > 0 ? value : ''
+                }
             }
         }
     });
@@ -896,7 +913,15 @@ function renderRegimeMixChart(execsAll) {
                 r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } }
             },
             plugins: {
-                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 } } }
+                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 } } },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => value > 0 ? value : '',
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    borderRadius: 4,
+                    padding: 4
+                }
             }
         }
     });
@@ -953,7 +978,12 @@ function renderMeuDesempenho() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { color: '#F8FAFC', padding: 15, font: { family: 'Inter', size: 12 } } }
+                legend: { position: 'bottom', labels: { color: '#F8FAFC', padding: 15, font: { family: 'Inter', size: 12 } } },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 12 },
+                    formatter: (value) => value > 0 ? Math.round(value) : ''
+                }
             }
         }
     });
