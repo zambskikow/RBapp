@@ -1112,39 +1112,40 @@ function renderClientes() {
 
         const isSimples = c.regime === 'Simples Nacional' || c.regime === 'MEI';
 
-        let tagsHtml = '';
-        if (c.rotinasSelecionadas) {
-            c.rotinasSelecionadas.forEach(rotId => {
-                const rName = Store.getData().rotinasBase.find(r => r.id === rotId)?.nome || 'Rotina';
-                tagsHtml += `<span class="rotina-mini-tag">${rName}</span>`;
-            });
-        }
+        // Coluna de Status com Toggle
+        const statusToggleHtml = `
+            <div style="display: flex; align-items: center; justify-content: center;">
+                <label class="custom-toggle">
+                    <input type="checkbox" onchange="toggleClientStatus(${c.id}, this.checked)" ${c.ativo !== false ? 'checked' : ''}>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        `;
 
         tr.innerHTML = `
             <td style="text-align: center;">
                 <input type="checkbox" class="client-checkbox custom-checkbox" value="${c.id}">
             </td>
-            <td><strong>${c.codigo}</strong></td>
-            <td>${c.razaoSocial}</td>
-            <td>${c.cnpj}</td>
-            <td>${c.regime}</td>
-            <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${c.responsavelFiscal}</span></td>
-            <td><div style="display:flex; gap:4px; flex-wrap:wrap; max-width:200px;">${tagsHtml}</div></td>
-            <td style="white-space: nowrap;">
-                ${isOperacional ? '' : `
-                <button class="btn btn-small btn-secondary btn-delete-single-client" data-id="${c.id}" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                    <i class="fa-solid fa-trash"></i> Excluir
-                </button>
-                `}
+            <td onclick="openClientDetail(${c.id})" style="cursor: pointer; color: var(--primary-light); font-weight: 700;">
+                ${c.codigo || 'S/C'}
             </td>
-
+            <td onclick="openClientDetail(${c.id})" style="cursor: pointer;">
+                <span style="font-weight: 600; color: var(--text-main); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,0.1);">${c.razaoSocial}</span>
+            </td>
+            <td style="font-size: 0.8rem; color: var(--text-muted); opacity: 0.8;">${c.cnpj}</td>
+            <td><span class="status-badge noprazo" style="font-size: 0.75rem;">${c.regime}</span></td>
+            <td><span class="resp-tag" style="font-size: 0.75rem;"><i class="fa-solid fa-user-tie"></i> ${c.responsavelFiscal || 'N/T'}</span></td>
+            <td>${statusToggleHtml}</td>
+            <td style="white-space: nowrap;">
+                <div class="btn-action-container">
+                    ${isOperacional ? '' : `
+                    <button class="btn btn-small btn-secondary btn-delete-single-client" data-id="${c.id}" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    `}
+                </div>
+            </td>
         `;
-
-        // Clique na linha abre o painel de detalhes
-        tr.addEventListener('click', (e) => {
-            if (e.target.closest('.group-actions') || e.target.closest('.client-checkbox') || e.target.closest('button')) return;
-            openClientDetail(c.id);
-        });
 
         tbody.appendChild(tr);
     });
@@ -1311,6 +1312,18 @@ function openClientDetail(id = null) {
         });
     }
 
+    // Status Toggle Setup
+    const statusContainer = document.getElementById('client-status-container');
+    const statusToggle = document.getElementById('client-ativo');
+    const statusLabel = document.getElementById('client-status-label');
+
+    if (statusToggle) {
+        statusToggle.onchange = () => {
+            statusLabel.textContent = statusToggle.checked ? 'Ativo' : 'Inativo';
+            statusLabel.style.color = statusToggle.checked ? '#10B981' : '#EF4444';
+        };
+    }
+
     if (id) {
         const cliente = Store.getData().clientes.find(c => c.id === id);
         if (cliente) {
@@ -1330,6 +1343,13 @@ function openClientDetail(id = null) {
             document.getElementById('client-im').value = cliente.im || '';
             document.getElementById('client-abertura').value = cliente.dataAbertura || '';
             document.getElementById('client-tipo').value = cliente.tipoEmpresa || '';
+
+            // Status
+            if (statusContainer) statusContainer.style.display = 'flex';
+            if (statusToggle) {
+                statusToggle.checked = cliente.ativo !== false;
+                statusToggle.onchange(); // Trigger label update
+            }
 
             // Contato
             document.getElementById('client-contato-nome').value = cliente.contatoNome || '';
@@ -1358,10 +1378,15 @@ function openClientDetail(id = null) {
             }
         }
     } else {
+        const title = document.getElementById('client-panel-title');
+        const headerName = document.getElementById('client-header-name');
+        const submitBtn = document.getElementById('client-modal-submit-btn');
+
         title.innerHTML = 'Novo Cliente';
         headerName.textContent = 'um novo cliente';
         submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar Novo Cliente';
         document.getElementById('client-id').value = '';
+        if (statusContainer) statusContainer.style.display = 'none';
     }
 }
 
@@ -1399,7 +1424,8 @@ async function handleAddClient(e) {
         senhaDominio: document.getElementById('senha-dominio').value,
         outrosAcessos: document.getElementById('client-outros-acessos').value,
         driveLink: document.getElementById('client-drive').value,
-        rotinasSelecionadasIds: Array.from(document.querySelectorAll('.client-rotina-checkbox:checked')).map(cb => parseInt(cb.value))
+        rotinasSelecionadasIds: Array.from(document.querySelectorAll('.client-rotina-checkbox:checked')).map(cb => parseInt(cb.value)),
+        ativo: document.getElementById('client-ativo') ? document.getElementById('client-ativo').checked : true
     };
 
     if (id) {
@@ -1412,6 +1438,24 @@ async function handleAddClient(e) {
     renderOperacional();
     renderDashboard();
     closeClientDetail();
+}
+
+/**
+ * Atalho para alternar status do cliente diretamente da lista
+ */
+async function toggleClientStatus(id, newStatus) {
+    try {
+        const cliente = Store.getData().clientes.find(c => c.id === id);
+        if (cliente) {
+            await Store.editClient(id, { ...cliente, ativo: newStatus });
+            showFeedbackToast(`Status de ${cliente.razaoSocial} alterado para ${newStatus ? 'Ativo' : 'Inativo'}.`, 'success');
+            // Refresh counts and dashboard if needed
+            renderDashboard();
+        }
+    } catch (e) {
+        console.error("Erro ao alternar status:", e);
+        showFeedbackToast("Erro ao atualizar status.", "error");
+    }
 }
 
 // ==========================================

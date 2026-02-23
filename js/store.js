@@ -100,7 +100,8 @@ window.Store = {
                 senhaPref: c.senha_pref || "",
                 loginDominio: c.login_dominio || "",
                 senhaDominio: c.senha_dominio || "",
-                outrosAcessos: c.outros_acessos || ""
+                outrosAcessos: c.outros_acessos || "",
+                ativo: c.ativo !== false // Default true
             }));
 
             db.execucoes = db.execucoes.map(e => ({
@@ -430,7 +431,8 @@ window.Store = {
                 senha_pref: senhaPref,
                 login_dominio: loginDominio,
                 senha_dominio: senhaDominio,
-                outros_acessos: outrosAcessos
+                outros_acessos: outrosAcessos,
+                ativo: clientData.ativo !== false
             })
         });
 
@@ -441,7 +443,8 @@ window.Store = {
                 id: newClient.id, razaoSocial, cnpj, codigo, regime,
                 responsavelFiscal, rotinasSelecionadas: rotinasSelecionadasIds, driveLink,
                 ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
-                loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos
+                loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos,
+                ativo: newClient.ativo !== false
             };
             db.clientes.push(clientObj);
             await this.engineRotinas(db.clientes[db.clientes.length - 1]);
@@ -604,7 +607,8 @@ window.Store = {
             Object.assign(c, {
                 razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadas: rotinasSelecionadasIds, driveLink,
                 codigo, ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
-                loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos
+                loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos,
+                ativo: clientData.ativo
             });
 
             // Handle Removals
@@ -650,7 +654,8 @@ window.Store = {
                         senha_pref: senhaPref,
                         login_dominio: loginDominio,
                         senha_dominio: senhaDominio,
-                        outros_acessos: outrosAcessos
+                        outros_acessos: outrosAcessos,
+                        ativo: clientData.ativo
                     })
                 });
                 if (!res.ok) {

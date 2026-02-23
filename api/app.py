@@ -52,6 +52,7 @@ class ClienteCreate(BaseModel):
     login_dominio: str = ""
     senha_dominio: str = ""
     outros_acessos: str = ""
+    ativo: bool = True
 
 
 class ClienteUpdate(BaseModel):
@@ -78,6 +79,7 @@ class ClienteUpdate(BaseModel):
     login_dominio: str | None = None
     senha_dominio: str | None = None
     outros_acessos: str | None = None
+    ativo: bool | None = None
 
 
 class SetorCreate(BaseModel):
