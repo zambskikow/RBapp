@@ -448,7 +448,13 @@ window.Store = {
             this.sendMensagem("Sistema", responsavelFiscal, `Novo cliente cadastrado: ${razaoSocial}.`);
             this.registerLog("Cadastrou Cliente", razaoSocial);
             return clientObj;
+        } else {
+            const errorMsg = await res.text();
+            console.error('Erro API addClient:', res.status, errorMsg);
+            alert(`Erro ao cadastrar cliente (${res.status}). Verifique se a tabela no Supabase tem todas as colunas necessárias.`);
+            return null;
         }
+
     },
 
     async addFuncionario(nome, setor, permissao, senha, ativo = true) {
@@ -646,7 +652,12 @@ window.Store = {
                         outros_acessos: outrosAcessos
                     })
                 });
-                if (!res.ok) console.warn('API PUT cliente falhou.', res.status);
+                if (!res.ok) {
+                    const errorMsg = await res.text();
+                    console.warn('API PUT cliente falhou.', res.status, errorMsg);
+                    alert(`Erro ao salvar alterações do cliente (${res.status}). Isso geralmente ocorre se faltarem colunas no banco de dados Supabase.`);
+                }
+
             } catch (e) {
                 console.error("Erro ao editar cliente via API:", e);
             }

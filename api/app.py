@@ -189,13 +189,15 @@ def get_clientes():
 @app.post("/api/clientes")
 def create_cliente(cliente: ClienteCreate):
     data = cliente.model_dump()
-    response = supabase.table("clientes").insert(data).execute()
+    response = supabase.table("clientes").insert(data).select().execute()
     return response.data
+
 
 @app.put("/api/clientes/{cliente_id}")
 def update_cliente(cliente_id: int, updates: ClienteUpdate):
-    response = supabase.table("clientes").update(updates.model_dump(exclude_unset=True)).eq("id", cliente_id).execute()
+    response = supabase.table("clientes").update(updates.model_dump(exclude_unset=True)).eq("id", cliente_id).select().execute()
     return response.data
+
 
 @app.delete("/api/clientes/{cliente_id}")
 def delete_cliente(cliente_id: int):
