@@ -1798,11 +1798,13 @@ function updateMensagensBadges() {
     // Topbar
     const unreadCount = Store.getUnreadCount(LOGGED_USER.nome);
     const topbarBadge = document.getElementById('topbar-badge-msg');
-    if (unreadCount > 0) {
-        topbarBadge.style.display = 'inline-flex';
-        topbarBadge.textContent = unreadCount;
-    } else {
-        topbarBadge.style.display = 'none';
+    if (topbarBadge) {
+        if (unreadCount > 0) {
+            topbarBadge.style.display = 'inline-flex';
+            topbarBadge.textContent = unreadCount;
+        } else {
+            topbarBadge.style.display = 'none';
+        }
     }
 
     // Sidebar Inbox Badge
