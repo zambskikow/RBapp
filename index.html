@@ -123,24 +123,25 @@
             <!-- Dashboard View (Manager) -->
             <div id="view-dashboard" class="view-section active">
                 <header class="section-header">
-                    <div>
+                    <div class="section-title-group">
                         <h1>Visão Geral do Mês</h1>
-                        <p class="subtitle">Acompanhe a saúde das entregas fiscais</p>
+                        <p class="subtitle">Acompanhe a saúde das entregas fiscais de forma centralizada</p>
                     </div>
-                    <div class="header-actions" style="display:flex; gap:0.5rem; align-items:center;">
-                        <select id="dash-competencia-filter" class="glass-select" style="min-width: 130px;">
+                    <div class="header-actions" style="display:flex; gap:1rem; align-items:center;">
+                        <select id="dash-competencia-filter" class="glass-select" style="min-width: 150px;">
                             <!-- Populated dynamically -->
                         </select>
-                        <select id="dash-user-filter" class="glass-select" style="min-width: 130px;">
+                        <select id="dash-user-filter" class="glass-select" style="min-width: 150px;">
                             <option value="All">Todos Analistas</option>
                             <!-- Populated dynamically -->
                         </select>
-                        <select id="dash-client-filter" class="glass-select" style="min-width: 130px;">
+                        <select id="dash-client-filter" class="glass-select" style="min-width: 150px;">
                             <option value="All">Todos Clientes</option>
                             <!-- Populated dynamically -->
                         </select>
-                        <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i>
-                            Relatório</button>
+                        <button class="btn btn-secondary" onclick="window.print()" style="padding: 0.75rem 1.25rem;">
+                            <i class="fa-solid fa-print"></i> Relatório
+                        </button>
                     </div>
                 </header>
 
@@ -520,18 +521,17 @@
 
                 <!-- Client Detail Panel (Main Screen) -->
                 <div id="clientes-detail-panel" class="glass-card fade-in" style="display: none; padding: 2rem;">
-                    <header class="detail-panel-header">
-                        <div class="detail-header-info">
-                            <button class="btn btn-secondary" id="btn-back-clients-list" type="button"
-                                style="padding: 0.5rem 1rem;">
-                                <i class="fa-solid fa-arrow-left"></i> Voltar
-                            </button>
-                            <h2 id="modal-client-title"><i class="fa-solid fa-user-pen highlight-text"></i> Detalhes do
-                                Cliente</h2>
+                    <header class="detail-header">
+                        <div class="detail-title-group">
+                            <i class="fa-solid fa-user-gear"></i>
+                            <div>
+                                <h2 id="client-panel-title">Ficha do Cliente</h2>
+                                <p id="client-panel-subtitle">Gerencie as informações e acessos deste cliente</p>
+                            </div>
                         </div>
                         <div class="header-actions">
                             <button class="btn btn-primary" form="add-client-form" type="submit"
-                                id="client-modal-submit-btn" style="padding: 0.5rem 1.5rem; font-size: 1rem;">
+                                id="client-modal-submit-btn" style="padding: 0.8rem 2rem; border-radius: 50px;">
                                 <i class="fa-solid fa-save"></i> Salvar Alterações
                             </button>
                         </div>
@@ -638,34 +638,43 @@
 
                             <!-- Tab: Acessos -->
                             <div id="tab-acessos" class="tab-content">
-                                <div class="form-section-title"><i class="fa-solid fa-shield-halved"></i> Credenciais e Acessos</div>
+                                <div class="form-section-title"><i class="fa-solid fa-shield-halved"></i> Credenciais e
+                                    Acessos</div>
                                 <div class="access-grid">
                                     <div class="access-card ecac">
                                         <label>e-CAC (Federal)</label>
                                         <div class="access-inputs">
-                                            <input type="text" id="login-ecac" class="glass-input" placeholder="Código/CPF/CNPJ">
-                                            <input type="password" id="senha-ecac" class="glass-input" placeholder="Senha">
+                                            <input type="text" id="login-ecac" class="glass-input"
+                                                placeholder="Código/CPF/CNPJ">
+                                            <input type="password" id="senha-ecac" class="glass-input"
+                                                placeholder="Senha">
                                         </div>
                                     </div>
                                     <div class="access-card sefaz">
                                         <label>SEFAZ (Estadual)</label>
                                         <div class="access-inputs">
-                                            <input type="text" id="login-sefaz" class="glass-input" placeholder="Usuário">
-                                            <input type="password" id="senha-sefaz" class="glass-input" placeholder="Senha">
+                                            <input type="text" id="login-sefaz" class="glass-input"
+                                                placeholder="Usuário">
+                                            <input type="password" id="senha-sefaz" class="glass-input"
+                                                placeholder="Senha">
                                         </div>
                                     </div>
                                     <div class="access-card pref">
                                         <label>Prefeitura (Municipal)</label>
                                         <div class="access-inputs">
-                                            <input type="text" id="login-pref" class="glass-input" placeholder="Usuário">
-                                            <input type="password" id="senha-pref" class="glass-input" placeholder="Senha">
+                                            <input type="text" id="login-pref" class="glass-input"
+                                                placeholder="Usuário">
+                                            <input type="password" id="senha-pref" class="glass-input"
+                                                placeholder="Senha">
                                         </div>
                                     </div>
                                     <div class="access-card dominio">
                                         <label>Sistema Domínio</label>
                                         <div class="access-inputs">
-                                            <input type="text" id="login-dominio" class="glass-input" placeholder="Usuário">
-                                            <input type="password" id="senha-dominio" class="glass-input" placeholder="Senha">
+                                            <input type="text" id="login-dominio" class="glass-input"
+                                                placeholder="Usuário">
+                                            <input type="password" id="senha-dominio" class="glass-input"
+                                                placeholder="Senha">
                                         </div>
                                     </div>
                                 </div>
