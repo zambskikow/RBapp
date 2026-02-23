@@ -1112,12 +1112,13 @@ function renderClientes() {
 
         const isSimples = c.regime === 'Simples Nacional' || c.regime === 'MEI';
 
-        // Coluna de Status com Toggle
+        // Coluna de Status com Toggle Compacto
         const statusToggleHtml = `
             <div style="display: flex; align-items: center; justify-content: center;">
-                <label class="custom-toggle">
+                <label class="custom-toggle" title="Alterar status de ${c.razaoSocial}">
                     <input type="checkbox" onchange="toggleClientStatus(${c.id}, this.checked)" ${c.ativo !== false ? 'checked' : ''}>
                     <span class="toggle-slider"></span>
+                    <span class="toggle-label" style="font-size: 0.7rem;">Ativo</span>
                 </label>
             </div>
         `;
@@ -1126,20 +1127,20 @@ function renderClientes() {
             <td style="text-align: center;">
                 <input type="checkbox" class="client-checkbox custom-checkbox" value="${c.id}">
             </td>
-            <td onclick="openClientDetail(${c.id})" style="cursor: pointer; color: var(--primary-light); font-weight: 700;">
+            <td class="clickable-cell" onclick="openClientDetail(${c.id})" style="cursor: pointer; color: var(--primary-light); font-weight: 700; width: 80px;">
                 ${c.codigo || 'S/C'}
             </td>
-            <td onclick="openClientDetail(${c.id})" style="cursor: pointer;">
-                <span style="font-weight: 600; color: var(--text-main); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,0.1);">${c.razaoSocial}</span>
+            <td class="clickable-cell" onclick="openClientDetail(${c.id})" style="cursor: pointer;">
+                <span style="font-weight: 600; color: var(--text-main); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,0.1); font-size: 0.9rem;">${c.razaoSocial}</span>
             </td>
-            <td style="font-size: 0.8rem; color: var(--text-muted); opacity: 0.8;">${c.cnpj}</td>
-            <td><span class="status-badge noprazo" style="font-size: 0.75rem;">${c.regime}</span></td>
-            <td><span class="resp-tag" style="font-size: 0.75rem;"><i class="fa-solid fa-user-tie"></i> ${c.responsavelFiscal || 'N/T'}</span></td>
-            <td>${statusToggleHtml}</td>
-            <td style="white-space: nowrap;">
+            <td style="font-size: 0.8rem; color: var(--text-muted); opacity: 0.7; width: 140px;">${c.cnpj}</td>
+            <td><span class="status-badge noprazo" style="font-size: 0.7rem; padding: 2px 8px;">${c.regime}</span></td>
+            <td><span class="resp-tag" style="font-size: 0.75rem; padding: 2px 8px;"><i class="fa-solid fa-user-tie"></i> ${c.responsavelFiscal || 'N/T'}</span></td>
+            <td style="width: 110px;">${statusToggleHtml}</td>
+            <td style="white-space: nowrap; width: 60px;">
                 <div class="btn-action-container">
                     ${isOperacional ? '' : `
-                    <button class="btn btn-small btn-secondary btn-delete-single-client" data-id="${c.id}" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                    <button class="btn btn-small btn-secondary btn-delete-single-client" data-id="${c.id}" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                     `}

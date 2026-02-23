@@ -736,19 +736,19 @@ body {
 
 .data-table th {
     text-align: left;
-    padding: 0 1rem 0.75rem;
+    padding: 0 1rem 0.6rem;
     color: var(--text-muted);
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .data-table td {
-    padding: 1.1rem 1rem;
+    padding: 0.7rem 1rem;
     background: rgba(255, 255, 255, 0.02);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: all 0.2s ease;
     border-top: 1px solid transparent;
     border-bottom: 1px solid transparent;
@@ -784,6 +784,15 @@ body {
 
 .data-table tbody tr:hover td:last-child {
     border-right: 1px solid var(--border-glass);
+}
+
+.clickable-cell:hover {
+    color: var(--primary-light) !important;
+    text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+
+.clickable-cell:hover span {
+    text-decoration-color: var(--primary-light) !important;
 }
 
 /* Orbs and Markers */
@@ -1088,11 +1097,12 @@ body {
 }
 
 .custom-toggle {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     cursor: pointer;
     user-select: none;
+    position: relative;
 }
 
 .custom-toggle input {
@@ -1101,10 +1111,10 @@ body {
 
 .toggle-slider {
     position: relative;
-    width: 50px;
-    height: 26px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 30px;
+    width: 40px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
     border: 1px solid var(--border-glass);
     transition: 0.3s;
 }
@@ -1113,28 +1123,33 @@ body {
     content: '';
     position: absolute;
     left: 3px;
-    top: 2px;
-    width: 20px;
-    height: 20px;
+    top: 3px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    background: #fff;
+    background: #94A3B8;
     transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .custom-toggle input:checked+.toggle-slider {
-    background: var(--success);
-    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
 }
 
 .custom-toggle input:checked+.toggle-slider::before {
-    transform: translateX(22px);
+    transform: translateX(20px);
+    background: var(--success);
 }
 
 .toggle-label {
-    font-size: 1rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #fff;
+    color: var(--text-muted);
+    transition: color 0.3s;
+}
+
+.custom-toggle input:checked~.toggle-label {
+    color: var(--success);
 }
 
 .modal-footer {
@@ -2043,6 +2058,7 @@ body {
     font-size: 0.85rem;
     padding: 0.6rem 0.8rem;
 }
+
 /* Password Visibility Toggle */
 .password-wrapper {
     position: relative;
@@ -2073,54 +2089,4 @@ body {
 
 .password-wrapper .glass-input {
     padding-right: 40px !important;
-}
-
-
-/* Custom Toggle Switch for Client Status */
-.custom-toggle {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 22px;
-}
-
-.custom-toggle input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.1);
-    transition: .4s;
-    border-radius: 34px;
-    border: 1px solid var(--border-glass);
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 14px;
-    width: 14px;
-    left: 4px;
-    bottom: 3px;
-    background-color: #94A3B8;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-input:checked + .toggle-slider {
-    background-color: rgba(16, 185, 129, 0.2);
-    border-color: rgba(16, 185, 129, 0.4);
-}
-
-input:checked + .toggle-slider:before {
-    transform: translateX(20px);
-    background-color: var(--success);
 }
