@@ -1111,9 +1111,28 @@ function renderOperacional() {
         grouped[t.rotina].push(t);
     });
 
-    Object.keys(grouped).forEach(rotinaName => {
-        const groupTasks = grouped[rotinaName];
-        if (groupTasks.length === 0 && searchVal) return; // Hide empty groups when searching
+    // Definir ordem dos grupos baseada na ordenação das tarefas
+    const groupOrder = [];
+    tasks.forEach(t => {
+        if (!groupOrder.includes(t.rotina)) groupOrder.push(t.rotina);
+    });
+
+    // Adicionar rotinas que não possuem tarefas no momento (para manter visibilidade se não houver busca)
+    if (!searchVal) {
+        Store.getData().rotinasBase.forEach(rb => {
+            if (!groupOrder.includes(rb.nome)) groupOrder.push(rb.nome);
+        });
+
+        // Se a ordenação for por Rotina, ordenar a lista final de grupos
+        if (sortVal === 'rotina-az') {
+            groupOrder.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+        }
+    }
+
+    groupOrder.forEach(rotinaName => {
+        const groupTasks = grouped[rotinaName] || [];
+        if (groupTasks.length === 0 && searchVal) return; // Ocultar grupos vazios na busca
+        if (groupTasks.length === 0 && !groupOrder.includes(rotinaName)) return; // Segurança
 
         groupTasks.sort((a, b) => {
             if (a.feito && !b.feito) return 1;
