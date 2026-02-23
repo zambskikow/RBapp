@@ -1188,6 +1188,68 @@ body {
     border-radius: 6px;
 }
 
+/* Routine Action Buttons UX */
+.btn-action-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-edit:hover i {
+    animation: rotate-icon 0.5s ease;
+}
+
+.btn-delete:hover i {
+    animation: shake-icon 0.4s ease-in-out infinite;
+}
+
+@keyframes rotate-icon {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shake-icon {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-15deg);
+    }
+
+    75% {
+        transform: rotate(15deg);
+    }
+}
+
+@keyframes delete-pop {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.4);
+        color: var(--danger);
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+.delete-pop {
+    animation: delete-pop 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 /* Routine Grouping in Operacional */
 .routine-group {
     background: rgba(15, 23, 42, 0.6);

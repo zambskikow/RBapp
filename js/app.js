@@ -1505,12 +1505,14 @@ function renderRotinas() {
             </td>
             <td>${diaText}</td>
             <td>
-                <button class="btn btn-small btn-secondary" onclick="openRotinaModal(${r.id})" style="margin-right: 4px;">
-                    <i class="fa-solid fa-pen"></i> Editar
-                </button>
-                <button class="btn btn-small btn-secondary" onclick="handleDeleteRotina(${r.id})" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);">
-                    <i class="fa-solid fa-trash"></i> Excluir
-                </button>
+                <div class="btn-action-container">
+                    <button class="btn btn-small btn-secondary btn-edit" onclick="openRotinaModal(${r.id})">
+                        <i class="fa-solid fa-pen"></i> Editar
+                    </button>
+                    <button class="btn btn-small btn-secondary btn-delete" onclick="handleDeleteRotina(${r.id}, this)" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);">
+                        <i class="fa-solid fa-trash"></i> Excluir
+                    </button>
+                </div>
             </td>
         `;
         tbody.appendChild(tr);
@@ -1752,34 +1754,28 @@ async function handleSaveRotina(e) {
 
 
 
-async function handleDeleteRotina(id) {
-
+async function handleDeleteRotina(id, btnElement = null) {
     const rotina = Store.getData().rotinasBase.find(r => r.id === id);
-
     if (!rotina) return;
 
-
-
     if (confirm(`Atenção: Tem certeza que deseja EXCLUIR a rotina '${rotina.nome}'? Isso a removerá da base de rotinas disponíveis.`)) {
-
-        try {
-
-            await Store.deleteRotinaBase(id);
-
-            renderRotinas();
-
-            alert(`Rotina '${rotina.nome}' excluída com sucesso!`);
-
-        } catch (error) {
-
-            console.error(error);
-
-            alert("Ocorreu um erro ao excluir a rotina. Verifique o console.");
-
+        // Efeito visual no ícone antes de sumir
+        if (btnElement) {
+            const icon = btnElement.querySelector('i');
+            if (icon) icon.classList.add('delete-pop');
         }
 
+        try {
+            // Pequeno delay para a animação aparecer antes da remoção
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await Store.deleteRotinaBase(id);
+            renderRotinas();
+            // alert(`Rotina '${rotina.nome}' excluída com sucesso!`); // Alert opcional, UI já some
+        } catch (error) {
+            console.error(error);
+            alert("Ocorreu um erro ao excluir a rotina. Verifique o console.");
+        }
     }
-
 }
 
 
