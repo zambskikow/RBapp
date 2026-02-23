@@ -1029,6 +1029,7 @@ function renderClientes() {
 
     // Atualizar KPIs
     animateValue('kpi-total-clientes', 0, stats.total, 600);
+    animateValue('kpi-inativos', 0, stats.inativos, 600);
     animateValue('kpi-simples', 0, stats.simples, 600);
     animateValue('kpi-presumido', 0, stats.presumido, 600);
     animateValue('kpi-real', 0, stats.real, 600);

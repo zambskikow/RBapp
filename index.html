@@ -434,7 +434,7 @@
                         <h4
                             style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 1px;">
                             Resumo da Base</h4>
-                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.8rem;">
+                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.8rem;">
                             <div class="kpi-card"
                                 style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
                                 <div class="kpi-icon"
@@ -443,6 +443,16 @@
                                 <div class="kpi-data">
                                     <p class="kpi-value" id="kpi-total-clientes">0</p>
                                     <h3>Total</h3>
+                                </div>
+                            </div>
+                            <div class="kpi-card"
+                                style="background: rgba(239, 68, 68, 0.05); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon"
+                                    style="background: rgba(239, 68, 68, 0.15); color: var(--danger); opacity: 0.7;"><i
+                                        class="fa-solid fa-user-slash"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-inativos">0</p>
+                                    <h3 style="opacity: 0.8;">Inativos</h3>
                                 </div>
                             </div>
                             <div class="kpi-card"
@@ -1554,8 +1564,8 @@
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/store.js?v=1.5"></script>
-    <script src="js/app.js?v=1.5"></script>
+    <script src="js/store.js?v=1.6"></script>
+    <script src="js/app.js?v=1.6"></script>
 </body>
 
 </html>

@@ -323,6 +323,8 @@ window.Store = {
     getClientStats() {
         return {
             total: db.clientes.length,
+            ativos: db.clientes.filter(c => c.ativo !== false).length,
+            inativos: db.clientes.filter(c => c.ativo === false).length,
             simples: db.clientes.filter(c => c.regime === 'Simples Nacional').length,
             presumido: db.clientes.filter(c => c.regime === 'Lucro Presumido').length,
             real: db.clientes.filter(c => c.regime === 'Lucro Real').length,
