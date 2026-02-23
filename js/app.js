@@ -1304,7 +1304,7 @@ function openClientDetail(id = null) {
         Store.getData().rotinasBase.forEach(r => {
             rotinasGrid.innerHTML += `
                 <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
-                    <input type="checkbox" name="rotina-sel" id="rotina-cb-${r.id}" value="${r.id}" class="custom-checkbox client-rotina-checkbox">
+                    <input type="checkbox" name="rotina-sel" id="rotina-cb-${r.id}" value="${r.id}" class="custom-checkbox client-rotina-checkbox" ${isOperacional ? 'disabled' : ''}>
                     ${r.nome}
                 </label>
             `;
@@ -1588,6 +1588,7 @@ function renderRotinas() {
 
         const tr = document.createElement('tr');
         tr.className = 'fade-in';
+        const isOperacional = LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'operacional';
         tr.innerHTML = `
             <td><strong>${r.nome}</strong></td>
             <td><span class="status-badge ${badgeClass}">${r.frequencia || 'Mensal'}</span></td>
@@ -1601,12 +1602,14 @@ function renderRotinas() {
             <td>${diaText}</td>
             <td>
                 <div class="btn-action-container">
+                    ${isOperacional ? '' : `
                     <button class="btn btn-small btn-secondary btn-edit" onclick="openRotinaModal(${r.id})">
                         <i class="fa-solid fa-pen"></i> Editar
                     </button>
                     <button class="btn btn-small btn-secondary btn-delete" onclick="handleDeleteRotina(${r.id}, this)" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);">
                         <i class="fa-solid fa-trash"></i> Excluir
                     </button>
+                    `}
                 </div>
             </td>
         `;
@@ -1623,14 +1626,14 @@ function openRotinaModal(id = null) {
     const inputPrazo = document.getElementById('rotina-prazo');
     const selectFreq = document.getElementById('rotina-frequencia');
 
-    // Dynamic loading of Employees (Responsáveis)
+    const isOperacional = LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'operacional';
     const respGrid = document.getElementById('rotina-responsavel-grid');
     if (respGrid) {
         respGrid.innerHTML = '';
         Store.getData().funcionarios.forEach(f => {
             respGrid.innerHTML += `
                 <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
-                    <input type="checkbox" name="responsavel-sel" value="${f.nome}" class="custom-checkbox resp-checkbox">
+                    <input type="checkbox" name="responsavel-sel" value="${f.nome}" class="custom-checkbox resp-checkbox" ${isOperacional ? 'disabled' : ''}>
                     ${f.nome}
                 </label>
             `;
@@ -1673,12 +1676,16 @@ function openRotinaModal(id = null) {
         Store.getData().clientes.forEach(c => {
             clientesGrid.innerHTML += `
                 <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
-                    <input type="checkbox" name="cliente-sel" id="cliente-cb-${c.id}" value="${c.id}" class="custom-checkbox">
+                    <input type="checkbox" name="cliente-sel" id="cliente-cb-${c.id}" value="${c.id}" class="custom-checkbox" ${isOperacional ? 'disabled' : ''}>
                     ${c.razaoSocial}
                 </label>
             `;
         });
     }
+    const saveBtn = document.getElementById('btn-save-rotina-detail');
+    if (saveBtn) saveBtn.style.display = isOperacional ? 'none' : 'inline-block';
+    const resetChecklistBtn = document.getElementById('btn-add-checklist-item');
+    if (resetChecklistBtn) resetChecklistBtn.style.display = isOperacional ? 'none' : 'inline-block';
 
     if (id) {
         const rotina = Store.getData().rotinasBase.find(r => r.id === id);
