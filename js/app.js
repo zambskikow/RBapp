@@ -1918,9 +1918,8 @@ let currentLoadedMessageId = null;
 function updateMensagensBadges() {
     if (!LOGGED_USER) return;
 
-    const unreadCount = Store.getUnreadMensagensCount();
+    const unreadCount = Store.getUnreadCount(LOGGED_USER.nome);
     const badges = document.querySelectorAll('.badge');
-    const msgNavItem = document.querySelector('.nav-item[data-view="mensagens"]');
 
     badges.forEach(b => {
         if (unreadCount > 0) {
