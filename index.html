@@ -638,62 +638,40 @@
 
                             <!-- Tab: Acessos -->
                             <div id="tab-acessos" class="tab-content">
-                                <div class="form-section-title"><i class="fa-solid fa-shield-halved"></i> Credenciais e
-                                    Acessos</div>
-                                <div class="login-grid"
-                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                                    <div class="login-card"
-                                        style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-glass);">
-                                        <label
-                                            style="font-weight: 700; color: var(--primary-light); display: block; margin-bottom: 0.5rem;">e-CAC
-                                            (Federal)</label>
-                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                            <input type="text" id="login-ecac" class="glass-input"
-                                                placeholder="Código/CPF/CNPJ" style="font-size: 0.8rem;">
-                                            <input type="password" id="senha-ecac" class="glass-input"
-                                                placeholder="Senha" style="font-size: 0.8rem;">
+                                <div class="form-section-title"><i class="fa-solid fa-shield-halved"></i> Credenciais e Acessos</div>
+                                <div class="access-grid">
+                                    <div class="access-card ecac">
+                                        <label>e-CAC (Federal)</label>
+                                        <div class="access-inputs">
+                                            <input type="text" id="login-ecac" class="glass-input" placeholder="Código/CPF/CNPJ">
+                                            <input type="password" id="senha-ecac" class="glass-input" placeholder="Senha">
                                         </div>
                                     </div>
-                                    <div class="login-card"
-                                        style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-glass);">
-                                        <label
-                                            style="font-weight: 700; color: var(--success); display: block; margin-bottom: 0.5rem;">SEFAZ
-                                            (Estadual)</label>
-                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                            <input type="text" id="login-sefaz" class="glass-input"
-                                                placeholder="Usuário" style="font-size: 0.8rem;">
-                                            <input type="password" id="senha-sefaz" class="glass-input"
-                                                placeholder="Senha" style="font-size: 0.8rem;">
+                                    <div class="access-card sefaz">
+                                        <label>SEFAZ (Estadual)</label>
+                                        <div class="access-inputs">
+                                            <input type="text" id="login-sefaz" class="glass-input" placeholder="Usuário">
+                                            <input type="password" id="senha-sefaz" class="glass-input" placeholder="Senha">
                                         </div>
                                     </div>
-                                    <div class="login-card"
-                                        style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-glass);">
-                                        <label
-                                            style="font-weight: 700; color: var(--warning); display: block; margin-bottom: 0.5rem;">Prefeitura
-                                            (Municipal)</label>
-                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                            <input type="text" id="login-pref" class="glass-input" placeholder="Usuário"
-                                                style="font-size: 0.8rem;">
-                                            <input type="password" id="senha-pref" class="glass-input"
-                                                placeholder="Senha" style="font-size: 0.8rem;">
+                                    <div class="access-card pref">
+                                        <label>Prefeitura (Municipal)</label>
+                                        <div class="access-inputs">
+                                            <input type="text" id="login-pref" class="glass-input" placeholder="Usuário">
+                                            <input type="password" id="senha-pref" class="glass-input" placeholder="Senha">
                                         </div>
                                     </div>
-                                    <div class="login-card"
-                                        style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-glass);">
-                                        <label
-                                            style="font-weight: 700; color: #3b82f6; display: block; margin-bottom: 0.5rem;">Sistema
-                                            Domínio</label>
-                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                            <input type="text" id="login-dominio" class="glass-input"
-                                                placeholder="Usuário" style="font-size: 0.8rem;">
-                                            <input type="password" id="senha-dominio" class="glass-input"
-                                                placeholder="Senha" style="font-size: 0.8rem;">
+                                    <div class="access-card dominio">
+                                        <label>Sistema Domínio</label>
+                                        <div class="access-inputs">
+                                            <input type="text" id="login-dominio" class="glass-input" placeholder="Usuário">
+                                            <input type="password" id="senha-dominio" class="glass-input" placeholder="Senha">
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group" style="margin-top: 1.5rem;">
+                                <div class="form-group" style="margin-top: 2rem;">
                                     <label>Outros Acessos e Observações</label>
-                                    <textarea id="client-outros-acessos" class="glass-input" style="min-height: 100px;"
+                                    <textarea id="client-outros-acessos" class="glass-input" style="min-height: 120px;"
                                         placeholder="Ex: Usuário do portal do caminhoneiro, senha do certificado digital..."></textarea>
                                 </div>
                             </div>

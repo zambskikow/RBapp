@@ -1035,9 +1035,6 @@ function renderClientes() {
             <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${c.responsavelFiscal}</span></td>
             <td><div style="display:flex; gap:4px; flex-wrap:wrap; max-width:200px;">${tagsHtml}</div></td>
             <td style="white-space: nowrap;">
-                <button class="btn btn-small btn-secondary btn-edit-client" data-id="${c.id}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-right: 4px;">
-                    <i class="fa-solid fa-pen"></i> Editar
-                </button>
                 <button class="btn btn-small btn-secondary btn-delete-single-client" data-id="${c.id}" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                     <i class="fa-solid fa-trash"></i> Excluir
                 </button>
@@ -1050,15 +1047,6 @@ function renderClientes() {
             if (e.target.closest('.group-actions') || e.target.closest('.client-checkbox') || e.target.closest('button')) return;
             openClientDetail(c.id);
         });
-
-        // Edit button also opens detail panel
-        const editBtn = tr.querySelector('.btn-edit-client');
-        if (editBtn) {
-            editBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openClientDetail(c.id);
-            });
-        }
 
         tbody.appendChild(tr);
     });
