@@ -3570,6 +3570,14 @@ function renderAuditoriaCompetencia() {
     btnRun.parentNode.replaceChild(cloneBtn, btnRun);
 
     cloneBtn.addEventListener('click', runAuditoriaCompetencia);
+
+    // Print Button Listener
+    const btnPrint = document.getElementById('btn-print-audit-comp');
+    if (btnPrint) {
+        btnPrint.addEventListener('click', () => {
+            window.print();
+        });
+    }
 }
 
 function runAuditoriaCompetencia() {
@@ -3609,35 +3617,49 @@ function runAuditoriaCompetencia() {
 
         filtered.forEach(ex => {
             const client = Store.getData().clientes.find(c => c.id === ex.clienteId);
-            const rName = client ? client.nome : `#${ex.clienteId}`;
+            const clientName = client ? client.razaoSocial : `#${ex.clienteId}`;
 
-            const dPrazo = ex.diaPrazo ? new Date(ex.diaPrazo + "T00:00:00").setHours(0, 0, 0, 0) : tToday;
+            const dPrazo = ex.diaPrazo ? new Date(ex.diaPrazo + "T00:00:00") : null;
+            const dFeito = ex.feitoEm ? new Date(ex.feitoEm + "T00:00:00") : null;
 
             let statusTag = '';
+            let veredito = '';
+            let dataRealBaixa = ex.feitoEm ? formatDate(ex.feitoEm) : 'Pendente';
 
-            // Calculating exact state
             if (ex.feito) {
-                // Was it done late?
-                // Em simulações locais, faltaria o registro exato de `dataConclusao`. Adaptando pela prop `statusAuto`
-                statusTag = '<span class="status-badge concluido"><i class="fa-solid fa-check"></i> Concluído No Prazo</span>';
-                noPrazo++;
+                if (dPrazo && dFeito && dFeito > dPrazo) {
+                    statusTag = '<span class="status-badge atrasado"><i class="fa-solid fa-clock"></i> Com Atraso</span>';
+                    veredito = `<span style="color:var(--danger)">Entregue em ${dataRealBaixa} (Fora do Prazo)</span>`;
+                    atrasado++;
+                } else {
+                    statusTag = '<span class="status-badge concluido"><i class="fa-solid fa-check"></i> No Prazo</span>';
+                    veredito = `<span style="color:var(--success)">Entregue em ${dataRealBaixa} (No Prazo)</span>`;
+                    noPrazo++;
+                }
+                if (ex.baixadoPor) {
+                    veredito += `<br><small style="color:var(--text-muted)">Baixado por: ${ex.baixadoPor}</small>`;
+                }
             } else {
-                if (dPrazo < tToday) {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                if (dPrazo && dPrazo < now) {
                     statusTag = '<span class="status-badge atrasado"><i class="fa-solid fa-triangle-exclamation"></i> Atrasado</span>';
+                    veredito = '<span style="color:var(--danger)">Pendente e Atrasado</span>';
                     atrasado++;
                 } else {
                     statusTag = '<span class="status-badge"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
+                    veredito = 'Aguardando Execução';
                     pendente++;
                 }
             }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><strong>${rName}</strong></td>
+                <td><strong>${clientName}</strong></td>
                 <td>${ex.rotina}</td>
                 <td>${formatDate(ex.diaPrazo)}</td>
-                <td>${ex.feito ? '--' : 'Pendente'}</td>
-                <td>${statusTag}</td>
+                <td>${dataRealBaixa}</td>
+                <td>${veredito}</td>
             `;
             tbody.appendChild(tr);
         });

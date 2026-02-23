@@ -113,6 +113,7 @@ window.Store = {
                 driveLink: e.drive_link,
                 feito: e.feito,
                 feitoEm: e.feito_em,
+                baixadoPor: e.baixado_por || "", // Novo campo mapeado do banco
                 responsavel: e.responsavel,
                 iniciadoEm: e.iniciado_em,
                 checklistGerado: e.checklist_gerado,
@@ -350,21 +351,26 @@ window.Store = {
     // In a real deep restructuring we would have an app.put('/api/execucoes/{id}') on Python
     async toggleExecucaoFeito(id, isFeito) {
         const ex = db.execucoes.find(e => e.id === id);
-        if (ex) {
-            ex.feito = isFeito;
-            ex.feitoEm = isFeito ? today.toISOString().split('T')[0] : null;
+        const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
+        ex.feito = isFeito;
+        ex.feitoEm = isFeito ? new Date().toISOString().split('T')[0] : null;
+        ex.baixadoPor = isFeito ? username : null;
 
-            if (isFeito) ex.subitems.forEach(s => s.done = true);
-            else ex.subitems.forEach(s => s.done = false);
+        if (isFeito) ex.subitems.forEach(s => s.done = true);
+        else ex.subitems.forEach(s => s.done = false);
 
-            await fetch(`${API_BASE}/execucoes/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ feito: ex.feito, feito_em: ex.feitoEm, subitems: ex.subitems })
-            });
+        await fetch(`${API_BASE}/execucoes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                feito: ex.feito,
+                feito_em: ex.feitoEm,
+                baixado_por: ex.baixadoPor, // Persistindo quem baixou
+                subitems: ex.subitems
+            })
+        });
 
-            this.registerLog("Ação de Rotina", `Marcou rotina '${ex.rotina}' como ${isFeito ? 'Concluída' : 'Pendente'}`);
-        }
+        this.registerLog("Ação de Rotina", `Marcou rotina '${ex.rotina}' como ${isFeito ? 'Concluída' : 'Pendente'}`);
     },
 
     async deleteExecucao(id) {
@@ -378,27 +384,33 @@ window.Store = {
 
     async updateChecklist(execId, subId, isDone) {
         const ex = db.execucoes.find(e => e.id === execId);
-        if (ex) {
-            const sub = ex.subitems.find(s => s.id === subId);
-            if (sub) sub.done = isDone;
+        const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
+        const sub = ex.subitems.find(s => s.id === subId);
+        if (sub) sub.done = isDone;
 
-            const allDone = ex.subitems.every(s => s.done);
-            if (allDone && !ex.feito) {
-                ex.feito = true;
-                ex.feitoEm = today.toISOString().split('T')[0];
-            } else if (!allDone && ex.feito) {
-                ex.feito = false;
-                ex.feitoEm = null;
-            }
-
-            await fetch(`${API_BASE}/execucoes/${execId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ feito: ex.feito, feito_em: ex.feitoEm, subitems: ex.subitems })
-            });
-
-            this.registerLog("Atualizou Checklist", `Checklist item id ${subId} (rotina ${ex.rotina}) - ${isDone ? 'Feito' : 'Desfeito'}`);
+        const allDone = ex.subitems.every(s => s.done);
+        if (allDone && !ex.feito) {
+            ex.feito = true;
+            ex.feitoEm = new Date().toISOString().split('T')[0];
+            ex.baixadoPor = username;
+        } else if (!allDone && ex.feito) {
+            ex.feito = false;
+            ex.feitoEm = null;
+            ex.baixadoPor = null;
         }
+
+        await fetch(`${API_BASE}/execucoes/${execId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                feito: ex.feito,
+                feito_em: ex.feitoEm,
+                baixado_por: ex.baixado_por,
+                subitems: ex.subitems
+            })
+        });
+
+        this.registerLog("Atualizou Checklist", `Checklist item id ${subId} (rotina ${ex.rotina}) - ${isDone ? 'Feito' : 'Desfeito'}`);
     },
 
     async addClient(clientData) {
