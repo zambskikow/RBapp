@@ -145,40 +145,60 @@
                 </header>
 
                 <!-- KPI Cards -->
-                <div class="kpi-grid">
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
-                        <div class="kpi-data">
-                            <h3>Total Execuções</h3>
-                            <p class="kpi-value" id="kpi-total">0</p>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-bottom: 2rem;">
+                    <!-- Categoria: Visão Geral -->
+                    <div class="glass-card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <h4
+                            style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px;">
+                            Visão Geral</h4>
+                        <div class="kpi-card"
+                            style="background: rgba(255,255,255,0.03); border: none; box-shadow: none;">
+                            <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
+                            <div class="kpi-data">
+                                <h3>Total Geral</h3>
+                                <p class="kpi-value" id="kpi-total">0</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="glass-card kpi-card status-success">
-                        <div class="kpi-icon"><i class="fa-solid fa-check-double"></i></div>
-                        <div class="kpi-data">
-                            <h3>Concluídos</h3>
-                            <p class="kpi-value" id="kpi-done">0</p>
-                        </div>
-                    </div>
-                    <div class="glass-card kpi-card status-info">
-                        <div class="kpi-icon"><i class="fa-solid fa-bars-progress"></i></div>
-                        <div class="kpi-data">
-                            <h3>Em Andamento</h3>
-                            <p class="kpi-value" id="kpi-andamento">0</p>
-                        </div>
-                    </div>
-                    <div class="glass-card kpi-card status-warning">
-                        <div class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></div>
-                        <div class="kpi-data">
-                            <h3>Vencendo Hoje</h3>
-                            <p class="kpi-value" id="kpi-warning">0</p>
-                        </div>
-                    </div>
-                    <div class="glass-card kpi-card status-danger">
-                        <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                        <div class="kpi-data">
-                            <h3>Atrasados</h3>
-                            <p class="kpi-value" id="kpi-late">0</p>
+
+                    <!-- Categoria: Status de Entrega -->
+                    <div class="glass-card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <h4
+                            style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px;">
+                            Status de Entrega</h4>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                            <div class="kpi-card status-success"
+                                style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon"><i class="fa-solid fa-check-double"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-done" style="font-size: 1.2rem;">0</p>
+                                    <h3 style="font-size: 0.6rem;">Concluídos</h3>
+                                </div>
+                            </div>
+                            <div class="kpi-card status-info"
+                                style="background: rgba(59, 130, 246, 0.05); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon"><i class="fa-solid fa-bars-progress"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-andamento" style="font-size: 1.2rem;">0</p>
+                                    <h3 style="font-size: 0.6rem;">Andamento</h3>
+                                </div>
+                            </div>
+                            <div class="kpi-card status-warning"
+                                style="background: rgba(245, 158, 11, 0.05); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-warning" style="font-size: 1.2rem;">0</p>
+                                    <h3 style="font-size: 0.6rem;">Hoje</h3>
+                                </div>
+                            </div>
+                            <div class="kpi-card status-danger"
+                                style="background: rgba(239, 68, 68, 0.05); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-late" style="font-size: 1.2rem;">0</p>
+                                    <h3 style="font-size: 0.6rem;">Atrasados</h3>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -257,33 +277,42 @@
                     </div>
                 </header>
 
-                <div class="kpi-grid">
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon"><i class="fa-solid fa-bullseye"></i></div>
-                        <div class="kpi-data">
-                            <h3>Total de Tarefas</h3>
-                            <p class="kpi-value" id="kpi-meu-total">0</p>
+                <div class="glass-card" style="padding: 1rem; margin-bottom: 2rem;">
+                    <h4
+                        style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 1px;">
+                        Metas Individuais</h4>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem;">
+                        <div class="kpi-card"
+                            style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon"><i class="fa-solid fa-bullseye"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-meu-total" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Total Tarefas</h3>
+                            </div>
                         </div>
-                    </div>
-                    <div class="glass-card kpi-card status-success">
-                        <div class="kpi-icon"><i class="fa-solid fa-trophy"></i></div>
-                        <div class="kpi-data">
-                            <h3>Concluídas</h3>
-                            <p class="kpi-value" id="kpi-meu-done">0</p>
+                        <div class="kpi-card status-success"
+                            style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon"><i class="fa-solid fa-trophy"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-meu-done" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Concluídas</h3>
+                            </div>
                         </div>
-                    </div>
-                    <div class="glass-card kpi-card status-warning">
-                        <div class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></div>
-                        <div class="kpi-data">
-                            <h3>Vencendo Hoje</h3>
-                            <p class="kpi-value" id="kpi-meu-warning">0</p>
+                        <div class="kpi-card status-warning"
+                            style="background: rgba(245, 158, 11, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-meu-warning" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Vencendo Hoje</h3>
+                            </div>
                         </div>
-                    </div>
-                    <div class="glass-card kpi-card status-danger">
-                        <div class="kpi-icon"><i class="fa-solid fa-skull-crossbones"></i></div>
-                        <div class="kpi-data">
-                            <h3>Atrasadas</h3>
-                            <p class="kpi-value" id="kpi-meu-late">0</p>
+                        <div class="kpi-card status-danger"
+                            style="background: rgba(239, 68, 68, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon"><i class="fa-solid fa-skull-crossbones"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-meu-late" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Atrasadas</h3>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -344,39 +373,44 @@
                         <p class="subtitle">Base de clientes e Painel de Rotinas Fiscais</p>
                     </div>
                     <div class="header-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button class="btn btn-danger" id="btn-delete-clients"
-                            style="display: none; background: var(--danger);">
-                            <i class="fa-solid fa-trash"></i> Excluir Selecionados <span class="badge"
-                                id="delete-clients-badge">0</span>
-                        </button>
                         <button class="btn btn-primary" id="btn-add-client">
                             <i class="fa-solid fa-plus"></i> Novo Cliente
                         </button>
                     </div>
                 </header>
 
-                <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
-                        <div class="kpi-data">
-                            <h3>Total Clientes</h3>
-                            <p class="kpi-value" id="kpi-total-clientes">0</p>
+                <div class="glass-card" style="padding: 1rem; margin-bottom: 2rem;">
+                    <h4
+                        style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 1px;">
+                        Resumo da Base</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem;">
+                        <div class="kpi-card"
+                            style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon"
+                                style="background: rgba(99, 102, 241, 0.15); color: var(--primary-light);"><i
+                                    class="fa-solid fa-users"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-total-clientes" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Total Clientes</h3>
+                            </div>
                         </div>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--accent);"><i
-                                class="fa-solid fa-building"></i></div>
-                        <div class="kpi-data">
-                            <h3>Simples Nacional</h3>
-                            <p class="kpi-value" id="kpi-simples">0</p>
+                        <div class="kpi-card status-success"
+                            style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">
+                                <i class="fa-solid fa-leaf"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-simples" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Simples Nacional</h3>
+                            </div>
                         </div>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);"><i
-                                class="fa-solid fa-scale-balanced"></i></div>
-                        <div class="kpi-data">
-                            <h3>Demais Regimes</h3>
-                            <p class="kpi-value" id="kpi-outros-regimes">0</p>
+                        <div class="kpi-card status-info"
+                            style="background: rgba(59, 130, 246, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6;"><i
+                                    class="fa-solid fa-scale-balanced"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-outros-regimes" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Demais Regimes</h3>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -395,7 +429,14 @@
                                     <th>Regime Tributário</th>
                                     <th>Responsável Fiscal</th>
                                     <th>Status Motor</th>
-                                    <th>Ações</th>
+                                    <th style="display: flex; align-items: center; gap: 8px;">
+                                        Ações
+                                        <button id="btn-delete-clients-header" class="btn-bulk-delete-header"
+                                            style="display: none;" title="Excluir Selecionados">
+                                            <i class="fa-solid fa-trash"></i> <span
+                                                id="delete-clients-header-count">0</span>
+                                        </button>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>

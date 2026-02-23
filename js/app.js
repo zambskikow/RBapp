@@ -1026,15 +1026,14 @@ function renderClientes() {
 function setupClientCheckboxes() {
     const selectAllCb = document.getElementById('select-all-clients');
     const checkboxes = document.querySelectorAll('.client-checkbox');
-    const deleteBtn = document.getElementById('btn-delete-clients');
-    const badge = document.getElementById('delete-clients-badge');
+    const deleteBtn = document.getElementById('btn-delete-clients-header');
+    const badge = document.getElementById('delete-clients-header-count');
 
     const updateDeleteBtnVisibility = () => {
         const checkedCount = document.querySelectorAll('.client-checkbox:checked').length;
-        if (checkedCount > 0) {
-            deleteBtn.style.display = 'inline-block';
-            badge.textContent = checkedCount;
-            // Uncheck "select all" if not all are checked
+        if (checkedCount >= 2) {
+            deleteBtn.style.display = 'inline-flex';
+            if (badge) badge.textContent = checkedCount;
             if (checkedCount < checkboxes.length && selectAllCb) selectAllCb.checked = false;
             else if (selectAllCb) selectAllCb.checked = true;
         } else {
@@ -1044,11 +1043,8 @@ function setupClientCheckboxes() {
     };
 
     if (selectAllCb) {
-        selectAllCb.checked = false;
-        // Need to replace the element to prevent duplicate event listeners since renderClientes is called repeatedly
         const newSelectAll = selectAllCb.cloneNode(true);
         selectAllCb.parentNode.replaceChild(newSelectAll, selectAllCb);
-
         newSelectAll.addEventListener('change', (e) => {
             const isChecked = e.target.checked;
             checkboxes.forEach(cb => cb.checked = isChecked);
@@ -1060,30 +1056,36 @@ function setupClientCheckboxes() {
         cb.addEventListener('change', updateDeleteBtnVisibility);
     });
 
-    // Handle bulk delete click
     if (deleteBtn) {
-        // Remove old listeners to prevent duplicates
         const newDeleteBtn = deleteBtn.cloneNode(true);
         deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
 
         newDeleteBtn.addEventListener('click', async () => {
-            const selectedIds = Array.from(document.querySelectorAll('.client-checkbox:checked')).map(cb => parseInt(cb.value));
+            const selectedChecks = Array.from(document.querySelectorAll('.client-checkbox:checked'));
+            const selectedIds = selectedChecks.map(cb => parseInt(cb.value));
             if (selectedIds.length === 0) return;
 
             if (confirm(`Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados?`)) {
-                newDeleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
+                newDeleteBtn.disabled = true;
+                newDeleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+                // Animation phase
+                selectedChecks.forEach(cb => {
+                    const row = cb.closest('tr');
+                    if (row) row.classList.add('row-fade-out');
+                });
+
+                // Wait for animation
+                await new Promise(r => setTimeout(r, 500));
+
                 for (let id of selectedIds) {
                     await Store.deleteClient(id);
                 }
-                newDeleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir Selecionados <span class="badge" id="delete-clients-badge">0</span>';
-                newDeleteBtn.style.display = 'none';
-
-                const currentSelectAll = document.getElementById('select-all-clients');
-                if (currentSelectAll) currentSelectAll.checked = false;
 
                 renderClientes();
                 renderOperacional();
                 renderDashboard();
+                showFeedbackToast(`${selectedIds.length} clientes excluídos com sucesso.`, 'success');
             }
         });
     }
