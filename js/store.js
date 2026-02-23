@@ -285,10 +285,13 @@ window.Store = {
                 }
             }
 
+            const rotinaBase = db.rotinasBase.find(r => r.nome === ex.rotina);
+
             return {
                 ...ex,
                 clientName: client ? client.razaoSocial : 'Desconhecido',
                 regime: client ? client.regime : '',
+                setor: rotinaBase ? rotinaBase.setor : 'Geral',
                 statusAuto,
                 semaforo,
                 pendente

@@ -753,7 +753,7 @@ function renderDashboard() {
     // Renderizar Múltiplos Gráficos
     renderHealthChart(kpis);
     renderTeamProductivityChart(teamStats);
-    renderRegimeMixChart(execsAll);
+    renderSectorLoadChart(execsAll);
 
     // Render Bottlenecks table
     const critical = Store.getCriticalBottlenecks(currentCompetencia);
@@ -813,7 +813,7 @@ function renderDashboard() {
 // Global chart instances for destruction on redraw
 let healthChartInst = null;
 let teamChartInst = null;
-let regimeChartInst = null;
+let sectorChartInst = null;
 
 function renderHealthChart(kpis) {
     const ctxValue = document.getElementById('semaforoChart');
@@ -901,28 +901,30 @@ function renderTeamProductivityChart(teamStats) {
     });
 }
 
-function renderRegimeMixChart(execsAll) {
-    const ctxValue = document.getElementById('regimeChart');
+function renderSectorLoadChart(execsAll) {
+    const ctxValue = document.getElementById('sectorChart');
     if (!ctxValue) return;
-    if (regimeChartInst) regimeChartInst.destroy();
+    if (sectorChartInst) sectorChartInst.destroy();
 
-    const regimes = {};
+    const sectors = {};
     execsAll.forEach(ex => {
-        const r = ex.regime || "Outros";
-        regimes[r] = (regimes[r] || 0) + 1;
+        const s = ex.setor || "Geral";
+        sectors[s] = (sectors[s] || 0) + 1;
     });
 
-    regimeChartInst = new Chart(ctxValue, {
+    sectorChartInst = new Chart(ctxValue, {
         type: 'polarArea',
         data: {
-            labels: Object.keys(regimes),
+            labels: Object.keys(sectors),
             datasets: [{
-                data: Object.values(regimes),
+                data: Object.values(sectors),
                 backgroundColor: [
                     'rgba(99, 102, 241, 0.6)',
                     'rgba(139, 92, 246, 0.6)',
                     'rgba(16, 185, 129, 0.6)',
-                    'rgba(245, 158, 11, 0.6)'
+                    'rgba(245, 158, 11, 0.6)',
+                    'rgba(239, 68, 68, 0.6)',
+                    'rgba(59, 130, 246, 0.6)'
                 ],
                 borderWidth: 0
             }]
