@@ -2160,6 +2160,15 @@ function openTaskModal(taskId) {
 
 
     newToggle.checked = task.feito;
+    const isAdmin = LOGGED_USER && ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(LOGGED_USER.permissao);
+
+    // Lock global toggle if done and NOT admin/supervisor
+    if (task.feito && !isAdmin) {
+        newToggle.disabled = true;
+        document.getElementById('modal-status').innerHTML += ' <i class="fa-solid fa-lock" title="Bloqueado para edição"></i>';
+    } else {
+        newToggle.disabled = false;
+    }
 
     newToggle.addEventListener('change', (e) => {
 
@@ -2239,12 +2248,12 @@ function renderChecklist() {
 
 
 
+        const isAdmin = LOGGED_USER && ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(LOGGED_USER.permissao);
+        const isLocked = task.feito && !isAdmin;
+
         div.innerHTML = `
-
-            <input type="checkbox" class="custom-checkbox" id="chk_${sub.id}" ${sub.done ? 'checked' : ''}>
-
-            <label for="chk_${sub.id}" class="item-text">${sub.texto || sub.desc || 'Item sem nome'}</label>
-
+            <input type="checkbox" class="custom-checkbox" id="chk_${sub.id}" ${sub.done ? 'checked' : ''} ${isLocked ? 'disabled' : ''}>
+            <label for="chk_${sub.id}" class="item-text" style="${isLocked ? 'opacity:0.7; cursor:not-allowed;' : ''}">${sub.texto || sub.desc || 'Item sem nome'}</label>
         `;
 
 
