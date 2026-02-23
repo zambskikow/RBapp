@@ -2090,3 +2090,24 @@ body {
 .password-wrapper .glass-input {
     padding-right: 40px !important;
 }
+
+/* Operational Toggle List Styles */
+.routine-group-content {
+    max-height: 2000px;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease;
+    opacity: 1;
+}
+
+.routine-group-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    pointer-events: none;
+}
+
+.fa-rotate-180 {
+    transform: rotate(180deg);
+}

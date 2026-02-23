@@ -247,10 +247,16 @@ async function initApp() {
         if (meuDesempenhoView && meuDesempenhoView.style.display === 'block') renderMeuDesempenho();
     });
 
-    // Operational Search Listener
+    // Operational Search & Sort Listeners
     const opSearch = document.getElementById('operacional-search');
     if (opSearch) {
         opSearch.addEventListener('input', () => {
+            renderOperacional();
+        });
+    }
+    const opSort = document.getElementById('operacional-sort');
+    if (opSort) {
+        opSort.addEventListener('change', () => {
             renderOperacional();
         });
     }
@@ -1045,12 +1051,32 @@ function renderOperacional() {
 
     // Search Filter
     const searchVal = document.getElementById('operacional-search')?.value.toLowerCase() || '';
+    const sortVal = document.getElementById('operacional-sort')?.value || 'prazo-asc';
+
     if (searchVal) {
         tasks = tasks.filter(t =>
             t.rotina.toLowerCase().includes(searchVal) ||
             t.clientName.toLowerCase().includes(searchVal)
         );
     }
+
+    // Apply Sorting
+    tasks.sort((a, b) => {
+        switch (sortVal) {
+            case 'prazo-asc':
+                return new Date(a.diaPrazo) - new Date(b.diaPrazo);
+            case 'prazo-desc':
+                return new Date(b.diaPrazo) - new Date(a.diaPrazo);
+            case 'cliente-az':
+                return a.clientName.localeCompare(b.clientName, 'pt-BR');
+            case 'cliente-za':
+                return b.clientName.localeCompare(a.clientName, 'pt-BR');
+            case 'rotina-az':
+                return a.rotina.localeCompare(b.rotina, 'pt-BR');
+            default:
+                return new Date(a.diaPrazo) - new Date(b.diaPrazo);
+        }
+    });
 
     // Update Operational KPIs
     const opTotal = tasks.length;
@@ -1092,7 +1118,15 @@ function renderOperacional() {
         groupTasks.sort((a, b) => {
             if (a.feito && !b.feito) return 1;
             if (!a.feito && b.feito) return -1;
-            return new Date(a.diaPrazo) - new Date(b.diaPrazo);
+
+            // Dentro do grupo, manter a ordenação selecionada se possível
+            switch (sortVal) {
+                case 'prazo-asc': return new Date(a.diaPrazo) - new Date(b.diaPrazo);
+                case 'prazo-desc': return new Date(b.diaPrazo) - new Date(a.diaPrazo);
+                case 'cliente-az': return a.clientName.localeCompare(b.clientName, 'pt-BR');
+                case 'cliente-za': return b.clientName.localeCompare(a.clientName, 'pt-BR');
+                default: return new Date(a.diaPrazo) - new Date(b.diaPrazo);
+            }
         });
 
         const groupDiv = document.createElement('div');
@@ -1100,11 +1134,14 @@ function renderOperacional() {
         const doneCount = groupTasks.filter(t => t.feito).length;
 
         let tableHtml = `
-            <div class="routine-group-header">
-                <h2><i class="fa-solid fa-layer-group"></i> ${rotinaName}</h2>
+            <div class="routine-group-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="this.nextElementSibling.classList.toggle('collapsed'); this.querySelector('.chevron-icon').classList.toggle('fa-rotate-180')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-chevron-up chevron-icon" style="transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text-muted);"></i>
+                    <h2><i class="fa-solid fa-layer-group"></i> ${rotinaName}</h2>
+                </div>
                 <span class="routine-group-badge">${doneCount}/${groupTasks.length} Entregues</span>
             </div>
-            <div class="table-responsive">
+            <div class="routine-group-content table-responsive" style="transition: all 0.3s ease;">
                 <table class="data-table selectable-rows">
                     <thead>
                         <tr>

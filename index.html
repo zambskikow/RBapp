@@ -433,11 +433,19 @@
                     </div>
                 </div>
 
-                <!-- Barra de Pesquisa e Controles Adicionais -->
                 <div class="operacional-controls">
                     <div class="search-wrapper">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" id="operacional-search" placeholder="Pesquisar por rotina ou cliente...">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="operacional-sort" class="glass-select" style="min-width: 200px;">
+                            <option value="prazo-asc">Prazo (Mais Próximo)</option>
+                            <option value="prazo-desc">Prazo (Mais Longe)</option>
+                            <option value="cliente-az">Cliente (A → Z)</option>
+                            <option value="cliente-za">Cliente (Z → A)</option>
+                            <option value="rotina-az">Rotina (A → Z)</option>
+                        </select>
                     </div>
                 </div>
 
