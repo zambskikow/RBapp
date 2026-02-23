@@ -1103,59 +1103,166 @@
 
     <!-- Add/Edit Client Modal -->
     <div class="modal-overlay" id="add-client-modal">
-        <div class="glass-card modal-content" style="max-width: 500px;">
+        <div class="glass-card modal-content" style="max-width: 800px; width: 95%;">
             <header class="modal-header">
-                <h2 id="modal-client-title"><i class="fa-solid fa-user-plus highlight-text"></i> Novo Cliente</h2>
+                <h2 id="modal-client-title"><i class="fa-solid fa-user-plus highlight-text"></i> Detalhes do Cliente
+                </h2>
                 <button class="close-btn" id="close-client-modal"><i class="fa-solid fa-xmark"></i></button>
             </header>
 
-            <div class="modal-body" style="padding-bottom: 0;">
+            <nav class="modal-tabs">
+                <button type="button" class="modal-tab-btn active" data-tab="tab-geral"><i
+                        class="fa-solid fa-circle-info"></i> Geral</button>
+                <button type="button" class="modal-tab-btn" data-tab="tab-contato"><i
+                        class="fa-solid fa-address-book"></i> Contatos</button>
+                <button type="button" class="modal-tab-btn" data-tab="tab-acessos"><i class="fa-solid fa-key"></i>
+                    Acessos/Logins</button>
+                <button type="button" class="modal-tab-btn" data-tab="tab-rotinas"><i
+                        class="fa-solid fa-calendar-check"></i> Rotinas</button>
+            </nav>
+
+            <div class="modal-body" style="padding: 0;">
                 <form id="add-client-form">
                     <input type="hidden" id="client-id" value="">
-                    <div class="form-group">
-                        <label>Razão Social</label>
-                        <input type="text" id="client-razao" required class="glass-input"
-                            placeholder="Ex: Nova Empresa Ltda">
+
+                    <!-- Tab: Geral -->
+                    <div id="tab-geral" class="tab-content active">
+                        <div class="form-grid" style="grid-template-columns: 1fr 2fr;">
+                            <div class="form-group">
+                                <label>Código</label>
+                                <input type="text" id="client-codigo" class="glass-input" placeholder="Ex: 001">
+                            </div>
+                            <div class="form-group">
+                                <label>Razão Social</label>
+                                <input type="text" id="client-razao" required class="glass-input"
+                                    placeholder="Ex: Nova Empresa Ltda">
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>CNPJ</label>
+                                <input type="text" id="client-cnpj" required class="glass-input"
+                                    placeholder="00.000.000/0001-00">
+                            </div>
+                            <div class="form-group">
+                                <label>Regime Tributário</label>
+                                <select id="client-regime" class="glass-select" style="width: 100%;">
+                                    <option value="Simples Nacional">Simples Nacional</option>
+                                    <option value="Lucro Presumido">Lucro Presumido</option>
+                                    <option value="Lucro Real">Lucro Real</option>
+                                    <option value="MEI">MEI</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Inscrição Estadual</label>
+                                <input type="text" id="client-ie" class="glass-input" placeholder="Inscrição Estadual">
+                            </div>
+                            <div class="form-group">
+                                <label>Inscrição Municipal</label>
+                                <input type="text" id="client-im" class="glass-input" placeholder="Inscrição Municipal">
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Data de Abertura</label>
+                                <input type="date" id="client-abertura" class="glass-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Empresa</label>
+                                <input type="text" id="client-tipo" class="glass-input" placeholder="Ex: LTDA, EIRELI">
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>CNPJ</label>
-                        <input type="text" id="client-cnpj" required class="glass-input"
-                            placeholder="00.000.000/0001-00">
-                    </div>
-                    <div class="form-grid">
+
+                    <!-- Tab: Contato -->
+                    <div id="tab-contato" class="tab-content">
                         <div class="form-group">
-                            <label>Regime Tributário</label>
-                            <select id="client-regime" class="glass-select" style="width: 100%;">
-                                <option value="Simples Nacional">Simples Nacional</option>
-                                <option value="Lucro Presumido">Lucro Presumido</option>
-                                <option value="Lucro Real">Lucro Real</option>
-                                <option value="MEI">MEI</option>
-                            </select>
+                            <label>Nome do Contato Principal</label>
+                            <input type="text" id="client-contato-nome" class="glass-input"
+                                placeholder="Ex: Maria Souza">
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>E-mail</label>
+                                <input type="email" id="client-email" class="glass-input"
+                                    placeholder="contato@empresa.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Telefone</label>
+                                <input type="text" id="client-telefone" class="glass-input"
+                                    placeholder="(00) 00000-0000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsável Fiscal Interno</label>
+                            <input type="text" id="client-resp-fiscal" class="glass-input" placeholder="Ex: Dandara">
                         </div>
                     </div>
-                    <div class="form-group"
-                        style="margin-top: 1.5rem; background: rgba(0,0,0,0.1); padding: 1rem; border-radius: var(--radius-md);">
-                        <label style="margin-bottom: 0.5rem; display:block;"><i class="fa-solid fa-layer-group"></i>
-                            Rotinas Aplicáveis (Opcional)</label>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">Marque as rotinas
-                            que este cliente deve realizar (também pode ser feito pelo menu de Rotinas).</p>
-                        <div id="rotinas-checkbox-grid" class="form-grid"
-                            style="gap: 0.5rem; grid-template-columns: 1fr 1fr; max-height: 200px; overflow-y: auto;">
-                            <!-- Checkboxes injected by app.js -->
+
+                    <!-- Tab: Acessos -->
+                    <div id="tab-acessos" class="tab-content">
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem;">Cadastre aqui os
+                            acessos e senhas para facilitar o dia a dia.</p>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="login-entry">
+                                <div class="login-entry-header"><i class="fa-solid fa-landmark"></i> E-CAC / RFB</div>
+                                <input type="text" id="login-ecac" class="glass-input" placeholder="Login (CPF/CNPJ)"
+                                    style="margin-bottom: 0.5rem;">
+                                <input type="password" id="senha-ecac" class="glass-input" placeholder="Senha">
+                            </div>
+                            <div class="login-entry">
+                                <div class="login-entry-header"><i class="fa-solid fa-building-columns"></i> SEFAZ</div>
+                                <input type="text" id="login-sefaz" class="glass-input" placeholder="Login / Usuário"
+                                    style="margin-bottom: 0.5rem;">
+                                <input type="password" id="senha-sefaz" class="glass-input" placeholder="Senha">
+                            </div>
+                            <div class="login-entry">
+                                <div class="login-entry-header"><i class="fa-solid fa-city"></i> PREFEITURA</div>
+                                <input type="text" id="login-pref" class="glass-input" placeholder="CPF/CNPJ/Usuário"
+                                    style="margin-bottom: 0.5rem;">
+                                <input type="password" id="senha-pref" class="glass-input" placeholder="Senha">
+                            </div>
+                            <div class="login-entry">
+                                <div class="login-entry-header"><i class="fa-solid fa-laptop-code"></i> DOMÍNIO</div>
+                                <input type="text" id="login-dominio" class="glass-input" placeholder="Usuário"
+                                    style="margin-bottom: 0.5rem;">
+                                <input type="password" id="senha-dominio" class="glass-input" placeholder="Senha">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Outras Observações de Acesso</label>
+                            <textarea id="client-outros-acessos" class="glass-input" rows="3"
+                                placeholder="Informações adicionais de login..."></textarea>
                         </div>
                     </div>
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label><i class="fa-brands fa-google-drive"></i> Link da Pasta no Drive</label>
-                        <input type="url" id="client-drive" class="glass-input"
-                            placeholder="Ex: https://drive.google.com/drive/folders/...">
+
+                    <!-- Tab: Rotinas -->
+                    <div id="tab-rotinas" class="tab-content">
+                        <div class="form-group"
+                            style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: var(--radius-md);">
+                            <label style="margin-bottom: 0.5rem; display:block;"><i class="fa-solid fa-layer-group"></i>
+                                Rotinas Aplicáveis (Motor de Prazos)</label>
+                            <div id="rotinas-checkbox-grid" class="form-grid"
+                                style="gap: 0.5rem; grid-template-columns: 1fr 1fr; max-height: 250px; overflow-y: auto;">
+                                <!-- Checkboxes injected by app.js -->
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label><i class="fa-brands fa-google-drive"></i> Link da Pasta no Drive</label>
+                            <input type="url" id="client-drive" class="glass-input"
+                                placeholder="Ex: https://drive.google.com/drive/folders/...">
+                        </div>
                     </div>
                 </form>
             </div>
 
             <footer class="modal-footer">
                 <button class="btn btn-secondary" id="client-modal-cancel">Cancelar</button>
-                <button class="btn btn-primary" form="add-client-form" type="submit"
-                    id="client-modal-submit-btn">Cadastrar Cliente</button>
+                <button class="btn btn-primary" form="add-client-form" type="submit" id="client-modal-submit-btn">Salvar
+                    Cliente</button>
             </footer>
         </div>
     </div>

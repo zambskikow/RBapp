@@ -82,8 +82,25 @@ window.Store = {
                 cnpj: c.cnpj,
                 regime: c.regime,
                 responsavelFiscal: c.responsavel_fiscal,
-                rotinasSelecionadas: typeof c.rotinas_selecionadas === 'string' ? JSON.parse(c.rotinas_selecionadas) : c.rotinas_selecionadas,
-                driveLink: c.drive_link
+                rotinasSelecionadas: typeof c.rotinas_selecionadas === 'string' ? JSON.parse(c.rotinas_selecionadas) : c.rotinas_selecionadas || [],
+                driveLink: c.drive_link,
+                // Novos campos expansíveis (fallback para vazio se não existirem na API)
+                ie: c.inscricao_estadual || "",
+                im: c.inscricao_municipal || "",
+                dataAbertura: c.data_abertura || "",
+                tipoEmpresa: c.tipo_empresa || "",
+                contatoNome: c.contato_nome || "",
+                email: c.email || "",
+                telefone: c.telefone || "",
+                loginEcac: c.login_ecac || "",
+                senhaEcac: c.senha_ecac || "",
+                loginSefaz: c.login_sefaz || "",
+                senhaSefaz: c.senha_sefaz || "",
+                loginPref: c.login_pref || "",
+                senhaPref: c.senha_pref || "",
+                loginDominio: c.login_dominio || "",
+                senhaDominio: c.senha_dominio || "",
+                outrosAcessos: c.outros_acessos || ""
             }));
 
             db.execucoes = db.execucoes.map(e => ({
@@ -377,8 +394,14 @@ window.Store = {
         }
     },
 
-    async addClient(razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink = "") {
-        const codigo = `C${(db.clientes.length + 1).toString().padStart(3, '0')}`;
+    async addClient(clientData) {
+        const {
+            razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink,
+            codigo: customCodigo, ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
+            loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos
+        } = clientData;
+
+        const codigo = customCodigo || `C${(db.clientes.length + 1).toString().padStart(3, '0')}`;
 
         const res = await fetch(`${API_BASE}/clientes`, {
             method: 'POST',
@@ -390,21 +413,41 @@ window.Store = {
                 regime,
                 responsavel_fiscal: responsavelFiscal || "",
                 rotinas_selecionadas: rotinasSelecionadasIds || [],
-                drive_link: driveLink
+                drive_link: driveLink || "",
+                // Novos campos
+                inscricao_estadual: ie,
+                inscricao_municipal: im,
+                data_abertura: dataAbertura,
+                tipo_empresa: tipoEmpresa,
+                contato_nome: contatoNome,
+                email,
+                telefone,
+                login_ecac: loginEcac,
+                senha_ecac: senhaEcac,
+                login_sefaz: loginSefaz,
+                senha_sefaz: senhaSefaz,
+                login_pref: loginPref,
+                senha_pref: senhaPref,
+                login_dominio: loginDominio,
+                senha_dominio: senhaDominio,
+                outros_acessos: outrosAcessos
             })
         });
 
         if (res.ok) {
             const savedData = await res.json();
-            const newClient = savedData[0]; // Supabase returns array
-            // Convert to camelCase format
-            db.clientes.push({
+            const newClient = savedData[0];
+            const clientObj = {
                 id: newClient.id, razaoSocial, cnpj, codigo, regime,
-                responsavelFiscal, rotinasSelecionadas: rotinasSelecionadasIds, driveLink
-            });
+                responsavelFiscal, rotinasSelecionadas: rotinasSelecionadasIds, driveLink,
+                ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
+                loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos
+            };
+            db.clientes.push(clientObj);
             await this.engineRotinas(db.clientes[db.clientes.length - 1]);
             this.sendMensagem("Sistema", responsavelFiscal, `Novo cliente cadastrado: ${razaoSocial}.`);
             this.registerLog("Cadastrou Cliente", razaoSocial);
+            return clientObj;
         }
     },
 
@@ -536,17 +579,28 @@ window.Store = {
     },
 
     // Mocks for edit - in a full refactor these would be PUT requests
-    async editClient(id, razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink = "") {
+    async editClient(id, clientData) {
+        const {
+            razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink,
+            codigo, ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
+            loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos
+        } = clientData;
+
         const c = db.clientes.find(x => x.id === parseInt(id));
         if (c) {
-            // Determine added and removed routines BEFORE updating c.rotinasSelecionadas
+            // Determine added and removed routines
             const oldRotinas = c.rotinasSelecionadas || [];
             const newRotinasIds = rotinasSelecionadasIds.filter(rId => !oldRotinas.includes(rId));
             const removedRotinasIds = oldRotinas.filter(rId => !rotinasSelecionadasIds.includes(rId));
 
-            console.log(`[Store] Editando cliente ${razaoSocial}. Adicionadas: ${newRotinasIds}, Removidas: ${removedRotinasIds}`);
+            // Update local object
+            Object.assign(c, {
+                razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadas: rotinasSelecionadasIds, driveLink,
+                codigo, ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
+                loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos
+            });
 
-            // 1. Handle Removals
+            // Handle Removals
             if (removedRotinasIds.length > 0) {
                 const month = db.meses.find(m => m.ativo);
                 if (month) {
@@ -556,7 +610,6 @@ window.Store = {
                         if (rotina) {
                             const taskToDelete = db.execucoes.find(e => e.clienteId === c.id && e.rotina === rotina.nome && e.competencia === currentComp);
                             if (taskToDelete) {
-                                console.log(`[Store] Excluindo tarefa vinculada à rotina removida: ${rotina.nome}`);
                                 await this.deleteExecucao(taskToDelete.id);
                             }
                         }
@@ -564,26 +617,33 @@ window.Store = {
                 }
             }
 
-            // Update local object
-            c.razaoSocial = razaoSocial;
-            c.cnpj = cnpj;
-            c.regime = regime;
-            c.responsavelFiscal = responsavelFiscal;
-            c.rotinasSelecionadas = rotinasSelecionadasIds;
-            c.driveLink = driveLink;
-
-            // 2. Persist Client Changes
+            // Persist Client Changes
             try {
                 const res = await fetch(`${API_BASE}/clientes/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         razao_social: razaoSocial,
-                        cnpj,
-                        regime,
+                        cnpj, regime,
                         responsavel_fiscal: responsavelFiscal,
                         rotinas_selecionadas: rotinasSelecionadasIds,
-                        drive_link: driveLink
+                        drive_link: driveLink,
+                        codigo,
+                        inscricao_estadual: ie,
+                        inscricao_municipal: im,
+                        data_abertura: dataAbertura,
+                        tipo_empresa: tipoEmpresa,
+                        contato_nome: contatoNome,
+                        email, telefone,
+                        login_ecac: loginEcac,
+                        senha_ecac: senhaEcac,
+                        login_sefaz: loginSefaz,
+                        senha_sefaz: senhaSefaz,
+                        login_pref: loginPref,
+                        senha_pref: senhaPref,
+                        login_dominio: loginDominio,
+                        senha_dominio: senhaDominio,
+                        outros_acessos: outrosAcessos
                     })
                 });
                 if (!res.ok) console.warn('API PUT cliente falhou.', res.status);
@@ -593,9 +653,8 @@ window.Store = {
 
             this.registerLog("Editou Cliente", razaoSocial);
 
-            // 3. Handle Additions (Generate new tasks)
+            // Handle Additions
             if (newRotinasIds.length > 0) {
-                console.log(`[Store] Gearando novas tarefas para rotinas adicionadas: ${newRotinasIds}`);
                 const tempClient = { ...c, rotinasSelecionadas: newRotinasIds };
                 await this.engineRotinas(tempClient);
             }

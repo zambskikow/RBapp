@@ -307,6 +307,18 @@ async function initApp() {
 
     document.getElementById('add-client-form').addEventListener('submit', handleAddClient);
 
+    // Setup Client Modal Tabs
+    document.querySelectorAll('.modal-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            const targetTab = document.getElementById(tabId);
+            if (targetTab) targetTab.classList.add('active');
+        });
+    });
+
 
 
     // 7. Equipe Modal Events
@@ -1000,7 +1012,8 @@ function renderClientes() {
 
     sorted.forEach(c => {
         const tr = document.createElement('tr');
-        tr.className = 'fade-in';
+        tr.className = 'fade-in client-row-clickable';
+        tr.dataset.id = c.id;
 
         const isSimples = c.regime === 'Simples Nacional' || c.regime === 'MEI';
 
@@ -1023,7 +1036,7 @@ function renderClientes() {
             <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${c.responsavelFiscal}</span></td>
             <td><div style="display:flex; gap:4px; flex-wrap:wrap; max-width:200px;">${tagsHtml}</div></td>
             <td style="white-space: nowrap;">
-                <button class="btn btn-small btn-secondary" onclick="openClientModal(${c.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-right: 4px;">
+                <button class="btn btn-small btn-secondary btn-edit-client" data-id="${c.id}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-right: 4px;">
                     <i class="fa-solid fa-pen"></i> Editar
                 </button>
                 <button class="btn btn-small btn-secondary btn-delete-single-client" data-id="${c.id}" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); padding: 0.25rem 0.5rem; font-size: 0.75rem;">
@@ -1031,6 +1044,22 @@ function renderClientes() {
                 </button>
             </td>
         `;
+
+        // Row click opens modal
+        tr.addEventListener('click', (e) => {
+            // Don't open if clicked on checkbox, btn, or icons inside buttons
+            if (e.target.closest('.group-actions') || e.target.closest('.client-checkbox') || e.target.closest('button')) return;
+            openClientModal(c.id);
+        });
+
+        // Edit button also opens modal
+        const editBtn = tr.querySelector('.btn-edit-client');
+        if (editBtn) {
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openClientModal(c.id);
+            });
+        }
 
         tbody.appendChild(tr);
     });
@@ -1132,6 +1161,12 @@ function setupClientCheckboxes() {
 function openClientModal(id = null) {
     document.getElementById('add-client-form').reset();
 
+    // Reset tabs
+    document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('[data-tab="tab-geral"]').classList.add('active');
+    document.getElementById('tab-geral').classList.add('active');
+
     const title = document.getElementById('modal-client-title');
     const submitBtn = document.getElementById('client-modal-submit-btn');
 
@@ -1150,19 +1185,42 @@ function openClientModal(id = null) {
     }
 
     if (id) {
-        // Edit Mode
         const cliente = Store.getData().clientes.find(c => c.id === id);
         if (cliente) {
-            title.innerHTML = '<i class="fa-solid fa-user-pen highlight-text"></i> Editar Cliente';
+            title.innerHTML = `<i class="fa-solid fa-user-pen highlight-text"></i> ${cliente.razaoSocial}`;
             submitBtn.innerHTML = 'Salvar Alterações';
 
             document.getElementById('client-id').value = cliente.id;
-            document.getElementById('client-razao').value = cliente.razaoSocial;
-            document.getElementById('client-cnpj').value = cliente.cnpj;
-            document.getElementById('client-regime').value = cliente.regime;
-            document.getElementById('client-drive').value = cliente.driveLink || '';
 
-            // Check rotinas
+            // Geral
+            document.getElementById('client-codigo').value = cliente.codigo || '';
+            document.getElementById('client-razao').value = cliente.razaoSocial || '';
+            document.getElementById('client-cnpj').value = cliente.cnpj || '';
+            document.getElementById('client-regime').value = cliente.regime || 'Simples Nacional';
+            document.getElementById('client-ie').value = cliente.ie || '';
+            document.getElementById('client-im').value = cliente.im || '';
+            document.getElementById('client-abertura').value = cliente.dataAbertura || '';
+            document.getElementById('client-tipo').value = cliente.tipoEmpresa || '';
+
+            // Contato
+            document.getElementById('client-contato-nome').value = cliente.contatoNome || '';
+            document.getElementById('client-email').value = cliente.email || '';
+            document.getElementById('client-telefone').value = cliente.telefone || '';
+            document.getElementById('client-resp-fiscal').value = cliente.responsavelFiscal || '';
+
+            // Acessos
+            document.getElementById('login-ecac').value = cliente.loginEcac || '';
+            document.getElementById('senha-ecac').value = cliente.senhaEcac || '';
+            document.getElementById('login-sefaz').value = cliente.loginSefaz || '';
+            document.getElementById('senha-sefaz').value = cliente.senhaSefaz || '';
+            document.getElementById('login-pref').value = cliente.loginPref || '';
+            document.getElementById('senha-pref').value = cliente.senhaPref || '';
+            document.getElementById('login-dominio').value = cliente.loginDominio || '';
+            document.getElementById('senha-dominio').value = cliente.senhaDominio || '';
+            document.getElementById('client-outros-acessos').value = cliente.outrosAcessos || '';
+
+            // Operacional
+            document.getElementById('client-drive').value = cliente.driveLink || '';
             if (cliente.rotinasSelecionadas) {
                 cliente.rotinasSelecionadas.forEach(rId => {
                     const cb = document.getElementById(`rotina-cb-${rId}`);
@@ -1171,11 +1229,9 @@ function openClientModal(id = null) {
             }
         }
     } else {
-        // Add Mode
         title.innerHTML = '<i class="fa-solid fa-user-plus highlight-text"></i> Novo Cliente';
         submitBtn.innerHTML = 'Cadastrar Novo Cliente';
         document.getElementById('client-id').value = '';
-        document.getElementById('client-drive').value = '';
     }
 
     document.getElementById('add-client-modal').classList.add('active');
@@ -1189,25 +1245,42 @@ async function handleAddClient(e) {
     e.preventDefault();
 
     const id = document.getElementById('client-id').value;
-    const razao = document.getElementById('client-razao').value;
-    const cnpj = document.getElementById('client-cnpj').value;
-    const regime = document.getElementById('client-regime').value;
-    const drive = document.getElementById('client-drive').value;
 
-    const selectedRotinas = Array.from(document.querySelectorAll('.client-rotina-checkbox:checked')).map(cb => parseInt(cb.value));
+    const clientData = {
+        codigo: document.getElementById('client-codigo').value,
+        razaoSocial: document.getElementById('client-razao').value,
+        cnpj: document.getElementById('client-cnpj').value,
+        regime: document.getElementById('client-regime').value,
+        ie: document.getElementById('client-ie').value,
+        im: document.getElementById('client-im').value,
+        dataAbertura: document.getElementById('client-abertura').value,
+        tipoEmpresa: document.getElementById('client-tipo').value,
+        contatoNome: document.getElementById('client-contato-nome').value,
+        email: document.getElementById('client-email').value,
+        telefone: document.getElementById('client-telefone').value,
+        responsavelFiscal: document.getElementById('client-resp-fiscal').value,
+        loginEcac: document.getElementById('login-ecac').value,
+        senhaEcac: document.getElementById('senha-ecac').value,
+        loginSefaz: document.getElementById('login-sefaz').value,
+        senhaSefaz: document.getElementById('senha-sefaz').value,
+        loginPref: document.getElementById('login-pref').value,
+        senhaPref: document.getElementById('senha-pref').value,
+        loginDominio: document.getElementById('login-dominio').value,
+        senhaDominio: document.getElementById('senha-dominio').value,
+        outrosAcessos: document.getElementById('client-outros-acessos').value,
+        driveLink: document.getElementById('client-drive').value,
+        rotinasSelecionadasIds: Array.from(document.querySelectorAll('.client-rotina-checkbox:checked')).map(cb => parseInt(cb.value))
+    };
 
     if (id) {
-        await Store.editClient(id, razao, cnpj, regime, null, selectedRotinas, drive);
+        await Store.editClient(id, clientData);
     } else {
-        await Store.addClient(razao, cnpj, regime, null, selectedRotinas, drive);
+        await Store.addClient(clientData);
     }
 
-    // Refresh lists
     renderClientes();
     renderOperacional();
     renderDashboard();
-
-    // Close modal
     closeClientModal();
 }
 
