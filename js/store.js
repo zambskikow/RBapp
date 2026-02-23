@@ -727,11 +727,17 @@ window.Store = {
             if (hasRotina && !shouldHaveRotina) {
                 const novasRotinas = rotinasAtual.filter(id => id !== rotinaId);
                 console.log(`[Store] Removendo rotina ${rotinaId} do cliente ${cliente.razaoSocial}`);
-                await this.editClient(cliente.id, cliente.razaoSocial, cliente.cnpj, cliente.regime, cliente.responsavelFiscal, novasRotinas, cliente.driveLink);
+                await this.editClient(cliente.id, {
+                    ...cliente,
+                    rotinasSelecionadasIds: novasRotinas
+                });
             } else if (!hasRotina && shouldHaveRotina) {
                 const novasRotinas = [...rotinasAtual, rotinaId];
                 console.log(`[Store] Adicionando rotina ${rotinaId} ao cliente ${cliente.razaoSocial}`);
-                await this.editClient(cliente.id, cliente.razaoSocial, cliente.cnpj, cliente.regime, cliente.responsavelFiscal, novasRotinas, cliente.driveLink);
+                await this.editClient(cliente.id, {
+                    ...cliente,
+                    rotinasSelecionadasIds: novasRotinas
+                });
             }
         }
     },

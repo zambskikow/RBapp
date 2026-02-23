@@ -1089,6 +1089,24 @@ function renderClientes() {
     });
 }
 
+// Funções Utilitárias Globais
+function toggleListVisibility(gridId, iconId) {
+    const grid = document.getElementById(gridId);
+    const icon = document.getElementById(iconId);
+
+    if (grid && icon) {
+        const isHidden = grid.style.display === 'none';
+        grid.style.display = isHidden ? 'grid' : 'none';
+
+        // Rotacionar ícone
+        if (isHidden) {
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        } else {
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        }
+    }
+}
+
 function setupClientCheckboxes() {
     const selectAllCb = document.getElementById('select-all-clients');
     const checkboxes = document.querySelectorAll('.client-checkbox');
