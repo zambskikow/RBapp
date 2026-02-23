@@ -329,8 +329,6 @@ async function initApp() {
 
     document.getElementById('dash-user-filter').addEventListener('change', renderDashboard);
 
-    document.getElementById('dash-client-filter').addEventListener('change', renderDashboard);
-
 
 
     // 4. Modals Events Setup
@@ -649,7 +647,6 @@ function setupNavigation() {
 
 function populateDashboardSelects() {
     const dashUserFilter = document.getElementById('dash-user-filter');
-    const dashClientFilter = document.getElementById('dash-client-filter');
     const userFilter = document.getElementById('user-filter');
 
     // Users
@@ -666,14 +663,6 @@ function populateDashboardSelects() {
             userFilter.innerHTML += `<option value="${f.nome}">${f.nome}</option>`;
         });
     }
-
-    // Clients
-    if (dashClientFilter) {
-        dashClientFilter.innerHTML = '<option value="All">Todos Clientes</option>';
-        Store.getData().clientes.forEach(c => {
-            dashClientFilter.innerHTML += `<option value="${c.id}">${c.razaoSocial}</option>`;
-        });
-    }
 }
 
 // ==========================================
@@ -681,39 +670,76 @@ function populateDashboardSelects() {
 // ==========================================
 function renderDashboard() {
     const dashUser = document.getElementById('dash-user-filter').value;
-    const dashClient = document.getElementById('dash-client-filter').value;
 
+    // Agora o dashboard é global da empresa, mas permite filtrar por analista
     let execsAll = Store.getExecucoesWithDetails(dashUser);
 
-    // Filter by Competencia
+    // Filtro de Competência (Sempre ativo)
     if (currentCompetencia) {
         execsAll = execsAll.filter(e => e.competencia === currentCompetencia);
     }
 
-    // Filter by Client
-    if (dashClient !== 'All') {
-        const clientId = parseInt(dashClient);
-        execsAll = execsAll.filter(e => e.clienteId === clientId);
-    }
+    // Cálculos de KPIs Estratégicos
+    const total = execsAll.length;
+    const concluidos = execsAll.filter(e => e.feito).length;
+    const taxaEficiencia = total > 0 ? Math.round((concluidos / total) * 100) : 0;
 
-    // Recalculate KPIs based on filtered array
     const kpis = {
-        total: execsAll.length,
-        concluidos: execsAll.filter(e => e.feito).length,
+        total: total,
+        concluidos: concluidos,
         emAndamento: execsAll.filter(e => !e.feito).length,
         vencendo: execsAll.filter(e => !e.feito && e.semaforo === 'yellow').length,
-        atrasados: execsAll.filter(e => !e.feito && e.semaforo === 'red').length
+        atrasados: execsAll.filter(e => !e.feito && e.semaforo === 'red').length,
+        taxaEficiencia: taxaEficiencia
     };
 
-    // Counters Animation
+    // Identificar Maior Carga e Cliente Crítico
+    let maiorCargaAnalista = "--";
+    let maxPendencias = -1;
+    let clienteCritico = "--";
+
+    const teamStats = {};
+    execsAll.forEach(ex => {
+        const reps = (ex.responsavel || "Automático").split(",").map(r => r.trim());
+        reps.forEach(resp => {
+            if (!teamStats[resp]) teamStats[resp] = { total: 0, concluidas: 0, pendentes: 0 };
+            teamStats[resp].total++;
+            if (ex.feito) teamStats[resp].concluidas++;
+            else teamStats[resp].pendentes++;
+
+            if (teamStats[resp].pendentes > maxPendencias) {
+                maxPendencias = teamStats[resp].pendentes;
+                maiorCargaAnalista = resp;
+            }
+        });
+    });
+
+    const maisAtrasado = execsAll.filter(e => !e.feito && e.semaforo === 'red')
+        .sort((a, b) => new Date(a.diaPrazo) - new Date(b.diaPrazo))[0];
+    if (maisAtrasado) clienteCritico = maisAtrasado.clientName;
+
+    // Atualização dos Contadores com Animação
     animateValue('kpi-total', parseInt(document.getElementById('kpi-total').innerText) || 0, kpis.total, 800);
     animateValue('kpi-done', parseInt(document.getElementById('kpi-done').innerText) || 0, kpis.concluidos, 800);
-    animateValue('kpi-andamento', parseInt(document.getElementById('kpi-andamento').innerText) || 0, kpis.emAndamento, 800);
     animateValue('kpi-warning', parseInt(document.getElementById('kpi-warning').innerText) || 0, kpis.vencendo, 800);
     animateValue('kpi-late', parseInt(document.getElementById('kpi-late').innerText) || 0, kpis.atrasados, 800);
 
-    // Chart.js initialization
-    renderChart(kpis);
+    const efEl = document.getElementById('kpi-eficiencia');
+    if (efEl) {
+        efEl.innerText = `${taxaEficiencia}%`;
+        efEl.style.color = taxaEficiencia > 80 ? 'var(--success)' : (taxaEficiencia > 50 ? 'var(--warning)' : 'var(--danger)');
+    }
+
+    // Alertas de Gestão
+    const alertCarga = document.getElementById('kpi-alert-carga');
+    const alertRisco = document.getElementById('kpi-alert-risco');
+    if (alertCarga) alertCarga.querySelector('span').innerText = `Maior Carga: ${maiorCargaAnalista} (${maxPendencias > 0 ? maxPendencias : 0})`;
+    if (alertRisco) alertRisco.querySelector('span').innerText = `Crítico: ${clienteCritico}`;
+
+    // Renderizar Múltiplos Gráficos
+    renderHealthChart(kpis);
+    renderTeamProductivityChart(teamStats);
+    renderRegimeMixChart(execsAll);
 
     // Render Bottlenecks table
     const critical = Store.getCriticalBottlenecks(currentCompetencia);
@@ -736,25 +762,7 @@ function renderDashboard() {
         });
     }
 
-    // Render Team Performance
-    let execsTeam = Store.getExecucoesWithDetails('All');
-    if (currentCompetencia) {
-        execsTeam = execsTeam.filter(e => e.competencia === currentCompetencia);
-    }
-    const teamStats = {};
-    execsTeam.forEach(ex => {
-        const reps = (ex.responsavel || "Automático").split(",").map(r => r.trim());
-        reps.forEach(resp => {
-            if (!teamStats[resp]) {
-                teamStats[resp] = { total: 0, concluidas: 0, hoje: 0, atrasadas: 0 };
-            }
-            teamStats[resp].total++;
-            if (ex.feito) teamStats[resp].concluidas++;
-            else if (ex.semaforo === 'red') teamStats[resp].atrasadas++;
-            else if (ex.semaforo === 'yellow') teamStats[resp].hoje++;
-        });
-    });
-
+    // Render Team Performance Table
     const ptbody = document.querySelector('#team-performance-table tbody');
     ptbody.innerHTML = '';
     if (Object.keys(teamStats).length === 0) {
@@ -779,8 +787,8 @@ function renderDashboard() {
                 <td><span class="resp-tag"><i class="fa-solid fa-user-circle"></i> ${resp}</span></td>
                 <td>${st.total}</td>
                 <td><span style="color:var(--success); font-weight:bold;">${st.concluidas}</span></td>
-                <td><span style="color:var(--warning);">${st.hoje}</span></td>
-                <td><span style="color:var(--danger);">${st.atrasadas}</span></td>
+                <td><span style="color:var(--warning); font-weight:bold;">${st.total - st.concluidas}</span></td>
+                <td><span style="color:var(--danger); font-weight:bold;">${st.pendentes}</span></td>
                 <td style="width:200px;">${progressHtml}</td>
             `;
             ptbody.appendChild(tr);
@@ -788,20 +796,23 @@ function renderDashboard() {
     }
 }
 
-function renderChart(kpis) {
-    const ctx = document.getElementById('semaforoChart');
-    if (currentSemaforoChart) {
-        currentSemaforoChart.destroy();
-    }
+// Global chart instances for destruction on redraw
+let healthChartInst = null;
+let teamChartInst = null;
+let regimeChartInst = null;
+
+function renderHealthChart(kpis) {
+    const ctxValue = document.getElementById('semaforoChart');
+    if (!ctxValue) return;
+    if (healthChartInst) healthChartInst.destroy();
 
     const data = [kpis.concluidos, kpis.emAndamento, kpis.vencendo, kpis.atrasados];
-    // Dummy state so it looks like a ring
     if (data.every(d => d === 0)) data[0] = 0.1;
 
-    currentSemaforoChart = new Chart(ctx, {
+    healthChartInst = new Chart(ctxValue, {
         type: 'doughnut',
         data: {
-            labels: ['Concluído', 'Em Andamento', 'Vencendo Hoje', 'Atrasado'],
+            labels: ['Concluído', 'No Prazo', 'Vencendo', 'Atrasado'],
             datasets: [{
                 data: data,
                 backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
@@ -813,12 +824,79 @@ function renderChart(kpis) {
             cutout: '75%',
             responsive: true,
             maintainAspectRatio: false,
-            animation: { animateScale: true, animateRotate: true },
             plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#F8FAFC', padding: 20, font: { family: 'Inter', size: 13 } }
-                }
+                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 } } }
+            }
+        }
+    });
+}
+
+function renderTeamProductivityChart(teamStats) {
+    const ctxValue = document.getElementById('teamChart');
+    if (!ctxValue) return;
+    if (teamChartInst) teamChartInst.destroy();
+
+    const labels = Object.keys(teamStats);
+    const concluidas = labels.map(l => teamStats[l].concluidas);
+    const pendentes = labels.map(l => teamStats[l].pendentes);
+
+    teamChartInst = new Chart(ctxValue, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Feito', data: concluidas, backgroundColor: '#10B981' },
+                { label: 'Pendente', data: pendentes, backgroundColor: 'rgba(255,255,255,0.1)' }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { stacked: true, grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10 } } },
+                y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', font: { size: 10 } } }
+            },
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 } } }
+            }
+        }
+    });
+}
+
+function renderRegimeMixChart(execsAll) {
+    const ctxValue = document.getElementById('regimeChart');
+    if (!ctxValue) return;
+    if (regimeChartInst) regimeChartInst.destroy();
+
+    const regimes = {};
+    execsAll.forEach(ex => {
+        const r = ex.regime || "Outros";
+        regimes[r] = (regimes[r] || 0) + 1;
+    });
+
+    regimeChartInst = new Chart(ctxValue, {
+        type: 'polarArea',
+        data: {
+            labels: Object.keys(regimes),
+            datasets: [{
+                data: Object.values(regimes),
+                backgroundColor: [
+                    'rgba(99, 102, 241, 0.6)',
+                    'rgba(139, 92, 246, 0.6)',
+                    'rgba(16, 185, 129, 0.6)',
+                    'rgba(245, 158, 11, 0.6)'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } }
+            },
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 } } }
             }
         }
     });
