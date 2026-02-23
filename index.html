@@ -360,6 +360,52 @@
                     </div>
                 </header>
 
+                <!-- Novos KPIs do Painel Operacional -->
+                <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                        <div class="kpi-card"
+                            style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-operacional-total" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Total</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card status-success"
+                            style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon"><i class="fa-solid fa-check-double"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-operacional-done" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Concluídos</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card status-info"
+                            style="background: rgba(59, 130, 246, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon"><i class="fa-solid fa-bars-progress"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-operacional-andamento" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Andamento</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card status-danger"
+                            style="background: rgba(239, 68, 68, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-operacional-late" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Atrasados</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de Pesquisa e Controles Adicionais -->
+                <div class="operacional-controls">
+                    <div class="search-wrapper">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="operacional-search" placeholder="Pesquisar por rotina ou cliente...">
+                    </div>
+                </div>
+
                 <div id="operacional-groups-container">
                     <!-- Routine Groups injected by app.js here -->
                 </div>
@@ -397,7 +443,8 @@
                         <div class="kpi-card"
                             style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
                             <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">
-                                <i class="fa-solid fa-leaf"></i></div>
+                                <i class="fa-solid fa-leaf"></i>
+                            </div>
                             <div class="kpi-data">
                                 <p class="kpi-value" id="kpi-simples" style="font-size: 1.3rem;">0</p>
                                 <h3 style="font-size: 0.65rem;">Simples</h3>
@@ -406,7 +453,8 @@
                         <div class="kpi-card"
                             style="background: rgba(245, 158, 11, 0.05); border: none; padding: 0.75rem;">
                             <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">
-                                <i class="fa-solid fa-building"></i></div>
+                                <i class="fa-solid fa-building"></i>
+                            </div>
                             <div class="kpi-data">
                                 <p class="kpi-value" id="kpi-presumido" style="font-size: 1.3rem;">0</p>
                                 <h3 style="font-size: 0.65rem;">Presumido</h3>

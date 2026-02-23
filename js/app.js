@@ -227,24 +227,23 @@ async function initApp() {
 
 
     compFilter.addEventListener('change', (e) => {
-
         currentCompetencia = e.target.value;
-
         dashCompFilter.value = currentCompetencia;
-
         meuCompFilter.value = currentCompetencia;
-
         renderOperacional();
-
         const dashboardView = document.getElementById('view-dashboard');
-
         if (dashboardView && dashboardView.style.display === 'block') renderDashboard();
-
         const meuDesempenhoView = document.getElementById('view-meu-desempenho');
-
         if (meuDesempenhoView && meuDesempenhoView.style.display === 'block') renderMeuDesempenho();
-
     });
+
+    // Operational Search Listener
+    const opSearch = document.getElementById('operacional-search');
+    if (opSearch) {
+        opSearch.addEventListener('input', () => {
+            renderOperacional();
+        });
+    }
 
 
 
@@ -498,6 +497,28 @@ function applyUserPermissions(auth) {
             adminNavDivider.style.display = 'block';
         } else {
             adminNavDivider.style.display = 'none';
+        }
+    }
+
+    // Dashboard Access Control
+    const dashUserFilter = document.getElementById('dash-user-filter');
+    const isAdmin = ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(auth.permissao);
+
+    if (dashUserFilter) {
+        dashUserFilter.style.display = isAdmin ? 'block' : 'none';
+        if (!isAdmin) dashUserFilter.value = auth.nome;
+    }
+
+    // Painel Operacional Access Control
+    const userFilter = document.getElementById('user-filter');
+    if (userFilter) {
+        if (isAdmin) {
+            userFilter.style.display = 'block';
+            currentOperacionalUser = 'All';
+            userFilter.value = 'All';
+        } else {
+            userFilter.style.display = 'none';
+            currentOperacionalUser = auth.nome;
         }
     }
 }
@@ -815,15 +836,38 @@ function renderOperacional() {
         tasks = tasks.filter(t => t.competencia && t.competencia.startsWith(currentCompetencia));
     }
 
+    // Search Filter
+    const searchVal = document.getElementById('operacional-search')?.value.toLowerCase() || '';
+    if (searchVal) {
+        tasks = tasks.filter(t =>
+            t.rotina.toLowerCase().includes(searchVal) ||
+            t.clientName.toLowerCase().includes(searchVal)
+        );
+    }
+
+    // Update Operational KPIs
+    const opTotal = tasks.length;
+    const opDone = tasks.filter(t => t.feito).length;
+    const opLate = tasks.filter(t => !t.feito && t.statusAuto.includes('Atrasado')).length;
+    const opProgress = tasks.filter(t => !t.feito && t.statusAuto.includes('Andamento')).length;
+
+    animateValue('kpi-operacional-total', 0, opTotal, 500);
+    animateValue('kpi-operacional-done', 0, opDone, 500);
+    animateValue('kpi-operacional-andamento', 0, opProgress, 500);
+    animateValue('kpi-operacional-late', 0, opLate, 500);
+
     const container = document.getElementById('operacional-groups-container');
     container.innerHTML = '';
 
     if (tasks.length === 0) {
-        container.innerHTML = `<div class="glass-card" style="text-align:center; padding: 3rem;">Nenhuma tarefa encontrada para este filtro.</div>`;
+        container.innerHTML = `<div class="glass-card" style="text-align:center; padding: 3rem; color: var(--text-muted);">
+            <i class="fa-solid fa-magnifying-glass fa-2x" style="margin-bottom:1rem; opacity:0.5;"></i><br>
+            Nenhuma tarefa encontrada com os filtros atuais.
+        </div>`;
         return;
     }
 
-    // Group tasks by 'rotina', initializing with all base routines
+    // Grouping and Rendering...
     const grouped = {};
     Store.getData().rotinasBase.forEach(rb => {
         grouped[rb.nome] = [];
@@ -836,22 +880,18 @@ function renderOperacional() {
 
     Object.keys(grouped).forEach(rotinaName => {
         const groupTasks = grouped[rotinaName];
+        if (groupTasks.length === 0 && searchVal) return; // Hide empty groups when searching
 
-        // Sort inside group: Atrasados -> Vencendo Hoje -> No Prazo -> Concluido
         groupTasks.sort((a, b) => {
             if (a.feito && !b.feito) return 1;
             if (!a.feito && b.feito) return -1;
             return new Date(a.diaPrazo) - new Date(b.diaPrazo);
         });
 
-        // Create Group Wrapper
         const groupDiv = document.createElement('div');
         groupDiv.className = 'routine-group fade-in';
-
-        // Count done vs total
         const doneCount = groupTasks.filter(t => t.feito).length;
 
-        // Build HTML
         let tableHtml = `
             <div class="routine-group-header">
                 <h2><i class="fa-solid fa-layer-group"></i> ${rotinaName}</h2>
@@ -861,8 +901,8 @@ function renderOperacional() {
                 <table class="data-table selectable-rows">
                     <thead>
                         <tr>
-                            <th>Status Geral</th>
-                            <th>Sinalização</th>
+                            <th>Status</th>
+                            <th>Sinal</th>
                             <th>Cliente</th>
                             <th>Prazo</th>
                             <th>Responsável</th>
@@ -876,8 +916,8 @@ function renderOperacional() {
         if (groupTasks.length === 0) {
             tableHtml += `
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted); font-style: italic;">
-                        <i class="fa-solid fa-circle-info"></i> Nenhuma execução pendente. Vincule clientes ou aguarde o ciclo de geração.
+                    <td colspan="7" style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-style: italic;">
+                        Sem pendências.
                     </td>
                 </tr>
             `;
@@ -891,7 +931,7 @@ function renderOperacional() {
                 else if (t.statusAuto.includes('Vence')) badgeClass = 'vencendo';
 
                 let driveBtnHtml = t.driveLink && t.driveLink !== "#" && t.driveLink.trim() !== ""
-                    ? `<a href="${t.driveLink}" target="_blank" class="btn btn-small btn-secondary" style="margin-right: 4px; padding: 0.25rem 0.5rem; font-size: 0.8rem;" title="Abrir Google Drive do Cliente"><i class="fa-brands fa-google-drive"></i></a>`
+                    ? `<a href="${t.driveLink}" target="_blank" class="btn btn-small btn-secondary" style="margin-right: 4px; padding: 0.25rem 0.5rem; font-size: 0.8rem;" title="Google Drive"><i class="fa-brands fa-google-drive"></i></a>`
                     : '';
 
                 tableHtml += `
@@ -899,11 +939,7 @@ function renderOperacional() {
                         <td style="text-align: center;">
                             ${t.feito ? '<i class="fa-solid fa-circle-check fa-lg" style="color:var(--success)"></i>' : '<i class="fa-regular fa-circle fa-lg" style="color:var(--text-muted)"></i>'}
                         </td>
-                        <td>
-                            <div class="status-indicator">
-                                <span class="orb ${t.semaforo}"></span>
-                            </div>
-                        </td>
+                        <td><span class="orb ${t.semaforo}"></span></td>
                         <td><strong>${t.clientName}</strong></td>
                         <td>${formatDate(t.diaPrazo)}</td>
                         <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${t.responsavel}</span></td>
@@ -919,23 +955,14 @@ function renderOperacional() {
             });
         }
 
-        tableHtml += `
-                    </tbody>
-                </table>
-            </div>
-        `;
-
+        tableHtml += `</tbody></table></div>`;
         groupDiv.innerHTML = tableHtml;
         container.appendChild(groupDiv);
     });
 
-    // Attach click events for both row and button
     document.querySelectorAll('#operacional-groups-container tr[data-id]').forEach(tr => {
         const taskId = parseInt(tr.getAttribute('data-id'));
-        // Row click
         tr.addEventListener('click', () => openTaskModal(taskId));
-
-        // Prevent bubble on internal button
         const btn = tr.querySelector('.open-task-btn');
         if (btn) {
             btn.addEventListener('click', (e) => {
