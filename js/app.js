@@ -1205,7 +1205,10 @@ function renderOperacional() {
                             ${t.feito ? '<i class="fa-solid fa-circle-check fa-lg" style="color:var(--success)"></i>' : '<i class="fa-regular fa-circle fa-lg" style="color:var(--text-muted)"></i>'}
                         </td>
                         <td><span class="orb ${t.semaforo}"></span></td>
-                        <td><strong>${t.clientName}</strong></td>
+                        <td>
+                            <strong>${t.clientName}</strong><br>
+                            <small style="color:var(--text-muted); font-size:0.7rem;">${t.cnpj}</small>
+                        </td>
                         <td>${formatDate(t.diaPrazo)}</td>
                         <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${t.responsavel}</span></td>
                         <td><span class="status-badge ${badgeClass}">${t.statusAuto}</span></td>

@@ -290,6 +290,7 @@ window.Store = {
             return {
                 ...ex,
                 clientName: client ? client.razaoSocial : 'Desconhecido',
+                cnpj: client ? client.cnpj : '',
                 regime: client ? client.regime : '',
                 setor: rotinaBase ? rotinaBase.setor : 'Geral',
                 statusAuto,
