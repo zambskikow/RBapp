@@ -10,12 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-let currentSemaforoChart = null;
-
-// Register DataLabels plugin globally
-if (typeof ChartDataLabels !== 'undefined') {
-    Chart.register(ChartDataLabels);
-}
+// Plugin registration will be handled inside initApp for more safety
 
 let currentOperacionalUser = 'All';
 
@@ -40,6 +35,15 @@ async function initApp() {
 
 
     // Check initial state
+
+    // Register DataLabels plugin globally if available
+    if (typeof ChartDataLabels !== 'undefined') {
+        try {
+            Chart.register(ChartDataLabels);
+        } catch (e) {
+            console.warn("Datalabels plugin registration failed:", e);
+        }
+    }
 
     document.getElementById('login-form').addEventListener('submit', handleLogin);
 
@@ -689,12 +693,17 @@ function renderDashboard() {
     const concluidos = execsAll.filter(e => e.feito).length;
     const taxaEficiencia = total > 0 ? Math.round((concluidos / total) * 100) : 0;
 
+    const pendentes = execsAll.filter(e => !e.feito);
+    const vencendo = pendentes.filter(e => e.semaforo === 'yellow').length;
+    const atrasados = pendentes.filter(e => e.semaforo === 'red').length;
+    const noPrazo = pendentes.length - vencendo - atrasados;
+
     const kpis = {
         total: total,
         concluidos: concluidos,
-        emAndamento: execsAll.filter(e => !e.feito).length,
-        vencendo: execsAll.filter(e => !e.feito && e.semaforo === 'yellow').length,
-        atrasados: execsAll.filter(e => !e.feito && e.semaforo === 'red').length,
+        noPrazo: noPrazo > 0 ? noPrazo : 0,
+        vencendo: vencendo,
+        atrasados: atrasados,
         taxaEficiencia: taxaEficiencia
     };
 
@@ -811,8 +820,20 @@ function renderHealthChart(kpis) {
     if (!ctxValue) return;
     if (healthChartInst) healthChartInst.destroy();
 
-    const data = [kpis.concluidos, kpis.emAndamento, kpis.vencendo, kpis.atrasados];
-    if (data.every(d => d === 0)) data[0] = 0.1;
+    if (!kpis) return;
+
+    // Garantir que todos os valores sejam numéricos
+    const d_concluidos = Number(kpis.concluidos) || 0;
+    const d_noPrazo = Number(kpis.noPrazo) || 0;
+    const d_vencendo = Number(kpis.vencendo) || 0;
+    const d_atrasados = Number(kpis.atrasados) || 0;
+
+    let data = [d_concluidos, d_noPrazo, d_vencendo, d_atrasados];
+    const isActuallyEmpty = data.every(d => d === 0);
+
+    if (isActuallyEmpty) {
+        data = [0.1, 0, 0, 0]; // Valor mínimo para evitar canvas vazio
+    }
 
     healthChartInst = new Chart(ctxValue, {
         type: 'doughnut',
@@ -834,7 +855,7 @@ function renderHealthChart(kpis) {
                 datalabels: {
                     color: '#fff',
                     font: { weight: 'bold', size: 12 },
-                    formatter: (value) => value > 0 ? value : ''
+                    formatter: (value) => (value >= 1 && !isActuallyEmpty) ? value : ''
                 }
             }
         }
