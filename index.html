@@ -520,13 +520,19 @@
                 </div>
 
                 <!-- Client Detail Panel (Main Screen) -->
-                <div id="clientes-detail-panel" class="glass-card fade-in" style="display: none; padding: 2rem;">
+                <div id="clientes-detail-panel" class="glass-card fade-in" style="display: none; padding: 3rem;">
                     <header class="detail-header">
-                        <div class="detail-title-group">
-                            <i class="fa-solid fa-user-gear"></i>
-                            <div>
-                                <h2 id="client-panel-title">Ficha do Cliente</h2>
-                                <p id="client-panel-subtitle">Gerencie as informações e acessos deste cliente</p>
+                        <div class="header-left">
+                            <button class="btn btn-secondary btn-back" id="btn-back-clients-list" type="button">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <div class="detail-title-group">
+                                <i class="fa-solid fa-user-gear"></i>
+                                <div>
+                                    <h2 id="client-panel-title">Ficha do Cliente</h2>
+                                    <p id="client-panel-subtitle">Gerencie as informações e acessos de <span
+                                            id="client-header-name" class="highlight-text">...</span></p>
+                                </div>
                             </div>
                         </div>
                         <div class="header-actions">
@@ -543,7 +549,8 @@
                         <button type="button" class="modal-tab-btn" data-tab="tab-contato"><i
                                 class="fa-solid fa-address-book"></i> Contatos</button>
                         <button type="button" class="modal-tab-btn" data-tab="tab-acessos"><i
-                                class="fa-solid fa-key"></i> Acessos/Logins</button>
+                                class="fa-solid fa-key"></i>
+                            Acessos/Logins</button>
                         <button type="button" class="modal-tab-btn" data-tab="tab-rotinas"><i
                                 class="fa-solid fa-calendar-check"></i> Rotinas</button>
                     </nav>
@@ -936,7 +943,8 @@
                                     </div>
                                     <div class="reader-actions">
                                         <button class="btn btn-outline" id="btn-reply-msg"><i
-                                                class="fa-solid fa-reply"></i> Responder</button>
+                                                class="fa-solid fa-reply"></i>
+                                            Responder</button>
                                         <button class="action-btn text-danger" id="btn-delete-msg"><i
                                                 class="fa-solid fa-trash"></i></button>
                                     </div>
@@ -1100,7 +1108,8 @@
                             <div class="kpi-grid" style="grid-template-columns: 1fr 1fr;">
                                 <div class="glass-card table-container">
                                     <h3 style="margin-bottom: 1rem; color: var(--primary);"><i
-                                            class="fa-solid fa-download"></i> Fazer Backup</h3>
+                                            class="fa-solid fa-download"></i>
+                                        Fazer Backup</h3>
                                     <p
                                         style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem; line-height: 1.5;">
                                         Faça o download de um arquivo ".json" contendo 100% dos dados atuais do sistema.
@@ -1119,7 +1128,8 @@
                                 <div class="glass-card table-container"
                                     style="border: 1px solid rgba(239, 68, 68, 0.3);">
                                     <h3 style="margin-bottom: 1rem; color: var(--danger);"><i
-                                            class="fa-solid fa-upload"></i> Restaurar Sistema</h3>
+                                            class="fa-solid fa-upload"></i>
+                                        Restaurar Sistema</h3>
                                     <p
                                         style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem; line-height: 1.5;">
                                         Suba um backup anterior (isto apagará os dados atuais do momento).</p>
@@ -1127,7 +1137,8 @@
                                         style="padding: 0.5rem; margin-bottom: 1rem; width: 100%;">
                                     <button class="btn btn-primary" id="btn-restore-backup"
                                         style="width: 100%; background: var(--danger);"><i
-                                            class="fa-solid fa-rotate-left"></i> Esmagar Base Atual e Restaurar</button>
+                                            class="fa-solid fa-rotate-left"></i>
+                                        Esmagar Base Atual e Restaurar</button>
                                 </div>
                             </div>
                         </div>

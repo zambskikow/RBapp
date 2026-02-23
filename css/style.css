@@ -1680,6 +1680,34 @@ body {
     border-bottom: 1px solid var(--border-glass);
 }
 
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    /* Espaço entre botão voltar e título */
+}
+
+.btn-back {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-glass);
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+    transform: translateX(-3px);
+    border-color: var(--border-glass-light);
+}
+
 .detail-title-group {
     display: flex;
     align-items: center;

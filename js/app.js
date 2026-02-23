@@ -1160,7 +1160,8 @@ function openClientDetail(id = null) {
     document.querySelector('[data-tab="tab-geral"]').classList.add('active');
     document.getElementById('tab-geral').classList.add('active');
 
-    const title = document.getElementById('modal-client-title');
+    const title = document.getElementById('client-panel-title');
+    const headerName = document.getElementById('client-header-name');
     const submitBtn = document.getElementById('client-modal-submit-btn');
 
     // Load Rotinas for checklist
@@ -1180,7 +1181,8 @@ function openClientDetail(id = null) {
     if (id) {
         const cliente = Store.getData().clientes.find(c => c.id === id);
         if (cliente) {
-            title.innerHTML = `<i class="fa-solid fa-user-pen highlight-text"></i> ${cliente.razaoSocial}`;
+            title.innerHTML = 'Ficha do Cliente';
+            headerName.textContent = cliente.razaoSocial;
             submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Salvar Alterações';
 
             document.getElementById('client-id').value = cliente.id;
@@ -1222,7 +1224,8 @@ function openClientDetail(id = null) {
             }
         }
     } else {
-        title.innerHTML = '<i class="fa-solid fa-user-plus highlight-text"></i> Novo Cliente';
+        title.innerHTML = 'Novo Cliente';
+        headerName.textContent = 'um novo cliente';
         submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar Novo Cliente';
         document.getElementById('client-id').value = '';
     }
