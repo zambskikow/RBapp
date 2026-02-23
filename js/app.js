@@ -371,6 +371,19 @@ async function initApp() {
         });
     }
 
+    const notificationBtn = document.getElementById('btn-notification');
+    if (notificationBtn) {
+        notificationBtn.addEventListener('click', () => {
+            // Animação
+            notificationBtn.classList.add('bell-animate');
+            setTimeout(() => notificationBtn.classList.remove('bell-animate'), 500);
+
+            // Redireciona para mensagens
+            const msgTab = document.querySelector('.nav-item[data-view="mensagens"]');
+            if (msgTab) msgTab.click();
+        });
+    }
+
     // 9. Mensagens Modal Events
     document.getElementById('btn-nova-mensagem').addEventListener('click', openNovaMensagemModal);
     document.getElementById('close-mensagem-modal').addEventListener('click', closeNovaMensagemModal);
@@ -1905,19 +1918,20 @@ let currentLoadedMessageId = null;
 function updateMensagensBadges() {
     if (!LOGGED_USER) return;
 
-    // Topbar
-    const unreadCount = Store.getUnreadCount(LOGGED_USER.nome);
-    const topbarBadge = document.getElementById('topbar-badge-msg');
-    if (topbarBadge) {
-        if (unreadCount > 0) {
-            topbarBadge.style.display = 'inline-flex';
-            topbarBadge.textContent = unreadCount;
-        } else {
-            topbarBadge.style.display = 'none';
-        }
-    }
+    const unreadCount = Store.getUnreadMensagensCount();
+    const badges = document.querySelectorAll('.badge');
+    const msgNavItem = document.querySelector('.nav-item[data-view="mensagens"]');
 
-    // Sidebar Inbox Badge
+    badges.forEach(b => {
+        if (unreadCount > 0) {
+            b.textContent = unreadCount;
+            b.style.display = 'flex';
+        } else {
+            b.style.display = 'none';
+        }
+    });
+
+    // Sidebar Inbox Badge (specific element, if it exists)
     const inboxBadge = document.getElementById('inbox-unread-badge');
     if (inboxBadge) {
         if (unreadCount > 0) {

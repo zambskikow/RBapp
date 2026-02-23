@@ -285,6 +285,61 @@ body {
     letter-spacing: 0.5px;
 }
 
+/* Notification Bell in Sidebar */
+.sidebar-notification {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-glass);
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+}
+
+.sidebar.collapsed .sidebar-notification {
+    display: none;
+    /* Hide when collapsed to avoid layout break */
+}
+
+/* Shake Animation */
+@keyframes bell-shake {
+    0% {
+        transform: rotate(0);
+    }
+
+    15% {
+        transform: rotate(15deg);
+    }
+
+    30% {
+        transform: rotate(-15deg);
+    }
+
+    45% {
+        transform: rotate(10deg);
+    }
+
+    60% {
+        transform: rotate(-10deg);
+    }
+
+    75% {
+        transform: rotate(5deg);
+    }
+
+    85% {
+        transform: rotate(-5deg);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
+}
+
+.bell-animate i {
+    animation: bell-shake 0.5s ease-in-out;
+    color: var(--warning) !important;
+}
+
 /* Main Content Area */
 .main-content {
     flex: 1;
