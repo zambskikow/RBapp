@@ -1447,11 +1447,12 @@ async function toggleFuncionarioStatus(id) {
 // ==========================================
 function renderRotinas() {
     const rotinas = Store.getData().rotinasBase;
+    const clientes = Store.getData().clientes;
     const tbody = document.querySelector('#rotinas-table tbody');
     tbody.innerHTML = '';
 
     if (rotinas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 3rem;">Nenhuma rotina base cadastrada.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 3rem;">Nenhuma rotina base cadastrada.</td></tr>`;
         return;
     }
 
@@ -1460,8 +1461,17 @@ function renderRotinas() {
         if (r.frequencia === 'Anual') badgeClass = 'hoje';
         else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Using red to highlight
 
-        const diaText = r.frequencia === 'Mensal' ? `Dia ${r.diaPrazoPadrao} do mês base` :
-            (r.frequencia === 'Anual' ? `Todo ${r.diaPrazoPadrao}` : `Em ${r.diaPrazoPadrao} dia(s) úteis`);
+        const diaText = r.frequencia === 'Mensal' ? `Dia ${r.diaPrazoPadrao}` :
+            (r.frequencia === 'Anual' ? `${r.diaPrazoPadrao}` : `${r.diaPrazoPadrao} d.ú.`);
+
+        // Lista de clientes vinculados em uma só linha
+        const clientesVinculados = clientes
+            .filter(c => c.rotinasSelecionadas && c.rotinasSelecionadas.includes(r.id))
+            .map(c => c.razaoSocial)
+            .join(", ") || "Nenhum cliente";
+
+        // Responsáveis (já vem como string separada por vírgula da Store)
+        const responsaveisText = r.responsavel || "Automático";
 
         const tr = document.createElement('tr');
         tr.className = 'fade-in';
@@ -1469,6 +1479,12 @@ function renderRotinas() {
             <td><strong>${r.nome}</strong></td>
             <td><span class="status-badge ${badgeClass}">${r.frequencia || 'Mensal'}</span></td>
             <td><span class="resp-tag" style="background: rgba(255,255,255,0.05); color: var(--text-main);">${r.setor || '-'}</span></td>
+            <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${responsaveisText}">
+                <span style="font-size: 0.85rem; color: var(--text-muted);"><i class="fa-solid fa-users-gear"></i> ${responsaveisText}</span>
+            </td>
+            <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${clientesVinculados}">
+                <span style="font-size: 0.85rem; color: var(--text-muted);"><i class="fa-solid fa-building"></i> ${clientesVinculados}</span>
+            </td>
             <td>${diaText}</td>
             <td>
                 <button class="btn btn-small btn-secondary" onclick="openRotinaModal(${r.id})" style="margin-right: 4px;">
