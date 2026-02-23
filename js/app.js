@@ -558,6 +558,14 @@ function setupNavigation() {
             navItems.forEach(nav => nav.classList.remove('active'));
             link.classList.add('active');
 
+            // Disparar animação sutil no ícone
+            const icon = link.querySelector('i');
+            if (icon) {
+                icon.classList.add('icon-animate');
+                // Remove a classe após a animação (0.3s) para permitir repetir
+                setTimeout(() => icon.classList.remove('icon-animate'), 300);
+            }
+
             // Switch views globally
             const targetView = link.getAttribute('data-view');
             localStorage.setItem('fiscalapp_current_view', targetView);
