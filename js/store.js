@@ -593,21 +593,24 @@ window.Store = {
     // Mocks for edit - in a full refactor these would be PUT requests
     async editClient(id, clientData) {
         const {
-            razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadasIds, driveLink,
+            razaoSocial, cnpj, regime, responsavelFiscal, driveLink,
             codigo, ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
             loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos
         } = clientData;
+
+        // Fallback robusto para quando a chamada não envia o novo campo redundante
+        const finalRotinasIds = clientData.rotinasSelecionadasIds || clientData.rotinasSelecionadas || [];
 
         const c = db.clientes.find(x => x.id === parseInt(id));
         if (c) {
             // Determine added and removed routines
             const oldRotinas = c.rotinasSelecionadas || [];
-            const newRotinasIds = rotinasSelecionadasIds.filter(rId => !oldRotinas.includes(rId));
-            const removedRotinasIds = oldRotinas.filter(rId => !rotinasSelecionadasIds.includes(rId));
+            const newRotinasIds = finalRotinasIds.filter(rId => !oldRotinas.includes(rId));
+            const removedRotinasIds = oldRotinas.filter(rId => !finalRotinasIds.includes(rId));
 
             // Update local object
             Object.assign(c, {
-                razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadas: rotinasSelecionadasIds, driveLink,
+                razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadas: finalRotinasIds, driveLink,
                 codigo, ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
                 loginEcac, senhaEcac, loginSefaz, senhaSefaz, loginPref, senhaPref, loginDominio, senhaDominio, outrosAcessos,
                 ativo: clientData.ativo
@@ -639,7 +642,7 @@ window.Store = {
                         razao_social: razaoSocial,
                         cnpj, regime,
                         responsavel_fiscal: responsavelFiscal,
-                        rotinas_selecionadas: rotinasSelecionadasIds,
+                        rotinas_selecionadas: finalRotinasIds,
                         drive_link: driveLink,
                         codigo,
                         inscricao_estadual: ie,

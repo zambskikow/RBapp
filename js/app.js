@@ -1449,7 +1449,7 @@ async function toggleClientStatus(id, newStatus) {
     try {
         const cliente = Store.getData().clientes.find(c => c.id === id);
         if (cliente) {
-            await Store.editClient(id, { ...cliente, ativo: newStatus });
+            await Store.editClient(id, { ...cliente, ativo: newStatus, rotinasSelecionadasIds: cliente.rotinasSelecionadas || [] });
             showFeedbackToast(`Status de ${cliente.razaoSocial} alterado para ${newStatus ? 'Ativo' : 'Inativo'}.`, 'success');
             // Refresh counts and dashboard if needed
             renderDashboard();
