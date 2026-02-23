@@ -1116,8 +1116,8 @@ function renderClientes() {
         // Coluna de Status com Toggle Compacto
         const statusToggleHtml = `
             <div style="display: flex; align-items: center; justify-content: center;">
-                <label class="custom-toggle" title="Alterar status de ${c.razaoSocial}">
-                    <input type="checkbox" onchange="toggleClientStatus(${c.id}, this.checked)" ${c.ativo !== false ? 'checked' : ''}>
+                <label class="custom-toggle" title="${isOperacional ? 'Permissão apenas para visualização' : 'Alterar status de ' + c.razaoSocial}" style="${isOperacional ? 'cursor: not-allowed; opacity: 0.6;' : ''}">
+                    <input type="checkbox" onchange="toggleClientStatus(${c.id}, this.checked)" ${c.ativo !== false ? 'checked' : ''} ${isOperacional ? 'disabled' : ''}>
                     <span class="toggle-slider"></span>
                     <span class="toggle-label" style="font-size: 0.7rem;">Ativo</span>
                 </label>
