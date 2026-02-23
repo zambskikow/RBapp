@@ -111,7 +111,7 @@
                 <div class="topbar-actions">
                     <button class="action-btn" onclick="document.querySelector('[data-view=mensagens]').click()">
                         <i class="fa-solid fa-bell"></i>
-                        <span class="badge" id="topbar-badge-msg" style="display:none;">0</span>
+                        <!-- <span class="badge" id="topbar-badge-msg" style="display:none;">0</span> -->
                     </button>
                     <div class="date-display" id="currentDate">--/--/----</div>
                     <button id="btn-logout" class="btn btn-outline"
@@ -906,8 +906,7 @@
                                                 id="audit-comp-atrasado">0</span>
                                             <div style="font-size:0.7rem; color:var(--text-muted);">Atrasados</div>
                                         </div>
-                                        <div style="text-align: center;"><span
-                                                style="font-size: 1.2rem; font-weight: bold; color: var(--warning);"
+                                        <div style="text-align: center;"><span class="kpi-value"
                                                 id="audit-comp-pendente">0</span>
                                             <div style="font-size:0.7rem; color:var(--text-muted);">Esquecidos/Pendentes
                                             </div>

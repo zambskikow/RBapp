@@ -2661,12 +2661,12 @@ async function handleSaveCargo(e) {
 
 
     // Disable button to prevent double submit
+    const submitBtn = document.getElementById('btn-save-cargo') || e.target.querySelector('button[type="submit"]') || document.querySelector('#admin-cargo-modal button[type="submit"]');
 
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-
-    submitBtn.disabled = true;
-
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+    }
 
 
 
@@ -2684,9 +2684,10 @@ async function handleSaveCargo(e) {
 
 
 
-    submitBtn.disabled = false;
-
-    submitBtn.innerHTML = 'Salvar Permissões';
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Salvar Permissões';
+    }
 
 
 
