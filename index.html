@@ -95,10 +95,6 @@
                     <span class="user-name">Manager</span>
                     <span class="user-role">Setor Fiscal</span>
                 </div>
-                <button id="btn-notification" class="action-btn sidebar-notification" title="Notificações">
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="badge" style="display: none;">0</span>
-                </button>
             </div>
         </aside>
 
@@ -113,6 +109,11 @@
                     <div style="flex: 1;"></div> <!-- Spacer replacing search bar -->
                 </div>
                 <div class="topbar-actions">
+                    <button id="btn-notification" class="action-btn topbar-notification" title="Notificações"
+                        style="margin-right: 0.5rem; position: relative;">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="badge" style="position: absolute; top: -5px; right: -5px;">0</span>
+                    </button>
                     <div class="date-display" id="currentDate">--/--/----</div>
                     <button id="btn-logout" class="btn btn-outline"
                         style="border-color: var(--danger); color: var(--danger); font-size: 0.85rem; padding: 0.4rem 1rem;">
@@ -1450,9 +1451,12 @@
                 <form id="nova-mensagem-form">
                     <div class="form-group">
                         <label>Para (Destinatário)</label>
-                        <select id="msg-destinatario" class="glass-select" style="width: 100%;" required>
-                            <!-- Populated by JS -->
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Assunto</label>
+                        <input type="text" id="msg-assunto" class="glass-input" placeholder="Ex: Dúvida sobre imposto"
+                            required>
                     </div>
                     <div class="form-group">
                         <label>Mensagem</label>
@@ -1560,6 +1564,9 @@
             </footer>
         </div>
     </div>
+
+    <!-- Animation Container for Messenger -->
+    <div id="paper-plane-container" class="paper-plane-animation"></div>
 
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>

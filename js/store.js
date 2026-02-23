@@ -868,12 +868,35 @@ window.Store = {
     },
 
     // Additional methods mock
-    sendMensagem(remetente, destinatario, texto) {
-        // Push locally
-        const m = { id: Date.now(), remetente, destinatario, texto, lida: false, data: new Date().toISOString() };
+    async sendMensagem(remetente, destinatario, texto, assunto = 'Sem Assunto') {
+        const m = { id: Date.now(), remetente, destinatario, texto, assunto, lida: false, data: new Date().toISOString() };
         db.mensagens.push(m);
-        // Post api
-        fetch(`${API_BASE}/mensagens`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ remetente, destinatario, texto, lida: false }) }).catch(e => { });
+        try {
+            await fetch(`${API_BASE}/mensagens`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ remetente, destinatario, texto, assunto, lida: false })
+            });
+        } catch (e) { console.error("Erro ao enviar msg API:", e); }
+    },
+
+    async deleteMensagem(id) {
+        const idx = db.mensagens.findIndex(m => m.id === id);
+        if (idx !== -1) {
+            const m = db.mensagens[idx];
+            db.mensagens.splice(idx, 1);
+            try {
+                const res = await fetch(`${API_BASE}/mensagens/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("API Delete Failed");
+            } catch (e) {
+                console.warn("Falha ao deletar msg API, revertendo local:", e);
+                db.mensagens.push(m); // Rollback shallow
+                return false;
+            }
+            this.registerLog("Excluiu Mensagem", `ID: ${id}`);
+            return true;
+        }
+        return false;
     },
 
     getMensagensPara(usuario) {

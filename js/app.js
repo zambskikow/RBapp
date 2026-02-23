@@ -2284,13 +2284,16 @@ function loadMessageIntoReader(id) {
         btnReply.style.display = 'none';
     }
 
-    btnDelete.onclick = () => {
+    btnDelete.onclick = async () => {
         if (confirm("Deseja mesmo excluir esta mensagem da sua visualização?")) {
-            // Implement delete locally by filtering it out or via Store
-            hideInboxReader();
-            // Store.deleteMensagem(id) -> not fully implemented in Store yet, so we just clear view
-            // Real implementation would delete the row.
-            alert("Ação de apagar ainda não sincronizada com a API neste mock.");
+            const success = await Store.deleteMensagem(id);
+            if (success) {
+                showFeedbackToast("Mensagem excluída com sucesso.", "success");
+                hideInboxReader();
+                renderMensagens();
+            } else {
+                showFeedbackToast("Erro ao excluir mensagem.", "error");
+            }
         }
     };
 }
@@ -2316,8 +2319,10 @@ function openNovaMensagemModal(prefillDest = null, prefillSubj = "") {
 
     // Notice: there's no subject input in original HTML, so we just pre-fill texto if doing a reply
     let textArea = document.getElementById('msg-texto');
+    let subjectInput = document.getElementById('msg-assunto');
+
     if (prefillSubj) {
-        textArea.value = `--- EM RESPOSTA A: ${prefillSubj} ---\n\n`;
+        subjectInput.value = prefillSubj;
     }
 
     document.getElementById('nova-mensagem-modal').classList.add('active');
@@ -2327,20 +2332,44 @@ function closeNovaMensagemModal() {
     document.getElementById('nova-mensagem-modal').classList.remove('active');
 }
 
-function handleSendMensagem(e) {
+async function handleSendMensagem(e) {
     e.preventDefault();
     const dest = document.getElementById('msg-destinatario').value;
+    const assunto = document.getElementById('msg-assunto').value;
     const texto = document.getElementById('msg-texto').value;
 
-    Store.sendMensagem(LOGGED_USER.nome, dest, texto);
+    await Store.sendMensagem(LOGGED_USER.nome, dest, texto, assunto);
 
-    alert(`Mensagem enviada para ${dest}!`);
     closeNovaMensagemModal();
+    triggerPaperPlaneAnimation();
 
-    // If we're looking at sent items, refresh
-    if (currentInboxFolder === 'sent') {
-        renderMensagens();
-    }
+    setTimeout(() => {
+        showFeedbackToast(`Mensagem enviada para ${dest}!`, 'success');
+        // If we're looking at sent items, refresh
+        if (currentInboxFolder === 'sent') {
+            renderMensagens();
+        }
+    }, 1500);
+}
+
+function triggerPaperPlaneAnimation() {
+    const container = document.getElementById('paper-plane-container');
+    if (!container) return;
+
+    const plane = document.createElement('div');
+    plane.className = 'paper-plane';
+    plane.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+
+    // Start position (roughly center-right where modal usually is)
+    plane.style.left = '50%';
+    plane.style.top = '50%';
+
+    container.appendChild(plane);
+
+    // Remove element after animation
+    setTimeout(() => {
+        plane.remove();
+    }, 2000);
 }
 
 
