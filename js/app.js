@@ -1136,7 +1136,15 @@ function renderClientes() {
             </td>
             <td style="font-size: 0.8rem; color: var(--text-muted); opacity: 0.7; width: 140px;">${c.cnpj}</td>
             <td><span class="status-badge noprazo" style="font-size: 0.7rem; padding: 2px 8px;">${c.regime}</span></td>
-            <td><span class="resp-tag" style="font-size: 0.75rem; padding: 2px 8px;"><i class="fa-solid fa-user-tie"></i> ${c.responsavelFiscal || 'N/T'}</span></td>
+            <td style="text-align: center;">
+                ${c.driveLink ? `
+                <a href="${c.driveLink}" target="_blank" class="btn-action-drive" title="Abrir Google Drive de ${c.razaoSocial}" style="color: #34A853; font-size: 1.1rem; transition: transform 0.2s;">
+                    <i class="fa-brands fa-google-drive"></i>
+                </a>
+                ` : `
+                <i class="fa-brands fa-google-drive" title="Drive não configurado" style="color: var(--text-muted); opacity: 0.3; font-size: 1.1rem;"></i>
+                `}
+            </td>
             <td style="width: 110px;">${statusToggleHtml}</td>
             <td style="white-space: nowrap; width: 60px;">
                 <div class="btn-action-container">
