@@ -487,6 +487,25 @@
                         </div>
                     </div>
 
+                    <!-- Barra de Pesquisa e Controles de Ordenação -->
+                    <div class="operacional-controls" style="margin-bottom: 1rem;">
+                        <div class="search-wrapper">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="clientes-search" placeholder="Pesquisar por nome, CNPJ ou código...">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <select id="clientes-sort" class="glass-select" style="min-width: 200px;">
+                                <option value="az">Razão Social (A → Z)</option>
+                                <option value="za">Razão Social (Z → A)</option>
+                                <option value="codigo-asc">Código (Crescente)</option>
+                                <option value="codigo-desc">Código (Decrescente)</option>
+                                <option value="recente" selected>Mais Recente</option>
+                                <option value="antigo">Mais Antigo</option>
+                                <option value="regime">Regime Tributário</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="glass-card full-table-container">
                         <div class="table-responsive">
                             <table class="data-table" id="clients-table">

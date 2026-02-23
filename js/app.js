@@ -245,6 +245,20 @@ async function initApp() {
         });
     }
 
+    // Listeners de Pesquisa e Ordenação de Clientes
+    const clientesSearch = document.getElementById('clientes-search');
+    if (clientesSearch) {
+        clientesSearch.addEventListener('input', () => {
+            renderClientes();
+        });
+    }
+    const clientesSort = document.getElementById('clientes-sort');
+    if (clientesSort) {
+        clientesSort.addEventListener('change', () => {
+            renderClientes();
+        });
+    }
+
 
 
     dashCompFilter.addEventListener('change', (e) => {
@@ -1012,25 +1026,76 @@ function renderClientes() {
     const clients = Store.getData().clientes;
     const stats = Store.getClientStats();
 
-    // Update KPI Cards
+    // Atualizar KPIs
     animateValue('kpi-total-clientes', 0, stats.total, 600);
     animateValue('kpi-simples', 0, stats.simples, 600);
     animateValue('kpi-presumido', 0, stats.presumido, 600);
     animateValue('kpi-real', 0, stats.real, 600);
     animateValue('kpi-mei', 0, stats.mei, 600);
 
+    // Capturar filtros de pesquisa e ordenação
+    const searchInput = document.getElementById('clientes-search');
+    const sortSelect = document.getElementById('clientes-sort');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const sortMode = sortSelect ? sortSelect.value : 'recente';
+
     const tbody = document.querySelector('#clients-table tbody');
     tbody.innerHTML = '';
 
     if (clients.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 3rem;">Nenhum cliente cadastrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 3rem;">Nenhum cliente cadastrado.</td></tr>`;
         return;
     }
 
-    // Sort by ID descending (newest first)
-    const sorted = [...clients].sort((a, b) => b.id - a.id);
+    // Filtrar por pesquisa
+    let filtered = [...clients];
+    if (searchTerm) {
+        filtered = filtered.filter(c => {
+            const razao = (c.razaoSocial || '').toLowerCase();
+            const cnpj = (c.cnpj || '').toLowerCase();
+            const codigo = (c.codigo || '').toLowerCase();
+            const responsavel = (c.responsavelFiscal || '').toLowerCase();
+            return razao.includes(searchTerm) || cnpj.includes(searchTerm) || codigo.includes(searchTerm) || responsavel.includes(searchTerm);
+        });
+    }
 
-    sorted.forEach(c => {
+    // Ordenar conforme a opção selecionada
+    switch (sortMode) {
+        case 'az':
+            filtered.sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '', 'pt-BR'));
+            break;
+        case 'za':
+            filtered.sort((a, b) => (b.razaoSocial || '').localeCompare(a.razaoSocial || '', 'pt-BR'));
+            break;
+        case 'codigo-asc':
+            filtered.sort((a, b) => (a.codigo || '').localeCompare(b.codigo || '', 'pt-BR', { numeric: true }));
+            break;
+        case 'codigo-desc':
+            filtered.sort((a, b) => (b.codigo || '').localeCompare(a.codigo || '', 'pt-BR', { numeric: true }));
+            break;
+        case 'recente':
+            filtered.sort((a, b) => b.id - a.id);
+            break;
+        case 'antigo':
+            filtered.sort((a, b) => a.id - b.id);
+            break;
+        case 'regime':
+            filtered.sort((a, b) => (a.regime || '').localeCompare(b.regime || '', 'pt-BR'));
+            break;
+        default:
+            filtered.sort((a, b) => b.id - a.id);
+    }
+
+    // Mensagem de nenhum resultado encontrado
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 3rem; color: var(--text-muted);">
+            <i class="fa-solid fa-search" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block; opacity: 0.5;"></i>
+            Nenhum cliente encontrado para "<strong>${searchTerm}</strong>"
+        </td></tr>`;
+        return;
+    }
+
+    filtered.forEach(c => {
         const tr = document.createElement('tr');
         tr.className = 'fade-in client-row-clickable';
         tr.dataset.id = c.id;
@@ -1062,9 +1127,8 @@ function renderClientes() {
             </td>
         `;
 
-        // Row click opens detail panel
+        // Clique na linha abre o painel de detalhes
         tr.addEventListener('click', (e) => {
-            // Don't open if clicked on checkbox, btn, or icons inside buttons
             if (e.target.closest('.group-actions') || e.target.closest('.client-checkbox') || e.target.closest('button')) return;
             openClientDetail(c.id);
         });
@@ -1074,7 +1138,7 @@ function renderClientes() {
 
     setupClientCheckboxes();
 
-    // Add single delete events
+    // Eventos de exclusão individual
     document.querySelectorAll('.btn-delete-single-client').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = parseInt(e.currentTarget.getAttribute('data-id'));
@@ -1088,6 +1152,7 @@ function renderClientes() {
         });
     });
 }
+
 
 // Funções Utilitárias Globais
 function toggleListVisibility(gridId, iconId) {
