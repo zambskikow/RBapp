@@ -1302,25 +1302,26 @@
                                     foi o desempenho de um funcionário em um mês específico (Data exata de baixa, se
                                     quebrou o prazo, etc).</p>
                             </div>
-                            <div class="glass-card table-container" style="margin-bottom: 1rem;">
-                                <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-                                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <div class="glass-card table-container" style="margin-bottom: 1rem; padding: 1.5rem;">
+                                <div
+                                    style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1.5rem; align-items: end;">
+                                    <div class="form-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
                                         <label
-                                            style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Mês
+                                            style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500; margin: 0;">Mês
                                             de Competência</label>
                                         <select id="audit-comp-mes" class="glass-select"
                                             style="width: 100%; height: 46px;"></select>
                                     </div>
-                                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                                    <div class="form-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
                                         <label
-                                            style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Funcionário</label>
+                                            style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500; margin: 0;">Funcionário</label>
                                         <select id="audit-comp-user" class="glass-select"
                                             style="width: 100%; height: 46px;"></select>
                                     </div>
-                                    <div class="form-group">
+                                    <div>
                                         <button class="btn btn-primary" id="btn-run-audit-comp"
-                                            style="height: 46px; min-width: 160px; justify-content: center; background: linear-gradient(135deg, var(--primary-light), var(--accent)); border: none; font-weight: 600; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: all 0.3s ease;">
-                                            <i class="fa-solid fa-magnifying-glass"></i> Auditar
+                                            style="height: 46px; min-width: 160px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary-light), var(--accent)); border: none; font-weight: 600; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: all 0.3s ease; gap: 0.5rem;">
+                                            <i class="fa-solid fa-magnifying-glass"></i> <span>Auditar</span>
                                         </button>
                                     </div>
                                 </div>
