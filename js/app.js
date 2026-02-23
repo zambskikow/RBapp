@@ -2398,7 +2398,7 @@ function renderAuditoria() {
 
             <td><strong>${log.user_name}</strong></td>
 
-            <td><span class="badge ${log.permissao === 'Gerente' ? 'danger' : 'success'}">${log.permissao}</span></td>
+            <td><span class="table-badge ${log.permissao === 'Gerente' ? 'danger' : 'success'}">${log.permissao}</span></td>
 
             <td>${log.action}</td>
 
