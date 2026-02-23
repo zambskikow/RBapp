@@ -413,105 +413,315 @@
 
             <!-- Client Management View -->
             <div id="view-clientes" class="view-section" style="display: none;">
-                <header class="section-header">
-                    <div>
-                        <h1>Gestão de Clientes</h1>
-                        <p class="subtitle">Base de clientes e Painel de Rotinas Fiscais</p>
-                    </div>
-                    <div class="header-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button class="btn btn-primary" id="btn-add-client">
-                            <i class="fa-solid fa-plus"></i> Novo Cliente
-                        </button>
-                    </div>
-                </header>
 
-                <div class="glass-card" style="padding: 1rem; margin-bottom: 2rem;">
-                    <h4
-                        style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 1px;">
-                        Resumo da Base</h4>
-                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.8rem;">
-                        <div class="kpi-card"
-                            style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon"
-                                style="background: rgba(99, 102, 241, 0.15); color: var(--primary-light);"><i
-                                    class="fa-solid fa-users"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-total-clientes" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Total</h3>
+                <!-- Main List Container -->
+                <div id="clientes-list-container">
+                    <header class="section-header">
+                        <div>
+                            <h1>Gestão de Clientes</h1>
+                            <p class="subtitle">Base de clientes e Painel de Rotinas Fiscais</p>
+                        </div>
+                        <div class="header-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-primary" id="btn-add-client">
+                                <i class="fa-solid fa-plus"></i> Novo Cliente
+                            </button>
+                        </div>
+                    </header>
+
+                    <div class="glass-card" style="padding: 1rem; margin-bottom: 2rem;">
+                        <h4
+                            style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 1px;">
+                            Resumo da Base</h4>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.8rem;">
+                            <div class="kpi-card"
+                                style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon"
+                                    style="background: rgba(99, 102, 241, 0.15); color: var(--primary-light);"><i
+                                        class="fa-solid fa-users"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-total-clientes">0</p>
+                                    <h3>Total</h3>
+                                </div>
+                            </div>
+                            <div class="kpi-card"
+                                style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon"
+                                    style="background: rgba(16, 185, 129, 0.15); color: var(--success);"><i
+                                        class="fa-solid fa-leaf"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-simples">0</p>
+                                    <h3>Simples</h3>
+                                </div>
+                            </div>
+                            <div class="kpi-card"
+                                style="background: rgba(245, 158, 11, 0.05); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon"
+                                    style="background: rgba(245, 158, 11, 0.15); color: var(--warning);"><i
+                                        class="fa-solid fa-building"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-presumido">0</p>
+                                    <h3>Presumido</h3>
+                                </div>
+                            </div>
+                            <div class="kpi-card"
+                                style="background: rgba(59, 130, 246, 0.05); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6;"><i
+                                        class="fa-solid fa-scale-balanced"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-real">0</p>
+                                    <h3>Lucro Real</h3>
+                                </div>
+                            </div>
+                            <div class="kpi-card"
+                                style="background: rgba(139, 92, 246, 0.05); border: none; padding: 0.75rem;">
+                                <div class="kpi-icon"
+                                    style="background: rgba(139, 92, 246, 0.15); color: var(--accent);"><i
+                                        class="fa-solid fa-store"></i></div>
+                                <div class="kpi-data">
+                                    <p class="kpi-value" id="kpi-mei">0</p>
+                                    <h3>MEI</h3>
+                                </div>
                             </div>
                         </div>
-                        <div class="kpi-card"
-                            style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">
-                                <i class="fa-solid fa-leaf"></i>
-                            </div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-simples" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Simples</h3>
-                            </div>
-                        </div>
-                        <div class="kpi-card"
-                            style="background: rgba(245, 158, 11, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">
-                                <i class="fa-solid fa-building"></i>
-                            </div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-presumido" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Presumido</h3>
-                            </div>
-                        </div>
-                        <div class="kpi-card"
-                            style="background: rgba(59, 130, 246, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6;"><i
-                                    class="fa-solid fa-scale-balanced"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-real" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Lucro Real</h3>
-                            </div>
-                        </div>
-                        <div class="kpi-card"
-                            style="background: rgba(139, 92, 246, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--accent);"><i
-                                    class="fa-solid fa-store"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-mei" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">MEI</h3>
-                            </div>
+                    </div>
+
+                    <div class="glass-card full-table-container">
+                        <div class="table-responsive">
+                            <table class="data-table" id="clients-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; text-align: center;">
+                                            <input type="checkbox" id="select-all-clients" class="custom-checkbox">
+                                        </th>
+                                        <th>Cód</th>
+                                        <th>Razão Social</th>
+                                        <th>CNPJ</th>
+                                        <th>Regime Tributário</th>
+                                        <th>Responsável</th>
+                                        <th>Status Motor</th>
+                                        <th>
+                                            <div
+                                                style="display: flex; align-items: center; justify-content: space-between;">
+                                                <span>Ações</span>
+                                                <button id="btn-delete-clients-header" class="btn-bulk-delete-header"
+                                                    style="display: none;" title="Excluir Selecionados">
+                                                    <i class="fa-solid fa-trash"></i> <span
+                                                        id="delete-clients-header-count">0</span>
+                                                </button>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <div class="glass-card full-table-container">
-                    <div class="table-responsive">
-                        <table class="data-table" id="clients-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 40px; text-align: center;">
-                                        <input type="checkbox" id="select-all-clients" class="custom-checkbox">
-                                    </th>
-                                    <th>Cód</th>
-                                    <th>Razão Social</th>
-                                    <th>CNPJ</th>
-                                    <th>Regime Tributário</th>
-                                    <th>Responsável Fiscal</th>
-                                    <th>Status Motor</th>
-                                    <th>
-                                        <div
-                                            style="display: flex; align-items: center; justify-content: space-between;">
-                                            <span>Ações</span>
-                                            <button id="btn-delete-clients-header" class="btn-bulk-delete-header"
-                                                style="display: none;" title="Excluir Selecionados">
-                                                <i class="fa-solid fa-trash"></i> <span
-                                                    id="delete-clients-header-count">0</span>
-                                            </button>
+                <!-- Client Detail Panel (Main Screen) -->
+                <div id="clientes-detail-panel" class="glass-card fade-in" style="display: none; padding: 2rem;">
+                    <header class="detail-panel-header">
+                        <div class="detail-header-info">
+                            <button class="btn btn-secondary" id="btn-back-clients-list" type="button"
+                                style="padding: 0.5rem 1rem;">
+                                <i class="fa-solid fa-arrow-left"></i> Voltar
+                            </button>
+                            <h2 id="modal-client-title"><i class="fa-solid fa-user-pen highlight-text"></i> Detalhes do
+                                Cliente</h2>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn btn-primary" form="add-client-form" type="submit"
+                                id="client-modal-submit-btn" style="padding: 0.5rem 1.5rem; font-size: 1rem;">
+                                <i class="fa-solid fa-save"></i> Salvar Alterações
+                            </button>
+                        </div>
+                    </header>
+
+                    <nav class="modal-tabs">
+                        <button type="button" class="modal-tab-btn active" data-tab="tab-geral"><i
+                                class="fa-solid fa-circle-info"></i> Geral</button>
+                        <button type="button" class="modal-tab-btn" data-tab="tab-contato"><i
+                                class="fa-solid fa-address-book"></i> Contatos</button>
+                        <button type="button" class="modal-tab-btn" data-tab="tab-acessos"><i
+                                class="fa-solid fa-key"></i> Acessos/Logins</button>
+                        <button type="button" class="modal-tab-btn" data-tab="tab-rotinas"><i
+                                class="fa-solid fa-calendar-check"></i> Rotinas</button>
+                    </nav>
+
+                    <div class="panel-body">
+                        <form id="add-client-form">
+                            <input type="hidden" id="client-id" value="">
+
+                            <!-- Tab: Geral -->
+                            <div id="tab-geral" class="tab-content active">
+                                <div class="form-grid" style="grid-template-columns: 1fr 2fr;">
+                                    <div class="form-group">
+                                        <label>Código</label>
+                                        <input type="text" id="client-codigo" class="glass-input" placeholder="Ex: 001">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Razão Social</label>
+                                        <input type="text" id="client-razao" required class="glass-input"
+                                            placeholder="Ex: Nova Empresa Ltda">
+                                    </div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>CNPJ</label>
+                                        <input type="text" id="client-cnpj" required class="glass-input"
+                                            placeholder="00.000.000/0001-00">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Regime Tributário</label>
+                                        <select id="client-regime" class="glass-select" style="width: 100%;">
+                                            <option value="Simples Nacional">Simples Nacional</option>
+                                            <option value="Lucro Presumido">Lucro Presumido</option>
+                                            <option value="Lucro Real">Lucro Real</option>
+                                            <option value="MEI">MEI</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Inscrição Estadual</label>
+                                        <input type="text" id="client-ie" class="glass-input"
+                                            placeholder="Inscrição Estadual">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Inscrição Municipal</label>
+                                        <input type="text" id="client-im" class="glass-input"
+                                            placeholder="Inscrição Municipal">
+                                    </div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Data de Abertura</label>
+                                        <input type="date" id="client-abertura" class="glass-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tipo de Empresa</label>
+                                        <input type="text" id="client-tipo" class="glass-input"
+                                            placeholder="Ex: LTDA, EIRELI...">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab: Contato -->
+                            <div id="tab-contato" class="tab-content">
+                                <div class="form-section-title"><i class="fa-solid fa-headset"></i> Atendimento e
+                                    Contato</div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Nome do Contato Principal</label>
+                                        <input type="text" id="client-contato-nome" class="glass-input"
+                                            placeholder="Ex: João Silva">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Responsável Fiscal Interno</label>
+                                        <input type="text" id="client-resp-fiscal" class="glass-input"
+                                            placeholder="Quem atende este cliente?">
+                                    </div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>E-mail</label>
+                                        <input type="email" id="client-email" class="glass-input"
+                                            placeholder="email@cliente.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Telefone / WhatsApp</label>
+                                        <input type="text" id="client-telefone" class="glass-input"
+                                            placeholder="(00) 00000-0000">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab: Acessos -->
+                            <div id="tab-acessos" class="tab-content">
+                                <div class="form-section-title"><i class="fa-solid fa-shield-halved"></i> Credenciais e
+                                    Acessos</div>
+                                <div class="login-grid"
+                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                    <div class="login-card"
+                                        style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-glass);">
+                                        <label
+                                            style="font-weight: 700; color: var(--primary-light); display: block; margin-bottom: 0.5rem;">e-CAC
+                                            (Federal)</label>
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <input type="text" id="login-ecac" class="glass-input"
+                                                placeholder="Código/CPF/CNPJ" style="font-size: 0.8rem;">
+                                            <input type="password" id="senha-ecac" class="glass-input"
+                                                placeholder="Senha" style="font-size: 0.8rem;">
                                         </div>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
+                                    </div>
+                                    <div class="login-card"
+                                        style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-glass);">
+                                        <label
+                                            style="font-weight: 700; color: var(--success); display: block; margin-bottom: 0.5rem;">SEFAZ
+                                            (Estadual)</label>
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <input type="text" id="login-sefaz" class="glass-input"
+                                                placeholder="Usuário" style="font-size: 0.8rem;">
+                                            <input type="password" id="senha-sefaz" class="glass-input"
+                                                placeholder="Senha" style="font-size: 0.8rem;">
+                                        </div>
+                                    </div>
+                                    <div class="login-card"
+                                        style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-glass);">
+                                        <label
+                                            style="font-weight: 700; color: var(--warning); display: block; margin-bottom: 0.5rem;">Prefeitura
+                                            (Municipal)</label>
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <input type="text" id="login-pref" class="glass-input" placeholder="Usuário"
+                                                style="font-size: 0.8rem;">
+                                            <input type="password" id="senha-pref" class="glass-input"
+                                                placeholder="Senha" style="font-size: 0.8rem;">
+                                        </div>
+                                    </div>
+                                    <div class="login-card"
+                                        style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-glass);">
+                                        <label
+                                            style="font-weight: 700; color: #3b82f6; display: block; margin-bottom: 0.5rem;">Sistema
+                                            Domínio</label>
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <input type="text" id="login-dominio" class="glass-input"
+                                                placeholder="Usuário" style="font-size: 0.8rem;">
+                                            <input type="password" id="senha-dominio" class="glass-input"
+                                                placeholder="Senha" style="font-size: 0.8rem;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-top: 1.5rem;">
+                                    <label>Outros Acessos e Observações</label>
+                                    <textarea id="client-outros-acessos" class="glass-input" style="min-height: 100px;"
+                                        placeholder="Ex: Usuário do portal do caminhoneiro, senha do certificado digital..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Tab: Rotinas -->
+                            <div id="tab-rotinas" class="tab-content">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Link Google Drive (Pasta do Cliente)</label>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <input type="text" id="client-drive" class="glass-input"
+                                                placeholder="https://drive.google.com/...">
+                                            <button type="button" class="btn btn-secondary"
+                                                onclick="window.open(document.getElementById('client-drive').value, '_blank')"
+                                                style="padding: 0 1rem;"><i
+                                                    class="fa-solid fa-external-link"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-top: 1.5rem;">
+                                    <label>Rotinas Obrigatórias para este Cliente</label>
+                                    <div id="rotinas-checkbox-grid"
+                                        style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
+                                        <!-- Injected by app.js -->
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -1101,171 +1311,7 @@
         </div>
     </div>
 
-    <!-- Add/Edit Client Modal -->
-    <div class="modal-overlay" id="add-client-modal">
-        <div class="glass-card modal-content" style="max-width: 800px; width: 95%;">
-            <header class="modal-header">
-                <h2 id="modal-client-title"><i class="fa-solid fa-user-plus highlight-text"></i> Detalhes do Cliente
-                </h2>
-                <button class="close-btn" id="close-client-modal"><i class="fa-solid fa-xmark"></i></button>
-            </header>
-
-            <nav class="modal-tabs">
-                <button type="button" class="modal-tab-btn active" data-tab="tab-geral"><i
-                        class="fa-solid fa-circle-info"></i> Geral</button>
-                <button type="button" class="modal-tab-btn" data-tab="tab-contato"><i
-                        class="fa-solid fa-address-book"></i> Contatos</button>
-                <button type="button" class="modal-tab-btn" data-tab="tab-acessos"><i class="fa-solid fa-key"></i>
-                    Acessos/Logins</button>
-                <button type="button" class="modal-tab-btn" data-tab="tab-rotinas"><i
-                        class="fa-solid fa-calendar-check"></i> Rotinas</button>
-            </nav>
-
-            <div class="modal-body" style="padding: 0;">
-                <form id="add-client-form">
-                    <input type="hidden" id="client-id" value="">
-
-                    <!-- Tab: Geral -->
-                    <div id="tab-geral" class="tab-content active">
-                        <div class="form-grid" style="grid-template-columns: 1fr 2fr;">
-                            <div class="form-group">
-                                <label>Código</label>
-                                <input type="text" id="client-codigo" class="glass-input" placeholder="Ex: 001">
-                            </div>
-                            <div class="form-group">
-                                <label>Razão Social</label>
-                                <input type="text" id="client-razao" required class="glass-input"
-                                    placeholder="Ex: Nova Empresa Ltda">
-                            </div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>CNPJ</label>
-                                <input type="text" id="client-cnpj" required class="glass-input"
-                                    placeholder="00.000.000/0001-00">
-                            </div>
-                            <div class="form-group">
-                                <label>Regime Tributário</label>
-                                <select id="client-regime" class="glass-select" style="width: 100%;">
-                                    <option value="Simples Nacional">Simples Nacional</option>
-                                    <option value="Lucro Presumido">Lucro Presumido</option>
-                                    <option value="Lucro Real">Lucro Real</option>
-                                    <option value="MEI">MEI</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Inscrição Estadual</label>
-                                <input type="text" id="client-ie" class="glass-input" placeholder="Inscrição Estadual">
-                            </div>
-                            <div class="form-group">
-                                <label>Inscrição Municipal</label>
-                                <input type="text" id="client-im" class="glass-input" placeholder="Inscrição Municipal">
-                            </div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Data de Abertura</label>
-                                <input type="date" id="client-abertura" class="glass-input">
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo de Empresa</label>
-                                <input type="text" id="client-tipo" class="glass-input" placeholder="Ex: LTDA, EIRELI">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tab: Contato -->
-                    <div id="tab-contato" class="tab-content">
-                        <div class="form-group">
-                            <label>Nome do Contato Principal</label>
-                            <input type="text" id="client-contato-nome" class="glass-input"
-                                placeholder="Ex: Maria Souza">
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>E-mail</label>
-                                <input type="email" id="client-email" class="glass-input"
-                                    placeholder="contato@empresa.com">
-                            </div>
-                            <div class="form-group">
-                                <label>Telefone</label>
-                                <input type="text" id="client-telefone" class="glass-input"
-                                    placeholder="(00) 00000-0000">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Responsável Fiscal Interno</label>
-                            <input type="text" id="client-resp-fiscal" class="glass-input" placeholder="Ex: Dandara">
-                        </div>
-                    </div>
-
-                    <!-- Tab: Acessos -->
-                    <div id="tab-acessos" class="tab-content">
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem;">Cadastre aqui os
-                            acessos e senhas para facilitar o dia a dia.</p>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="login-entry">
-                                <div class="login-entry-header"><i class="fa-solid fa-landmark"></i> E-CAC / RFB</div>
-                                <input type="text" id="login-ecac" class="glass-input" placeholder="Login (CPF/CNPJ)"
-                                    style="margin-bottom: 0.5rem;">
-                                <input type="password" id="senha-ecac" class="glass-input" placeholder="Senha">
-                            </div>
-                            <div class="login-entry">
-                                <div class="login-entry-header"><i class="fa-solid fa-building-columns"></i> SEFAZ</div>
-                                <input type="text" id="login-sefaz" class="glass-input" placeholder="Login / Usuário"
-                                    style="margin-bottom: 0.5rem;">
-                                <input type="password" id="senha-sefaz" class="glass-input" placeholder="Senha">
-                            </div>
-                            <div class="login-entry">
-                                <div class="login-entry-header"><i class="fa-solid fa-city"></i> PREFEITURA</div>
-                                <input type="text" id="login-pref" class="glass-input" placeholder="CPF/CNPJ/Usuário"
-                                    style="margin-bottom: 0.5rem;">
-                                <input type="password" id="senha-pref" class="glass-input" placeholder="Senha">
-                            </div>
-                            <div class="login-entry">
-                                <div class="login-entry-header"><i class="fa-solid fa-laptop-code"></i> DOMÍNIO</div>
-                                <input type="text" id="login-dominio" class="glass-input" placeholder="Usuário"
-                                    style="margin-bottom: 0.5rem;">
-                                <input type="password" id="senha-dominio" class="glass-input" placeholder="Senha">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Outras Observações de Acesso</label>
-                            <textarea id="client-outros-acessos" class="glass-input" rows="3"
-                                placeholder="Informações adicionais de login..."></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Tab: Rotinas -->
-                    <div id="tab-rotinas" class="tab-content">
-                        <div class="form-group"
-                            style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: var(--radius-md);">
-                            <label style="margin-bottom: 0.5rem; display:block;"><i class="fa-solid fa-layer-group"></i>
-                                Rotinas Aplicáveis (Motor de Prazos)</label>
-                            <div id="rotinas-checkbox-grid" class="form-grid"
-                                style="gap: 0.5rem; grid-template-columns: 1fr 1fr; max-height: 250px; overflow-y: auto;">
-                                <!-- Checkboxes injected by app.js -->
-                            </div>
-                        </div>
-                        <div class="form-group" style="margin-top: 1rem;">
-                            <label><i class="fa-brands fa-google-drive"></i> Link da Pasta no Drive</label>
-                            <input type="url" id="client-drive" class="glass-input"
-                                placeholder="Ex: https://drive.google.com/drive/folders/...">
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <footer class="modal-footer">
-                <button class="btn btn-secondary" id="client-modal-cancel">Cancelar</button>
-                <button class="btn btn-primary" form="add-client-form" type="submit" id="client-modal-submit-btn">Salvar
-                    Cliente</button>
-            </footer>
-        </div>
-    </div>
+    <!-- Detalhes do cliente movidos para painel na tela principal -->
 
     <!-- Add Funcionario Modal -->
     <div class="modal-overlay" id="add-equipe-modal">

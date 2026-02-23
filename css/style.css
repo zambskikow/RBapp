@@ -535,13 +535,14 @@ body {
 }
 
 .kpi-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    /* Ícone um pouco maior */
     background: rgba(99, 102, 241, 0.15);
     color: var(--primary-light);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -549,16 +550,18 @@ body {
 }
 
 .kpi-data h3 {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+    /* Texto menor e elegante */
     color: var(--text-muted);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.15rem;
+    letter-spacing: 0.8px;
+    margin-bottom: 0.2rem;
 }
 
 .kpi-value {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    /* Valor em destaque */
     font-weight: 700;
     color: #fff;
     line-height: 1;
@@ -1644,4 +1647,125 @@ body {
     background: rgba(255, 255, 255, 0.08);
     border-color: var(--primary-light);
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* --- Redesign: Painel de Detalhes do Cliente --- */
+#clientes-detail-panel {
+    display: none;
+    animation: slideInRight 0.4s ease-out;
+}
+
+#clientes-detail-panel.active {
+    display: block;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.detail-title-group h2 {
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--text-main);
+}
+
+.detail-title-group p {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Padronização de KPIs */
+.kpi-card .kpi-icon {
+    font-size: 2.2rem !important;
+    /* ~46px */
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kpi-card .kpi-value {
+    font-size: 1.6rem !important;
+    font-weight: 700;
+}
+
+.kpi-card h3 {
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+}
+
+/* Tabs do Detail Panel */
+.modal-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-glass);
+    padding-bottom: 0.5rem;
+}
+
+.modal-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-tab-btn i {
+    font-size: 1rem;
+}
+
+.modal-tab-btn.active {
+    color: var(--primary-light);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.tab-content {
+    display: none;
+    padding: 1rem 0;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.login-entry {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    transition: transform 0.2s ease;
+}
+
+.login-entry:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-light);
+}
+
+.login-entry-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary-light);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
 }

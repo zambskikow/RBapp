@@ -297,13 +297,12 @@ async function initApp() {
 
 
 
-    // 6. Client Modal Events
+    // 6. Client Detail Panel Events
+    const btnAddClient = document.getElementById('btn-add-client');
+    if (btnAddClient) btnAddClient.addEventListener('click', () => openClientDetail());
 
-    document.getElementById('btn-add-client').addEventListener('click', openClientModal);
-
-    document.getElementById('close-client-modal').addEventListener('click', closeClientModal);
-
-    document.getElementById('client-modal-cancel').addEventListener('click', closeClientModal);
+    const btnBackClients = document.getElementById('btn-back-clients-list');
+    if (btnBackClients) btnBackClients.addEventListener('click', closeClientDetail);
 
     document.getElementById('add-client-form').addEventListener('submit', handleAddClient);
 
@@ -1045,19 +1044,19 @@ function renderClientes() {
             </td>
         `;
 
-        // Row click opens modal
+        // Row click opens detail panel
         tr.addEventListener('click', (e) => {
             // Don't open if clicked on checkbox, btn, or icons inside buttons
             if (e.target.closest('.group-actions') || e.target.closest('.client-checkbox') || e.target.closest('button')) return;
-            openClientModal(c.id);
+            openClientDetail(c.id);
         });
 
-        // Edit button also opens modal
+        // Edit button also opens detail panel
         const editBtn = tr.querySelector('.btn-edit-client');
         if (editBtn) {
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                openClientModal(c.id);
+                openClientDetail(c.id);
             });
         }
 
@@ -1158,8 +1157,14 @@ function setupClientCheckboxes() {
         });
     }
 }
-function openClientModal(id = null) {
+function openClientDetail(id = null) {
     document.getElementById('add-client-form').reset();
+
+    // Toggle panels
+    document.getElementById('clientes-list-container').style.display = 'none';
+    const detailPanel = document.getElementById('clientes-detail-panel');
+    detailPanel.style.display = 'block';
+    detailPanel.classList.add('active');
 
     // Reset tabs
     document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
@@ -1188,7 +1193,7 @@ function openClientModal(id = null) {
         const cliente = Store.getData().clientes.find(c => c.id === id);
         if (cliente) {
             title.innerHTML = `<i class="fa-solid fa-user-pen highlight-text"></i> ${cliente.razaoSocial}`;
-            submitBtn.innerHTML = 'Salvar Alterações';
+            submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Salvar Alterações';
 
             document.getElementById('client-id').value = cliente.id;
 
@@ -1230,15 +1235,15 @@ function openClientModal(id = null) {
         }
     } else {
         title.innerHTML = '<i class="fa-solid fa-user-plus highlight-text"></i> Novo Cliente';
-        submitBtn.innerHTML = 'Cadastrar Novo Cliente';
+        submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar Novo Cliente';
         document.getElementById('client-id').value = '';
     }
-
-    document.getElementById('add-client-modal').classList.add('active');
 }
 
-function closeClientModal() {
-    document.getElementById('add-client-modal').classList.remove('active');
+function closeClientDetail() {
+    document.getElementById('clientes-detail-panel').style.display = 'none';
+    document.getElementById('clientes-detail-panel').classList.remove('active');
+    document.getElementById('clientes-list-container').style.display = 'block';
 }
 
 async function handleAddClient(e) {
@@ -1281,7 +1286,7 @@ async function handleAddClient(e) {
     renderClientes();
     renderOperacional();
     renderDashboard();
-    closeClientModal();
+    closeClientDetail();
 }
 
 // ==========================================
