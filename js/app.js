@@ -119,8 +119,9 @@ async function initApp() {
 
 
     // Setup everything else but don't render until logged in
-
     setupNavigation();
+    setupPasswordToggles();
+
 
 
 
@@ -3378,5 +3379,25 @@ function initSettingsTabs() {
 
     settingsInitDone = true;
 }
+
+function setupPasswordToggles() {
+    document.querySelectorAll('.btn-toggle-password').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const wrapper = this.closest('.password-wrapper');
+            if (!wrapper) return;
+            const input = wrapper.querySelector('input');
+            const icon = this.querySelector('i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    });
+}
+
 
 
