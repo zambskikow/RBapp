@@ -3599,7 +3599,7 @@ function runAuditoriaCompetencia() {
     // Filter
     let filtered = allExecs;
     if (mesId) {
-        filtered = filtered.filter(e => e.mesId === mesId);
+        filtered = filtered.filter(e => e.competencia === mesId);
     }
     if (userName) {
         filtered = filtered.filter(e => e.responsavel === userName);
@@ -3629,26 +3629,26 @@ function runAuditoriaCompetencia() {
             if (ex.feito) {
                 if (dPrazo && dFeito && dFeito > dPrazo) {
                     statusTag = '<span class="status-badge atrasado"><i class="fa-solid fa-clock"></i> Com Atraso</span>';
-                    veredito = `<span style="color:var(--danger)">Entregue em ${dataRealBaixa} (Fora do Prazo)</span>`;
+                    vereditoHTML = `<div class="audit-veredito-card"><span style="color:var(--danger); font-weight:600;">Entregue em ${dataRealBaixa}</span><br><small style="color:var(--text-muted)">(Fora do Prazo)</small></div>`;
                     atrasado++;
                 } else {
                     statusTag = '<span class="status-badge concluido"><i class="fa-solid fa-check"></i> No Prazo</span>';
-                    veredito = `<span style="color:var(--success)">Entregue em ${dataRealBaixa} (No Prazo)</span>`;
+                    vereditoHTML = `<div class="audit-veredito-card"><span style="color:var(--success); font-weight:600;">Entregue em ${dataRealBaixa}</span><br><small style="color:var(--text-muted)">(No Prazo)</small></div>`;
                     noPrazo++;
                 }
                 if (ex.baixadoPor) {
-                    veredito += `<br><small style="color:var(--text-muted)">Baixado por: ${ex.baixadoPor}</small>`;
+                    vereditoHTML += `<div style="margin-top:4px; padding-left:10px;"><small style="color:var(--text-muted); font-style:italic;">Baixado por: ${ex.baixadoPor}</small></div>`;
                 }
             } else {
                 const now = new Date();
                 now.setHours(0, 0, 0, 0);
                 if (dPrazo && dPrazo < now) {
                     statusTag = '<span class="status-badge atrasado"><i class="fa-solid fa-triangle-exclamation"></i> Atrasado</span>';
-                    veredito = '<span style="color:var(--danger)">Pendente e Atrasado</span>';
+                    vereditoHTML = '<div class="audit-veredito-card"><span style="color:var(--danger); font-weight:600;">Pendente e Atrasado</span></div>';
                     atrasado++;
                 } else {
-                    statusTag = '<span class="status-badge"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
-                    veredito = 'Aguardando Execução';
+                    statusTag = '<span class="status-badge pendente"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
+                    vereditoHTML = '<div class="audit-veredito-card"><span style="color:var(--text-muted);">Aguardando Execução</span></div>';
                     pendente++;
                 }
             }
@@ -3657,9 +3657,9 @@ function runAuditoriaCompetencia() {
             tr.innerHTML = `
                 <td><strong>${clientName}</strong></td>
                 <td>${ex.rotina}</td>
-                <td>${formatDate(ex.diaPrazo)}</td>
-                <td>${dataRealBaixa}</td>
-                <td>${veredito}</td>
+                <td style="color:var(--text-muted)">${formatDate(ex.diaPrazo)}</td>
+                <td><span style="font-weight:500;">${dataRealBaixa}</span></td>
+                <td>${vereditoHTML}</td>
             `;
             tbody.appendChild(tr);
         });
