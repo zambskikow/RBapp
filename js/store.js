@@ -305,8 +305,10 @@ window.Store = {
     getClientStats() {
         return {
             total: db.clientes.length,
-            simples: db.clientes.filter(c => c.regime === 'Simples Nacional' || c.regime === 'MEI').length,
-            outros: db.clientes.filter(c => c.regime !== 'Simples Nacional' && c.regime !== 'MEI').length
+            simples: db.clientes.filter(c => c.regime === 'Simples Nacional').length,
+            presumido: db.clientes.filter(c => c.regime === 'Lucro Presumido').length,
+            real: db.clientes.filter(c => c.regime === 'Lucro Real').length,
+            mei: db.clientes.filter(c => c.regime === 'MEI').length
         };
     },
 

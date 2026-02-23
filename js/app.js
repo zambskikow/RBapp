@@ -956,7 +956,9 @@ function renderClientes() {
     // Update KPI Cards
     animateValue('kpi-total-clientes', 0, stats.total, 600);
     animateValue('kpi-simples', 0, stats.simples, 600);
-    animateValue('kpi-outros-regimes', 0, stats.outros, 600);
+    animateValue('kpi-presumido', 0, stats.presumido, 600);
+    animateValue('kpi-real', 0, stats.real, 600);
+    animateValue('kpi-mei', 0, stats.mei, 600);
 
     const tbody = document.querySelector('#clients-table tbody');
     tbody.innerHTML = '';
@@ -1026,19 +1028,32 @@ function renderClientes() {
 function setupClientCheckboxes() {
     const selectAllCb = document.getElementById('select-all-clients');
     const checkboxes = document.querySelectorAll('.client-checkbox');
-    const deleteBtn = document.getElementById('btn-delete-clients-header');
+    let deleteBtn = document.getElementById('btn-delete-clients-header');
     const badge = document.getElementById('delete-clients-header-count');
+
+    // Remove old listeners by cloning
+    if (deleteBtn) {
+        const newDeleteBtn = deleteBtn.cloneNode(true);
+        deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+        deleteBtn = newDeleteBtn; // Update reference to the one in DOM
+    }
 
     const updateDeleteBtnVisibility = () => {
         const checkedCount = document.querySelectorAll('.client-checkbox:checked').length;
-        if (checkedCount >= 2) {
-            deleteBtn.style.display = 'inline-flex';
-            if (badge) badge.textContent = checkedCount;
-            if (checkedCount < checkboxes.length && selectAllCb) selectAllCb.checked = false;
-            else if (selectAllCb) selectAllCb.checked = true;
-        } else {
-            deleteBtn.style.display = 'none';
-            if (selectAllCb) selectAllCb.checked = false;
+        if (deleteBtn) {
+            if (checkedCount >= 2) {
+                deleteBtn.style.display = 'inline-flex';
+                const badgeInDom = deleteBtn.querySelector('#delete-clients-header-count');
+                if (badgeInDom) badgeInDom.textContent = checkedCount;
+            } else {
+                deleteBtn.style.display = 'none';
+            }
+        }
+
+        if (selectAllCb) {
+            if (checkedCount === 0) selectAllCb.checked = false;
+            else if (checkedCount === checkboxes.length) selectAllCb.checked = true;
+            else selectAllCb.checked = false;
         }
     };
 
@@ -1057,17 +1072,14 @@ function setupClientCheckboxes() {
     });
 
     if (deleteBtn) {
-        const newDeleteBtn = deleteBtn.cloneNode(true);
-        deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-
-        newDeleteBtn.addEventListener('click', async () => {
+        deleteBtn.addEventListener('click', async () => {
             const selectedChecks = Array.from(document.querySelectorAll('.client-checkbox:checked'));
             const selectedIds = selectedChecks.map(cb => parseInt(cb.value));
             if (selectedIds.length === 0) return;
 
             if (confirm(`Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados?`)) {
-                newDeleteBtn.disabled = true;
-                newDeleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
                 // Animation phase
                 selectedChecks.forEach(cb => {

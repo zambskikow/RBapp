@@ -383,7 +383,7 @@
                     <h4
                         style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 1px;">
                         Resumo da Base</h4>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem;">
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.8rem;">
                         <div class="kpi-card"
                             style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
                             <div class="kpi-icon"
@@ -391,25 +391,43 @@
                                     class="fa-solid fa-users"></i></div>
                             <div class="kpi-data">
                                 <p class="kpi-value" id="kpi-total-clientes" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Total Clientes</h3>
+                                <h3 style="font-size: 0.65rem;">Total</h3>
                             </div>
                         </div>
-                        <div class="kpi-card status-success"
+                        <div class="kpi-card"
                             style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
                             <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">
                                 <i class="fa-solid fa-leaf"></i></div>
                             <div class="kpi-data">
                                 <p class="kpi-value" id="kpi-simples" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Simples Nacional</h3>
+                                <h3 style="font-size: 0.65rem;">Simples</h3>
                             </div>
                         </div>
-                        <div class="kpi-card status-info"
+                        <div class="kpi-card"
+                            style="background: rgba(245, 158, 11, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">
+                                <i class="fa-solid fa-building"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-presumido" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Presumido</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card"
                             style="background: rgba(59, 130, 246, 0.05); border: none; padding: 0.75rem;">
                             <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6;"><i
                                     class="fa-solid fa-scale-balanced"></i></div>
                             <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-outros-regimes" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Demais Regimes</h3>
+                                <p class="kpi-value" id="kpi-real" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">Lucro Real</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card"
+                            style="background: rgba(139, 92, 246, 0.05); border: none; padding: 0.75rem;">
+                            <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--accent);"><i
+                                    class="fa-solid fa-store"></i></div>
+                            <div class="kpi-data">
+                                <p class="kpi-value" id="kpi-mei" style="font-size: 1.3rem;">0</p>
+                                <h3 style="font-size: 0.65rem;">MEI</h3>
                             </div>
                         </div>
                     </div>
@@ -429,13 +447,16 @@
                                     <th>Regime Tributário</th>
                                     <th>Responsável Fiscal</th>
                                     <th>Status Motor</th>
-                                    <th style="display: flex; align-items: center; gap: 8px;">
-                                        Ações
-                                        <button id="btn-delete-clients-header" class="btn-bulk-delete-header"
-                                            style="display: none;" title="Excluir Selecionados">
-                                            <i class="fa-solid fa-trash"></i> <span
-                                                id="delete-clients-header-count">0</span>
-                                        </button>
+                                    <th>
+                                        <div
+                                            style="display: flex; align-items: center; justify-content: space-between;">
+                                            <span>Ações</span>
+                                            <button id="btn-delete-clients-header" class="btn-bulk-delete-header"
+                                                style="display: none;" title="Excluir Selecionados">
+                                                <i class="fa-solid fa-trash"></i> <span
+                                                    id="delete-clients-header-count">0</span>
+                                            </button>
+                                        </div>
                                     </th>
                                 </tr>
                             </thead>
