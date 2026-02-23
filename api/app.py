@@ -188,15 +188,26 @@ def get_clientes():
 
 @app.post("/api/clientes")
 def create_cliente(cliente: ClienteCreate):
-    data = cliente.model_dump()
-    response = supabase.table("clientes").insert(data).select().execute()
-    return response.data
+    try:
+        data = cliente.model_dump()
+        response = supabase.table("clientes").insert(data).select().execute()
+        return response.data
+    except Exception as e:
+        print(f"Erro ao criar cliente: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.put("/api/clientes/{cliente_id}")
 def update_cliente(cliente_id: int, updates: ClienteUpdate):
-    response = supabase.table("clientes").update(updates.model_dump(exclude_unset=True)).eq("id", cliente_id).select().execute()
-    return response.data
+    try:
+        data = updates.model_dump(exclude_unset=True)
+        response = supabase.table("clientes").update(data).eq("id", cliente_id).select().execute()
+        return response.data
+    except Exception as e:
+        print(f"Erro ao atualizar cliente {cliente_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.delete("/api/clientes/{cliente_id}")

@@ -451,9 +451,10 @@ window.Store = {
         } else {
             const errorMsg = await res.text();
             console.error('Erro API addClient:', res.status, errorMsg);
-            alert(`Erro ao cadastrar cliente (${res.status}). Verifique se a tabela no Supabase tem todas as colunas necessárias.`);
+            alert(`Erro ao cadastrar cliente (${res.status}): ${errorMsg}\n\nVerifique se a tabela no Supabase tem todas as colunas necessárias.`);
             return null;
         }
+
 
     },
 
@@ -655,8 +656,9 @@ window.Store = {
                 if (!res.ok) {
                     const errorMsg = await res.text();
                     console.warn('API PUT cliente falhou.', res.status, errorMsg);
-                    alert(`Erro ao salvar alterações do cliente (${res.status}). Isso geralmente ocorre se faltarem colunas no banco de dados Supabase.`);
+                    alert(`Erro ao salvar alterações do cliente (${res.status}): ${errorMsg}\n\nIsso geralmente ocorre se faltarem colunas no banco de dados Supabase.`);
                 }
+
 
             } catch (e) {
                 console.error("Erro ao editar cliente via API:", e);
