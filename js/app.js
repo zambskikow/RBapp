@@ -1133,15 +1133,17 @@ function renderOperacional() {
         groupDiv.className = 'routine-group fade-in';
         const doneCount = groupTasks.filter(t => t.feito).length;
 
+        const isCollapsed = groupTasks.length > 10;
+
         let tableHtml = `
             <div class="routine-group-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="this.nextElementSibling.classList.toggle('collapsed'); this.querySelector('.chevron-icon').classList.toggle('fa-rotate-180')">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fa-solid fa-chevron-up chevron-icon" style="transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text-muted);"></i>
+                    <i class="fa-solid fa-chevron-up chevron-icon ${isCollapsed ? 'fa-rotate-180' : ''}" style="transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text-muted);"></i>
                     <h2><i class="fa-solid fa-layer-group"></i> ${rotinaName}</h2>
                 </div>
                 <span class="routine-group-badge">${doneCount}/${groupTasks.length} Entregues</span>
             </div>
-            <div class="routine-group-content table-responsive" style="transition: all 0.3s ease;">
+            <div class="routine-group-content table-responsive ${isCollapsed ? 'collapsed' : ''}" style="transition: all 0.3s ease;">
                 <table class="data-table selectable-rows">
                     <thead>
                         <tr>
