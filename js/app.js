@@ -246,6 +246,35 @@ async function initApp() {
         });
     }
 
+    // Inbox Listeners
+    const btnNovaMsg = document.getElementById('btn-nova-mensagem');
+    if (btnNovaMsg) {
+        btnNovaMsg.addEventListener('click', () => openNovaMensagemModal());
+    }
+
+    const btnCloseMsg = document.getElementById('close-mensagem-modal');
+    if (btnCloseMsg) {
+        btnCloseMsg.addEventListener('click', () => closeNovaMensagemModal());
+    }
+
+    const btnCancelMsg = document.getElementById('mensagem-modal-cancel');
+    if (btnCancelMsg) {
+        btnCancelMsg.addEventListener('click', () => closeNovaMensagemModal());
+    }
+
+    const formMsg = document.getElementById('nova-mensagem-form');
+    if (formMsg) {
+        formMsg.addEventListener('submit', handleSendMensagem);
+    }
+
+    const btnNotif = document.getElementById('btn-notification');
+    if (btnNotif) {
+        btnNotif.addEventListener('click', () => {
+            // Se houver lógica de notificações futura, entra aqui
+            showFeedbackToast("Central de Notificações em breve!", "info");
+        });
+    }
+
     // Listeners de Pesquisa e Ordenação de Clientes
     const clientesSearch = document.getElementById('clientes-search');
     if (clientesSearch) {
