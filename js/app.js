@@ -1042,6 +1042,15 @@ function renderClientes() {
     const tbody = document.querySelector('#clients-table tbody');
     tbody.innerHTML = '';
 
+    const isOperacional = LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'operacional';
+
+    // Esconder botão Novo Cliente para operacional
+    const btnAddClient = document.getElementById('btn-add-client');
+    if (btnAddClient) {
+        btnAddClient.style.display = isOperacional ? 'none' : 'inline-block';
+    }
+
+
     if (clients.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 3rem;">Nenhum cliente cadastrado.</td></tr>`;
         return;
@@ -1121,10 +1130,13 @@ function renderClientes() {
             <td><span class="resp-tag"><i class="fa-solid fa-user"></i> ${c.responsavelFiscal}</span></td>
             <td><div style="display:flex; gap:4px; flex-wrap:wrap; max-width:200px;">${tagsHtml}</div></td>
             <td style="white-space: nowrap;">
+                ${isOperacional ? '' : `
                 <button class="btn btn-small btn-secondary btn-delete-single-client" data-id="${c.id}" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                     <i class="fa-solid fa-trash"></i> Excluir
                 </button>
+                `}
             </td>
+
         `;
 
         // Clique na linha abre o painel de detalhes
@@ -1268,6 +1280,22 @@ function openClientDetail(id = null) {
     const headerName = document.getElementById('client-header-name');
     const submitBtn = document.getElementById('client-modal-submit-btn');
 
+    const isOperacional = LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'operacional';
+
+    // Bloquear campos para operacional
+    const form = document.getElementById('add-client-form');
+    if (form) {
+        const elements = form.querySelectorAll('input, select, textarea');
+        elements.forEach(el => {
+            el.disabled = isOperacional;
+        });
+    }
+
+    if (submitBtn) {
+        submitBtn.style.display = isOperacional ? 'none' : 'inline-block';
+    }
+
+
     // Load Rotinas for checklist
     const rotinasGrid = document.getElementById('rotinas-checkbox-grid');
     if (rotinasGrid) {
@@ -1285,8 +1313,9 @@ function openClientDetail(id = null) {
     if (id) {
         const cliente = Store.getData().clientes.find(c => c.id === id);
         if (cliente) {
-            title.innerHTML = 'Ficha do Cliente';
+            title.innerHTML = isOperacional ? 'Ficha do Cliente (Consulta)' : 'Ficha do Cliente';
             headerName.textContent = cliente.razaoSocial;
+
             submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Salvar Alterações';
 
             document.getElementById('client-id').value = cliente.id;
