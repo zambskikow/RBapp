@@ -965,10 +965,25 @@ window.Store = {
             const rotina = db.rotinasBase.find(r => r.id === rotId);
             if (!rotina) continue;
 
-            // Format deadline date for PostgreSQL (YYYY-MM-DD)
-            let [y, mStr] = currentComp.split('-');
-            let dia = rotina.diaPrazoPadrao.toString().padStart(2, '0');
-            let dateStr = `${y}-${mStr}-${dia}`;
+            // Calcular data de prazo conforme a frequência da rotina
+            let dateStr;
+            if (rotina.frequencia === 'Eventual') {
+                // Para rotinas eventuais: prazo = hoje + diaPrazoPadrao dias corridos
+                const diasSLA = parseInt(rotina.diaPrazoPadrao) || 0;
+                const prazoEvt = new Date();
+                prazoEvt.setDate(prazoEvt.getDate() + diasSLA);
+                dateStr = prazoEvt.toISOString().split('T')[0];
+            } else if (rotina.frequencia === 'Anual' && rotina.diaPrazoPadrao.toString().includes('/')) {
+                // Para rotinas anuais no formato DD/MM: usa o ano atual
+                const [diaAnual, mesAnual] = rotina.diaPrazoPadrao.toString().split('/');
+                const anoAtual = new Date().getFullYear();
+                dateStr = `${anoAtual}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
+            } else {
+                // Para rotinas mensais: dia fixo no mês da competência
+                let [y, mStr] = currentComp.split('-');
+                let dia = rotina.diaPrazoPadrao.toString().padStart(2, '0');
+                dateStr = `${y}-${mStr}-${dia}`;
+            }
 
             // Checklists might be arrays of strings or objects. Normalize to objects for 'execucoes'.
             const subitems = (rotina.checklistPadrao || []).map((item, idx) => {

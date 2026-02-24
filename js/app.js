@@ -2232,13 +2232,17 @@ async function handleSaveRotina(e) {
 
     const selectedClientIds = Array.from(document.querySelectorAll('input[name="cliente-sel"]:checked')).map(cb => parseInt(cb.value));
 
-    // Optional validation logic
+    // Validações conforme o tipo de frequência
     if (frequencia === 'Mensal' && (isNaN(prazo) || prazo < 1 || prazo > 31)) {
         alert("Para rotinas mensais, preencha um dia válido de 1 a 31.");
         return;
     }
     if (frequencia === 'Anual' && !prazo.includes('/')) {
         alert("Para rotinas anuais, preencha a data no formato DD/MM.");
+        return;
+    }
+    if (frequencia === 'Eventual' && (isNaN(prazo) || parseInt(prazo) < 1)) {
+        alert("Para rotinas eventuais, preencha um número de dias válido (mínimo: 1).");
         return;
     }
 
