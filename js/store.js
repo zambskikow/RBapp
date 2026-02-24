@@ -40,7 +40,8 @@ window.Store = {
             console.log("Baixando dados do banco de dados (Supabase/Python)...");
             const [
                 setoresRes, funcionariosRes, rotinasBaseRes,
-                clientesRes, mesesRes, execucoesRes, mensagensRes, logsRes, cargosRes
+                clientesRes, mesesRes, execucoesRes, mensagensRes, logsRes, cargosRes,
+                marketing_postsRes, global_configRes
             ] = await Promise.all([
                 fetch(`${API_BASE}/setores`),
                 fetch(`${API_BASE}/funcionarios`),
