@@ -442,7 +442,7 @@ window.Store = {
         this.registerLog("Ação de Rotina", `Marcou rotina '${ex.rotina}' como ${isFeito ? 'Concluída' : 'Pendente'}`);
 
         if (isFeito) {
-            await this.checkEmployeeCompetenciaCompletion(ex.competencia);
+            await Store.checkEmployeeCompetenciaCompletion(ex.competencia);
         }
     },
 
@@ -490,7 +490,7 @@ window.Store = {
         this.registerLog("Atualizou Checklist", `Checklist item id ${subId} (rotina ${ex.rotina}) - ${isDone ? 'Feito' : 'Desfeito'}`);
 
         if (allDone && ex.feito) {
-            await this.checkEmployeeCompetenciaCompletion(ex.competencia);
+            await Store.checkEmployeeCompetenciaCompletion(ex.competencia);
         }
     },
 
@@ -500,7 +500,8 @@ window.Store = {
         alert(`DEBUG: checkEmployeeCompetenciaCompletion -> User: ${username} | Comp: ${competenciaId}`);
 
         // Espelhar exatamente o que o usuário vê na interface (ignora órfãos)
-        let execsUser = this.getExecucoesWithDetails(username).filter(e => e.competencia === competenciaId);
+        // Usar Store. ao invés de this. para evitar problemas de contexto (this undefined) em disparos assíncronos
+        let execsUser = Store.getExecucoesWithDetails(username).filter(e => e.competencia === competenciaId);
 
         if (execsUser.length === 0) {
             alert(`DEBUG: 0 rotinas encontradas para ${username} em ${competenciaId}! (Filtro pode estar bloqueando)`);
