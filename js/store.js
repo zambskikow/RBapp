@@ -424,16 +424,20 @@ window.Store = {
         if (isFeito) ex.subitems.forEach(s => s.done = true);
         else ex.subitems.forEach(s => s.done = false);
 
-        await fetch(`${API_BASE}/execucoes/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                feito: ex.feito,
-                feito_em: ex.feitoEm,
-                baixado_por: ex.baixadoPor, // Persistindo quem baixou
-                subitems: ex.subitems
-            })
-        });
+        try {
+            await fetch(`${API_BASE}/execucoes/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    feito: ex.feito,
+                    feito_em: ex.feitoEm,
+                    baixado_por: ex.baixadoPor, // Persistindo quem baixou
+                    subitems: ex.subitems
+                })
+            });
+        } catch (e) {
+            console.error("Erro fetch toggleExecucaoFeito:", e);
+        }
 
         this.registerLog("Ação de Rotina", `Marcou rotina '${ex.rotina}' como ${isFeito ? 'Concluída' : 'Pendente'}`);
 
@@ -468,16 +472,20 @@ window.Store = {
             ex.baixadoPor = null;
         }
 
-        await fetch(`${API_BASE}/execucoes/${execId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                feito: ex.feito,
-                feito_em: ex.feitoEm,
-                baixado_por: ex.baixado_por,
-                subitems: ex.subitems
-            })
-        });
+        try {
+            await fetch(`${API_BASE}/execucoes/${execId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    feito: ex.feito,
+                    feito_em: ex.feitoEm,
+                    baixado_por: ex.baixado_por,
+                    subitems: ex.subitems
+                })
+            });
+        } catch (e) {
+            console.error("Erro fetch updateChecklist:", e);
+        }
 
         this.registerLog("Atualizou Checklist", `Checklist item id ${subId} (rotina ${ex.rotina}) - ${isDone ? 'Feito' : 'Desfeito'}`);
 
@@ -489,14 +497,24 @@ window.Store = {
     async checkEmployeeCompetenciaCompletion(competenciaId) {
         const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
 
+        alert(`DEBUG: checkEmployeeCompetenciaCompletion -> User: ${username} | Comp: ${competenciaId}`);
+
         // Espelhar exatamente o que o usuário vê na interface (ignora órfãos)
         let execsUser = this.getExecucoesWithDetails(username).filter(e => e.competencia === competenciaId);
 
-        if (execsUser.length === 0) return; // Nenhuma rotina atribuída
+        if (execsUser.length === 0) {
+            alert(`DEBUG: 0 rotinas encontradas para ${username} em ${competenciaId}! (Filtro pode estar bloqueando)`);
+            return; // Nenhuma rotina atribuída
+        }
 
         const incompletas = execsUser.filter(e => !e.feito);
 
+        if (incompletas.length > 0) {
+            alert(`DEBUG: Ainda faltam ${incompletas.length} rotinas de ${execsUser.length} não feitas.`);
+        }
+
         if (incompletas.length === 0) {
+            alert(`DEBUG: SUCESSO! 0 rotinas pendentes de ${execsUser.length}. Vai criar a próxima competência.`);
             console.log(`[Early Release] ${username} concluiu todas as tarefas da competência ${competenciaId}! Liberando próxima...`);
 
             // Calcular próxima competência
