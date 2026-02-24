@@ -1697,17 +1697,36 @@
                 </select>
             </div>
 
-            <div class="form-group" style="margin-bottom:1.2rem;">
+            <div class="form-group" style="margin-bottom:1.2rem; position:relative;">
                 <label
                     style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Cliente</label>
-                <div class="search-wrapper" style="margin-top:0.5rem; margin-bottom:0.4rem;">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="evt-cliente-busca" placeholder="Buscar cliente..."
-                        oninput="filtrarClientesEventual(this.value)" autocomplete="off">
+                <!-- Campo visível (trigger) -->
+                <div id="evt-cliente-trigger" onclick="toggleClienteDropdown()"
+                    style="display:flex; align-items:center; justify-content:space-between; margin-top:0.5rem; padding:0.7rem 1rem; background:rgba(255,255,255,0.05); border:1px solid var(--border-glass); border-radius:var(--radius-sm); cursor:pointer; transition: border-color 0.2s;">
+                    <span id="evt-cliente-label" style="color:var(--text-muted); font-size:0.9rem;">— Selecione o
+                        Cliente —</span>
+                    <i class="fa-solid fa-chevron-down" id="evt-chevron"
+                        style="color:var(--text-muted); font-size:0.75rem; transition:transform 0.2s;"></i>
                 </div>
-                <select id="evt-cliente-select" class="glass-select" style="width:100%;">
-                    <option value="">— Selecione o Cliente —</option>
-                </select>
+                <!-- Input hidden para guardar o id selecionado -->
+                <input type="hidden" id="evt-cliente-select" value="">
+                <!-- Painel do dropdown -->
+                <div id="evt-cliente-dropdown"
+                    style="display:none; position:absolute; top:100%; left:0; right:0; z-index:99999; background:var(--bg-card,#1e1e2e); border:1px solid var(--border-glass); border-radius:var(--radius-sm); box-shadow:0 8px 32px rgba(0,0,0,0.4); margin-top:4px; overflow:hidden;">
+                    <!-- Busca interna -->
+                    <div style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">
+                        <div class="search-wrapper" style="margin:0;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="evt-cliente-busca" placeholder="Buscar cliente..."
+                                oninput="filtrarClientesEventual(this.value)" autocomplete="off" style="width:100%;">
+                        </div>
+                    </div>
+                    <!-- Lista de clientes -->
+                    <ul id="evt-cliente-list"
+                        style="list-style:none; margin:0; padding:0.3rem 0; max-height:200px; overflow-y:auto;">
+                        <!-- Populado por JS -->
+                    </ul>
+                </div>
             </div>
 
             <div id="evt-prazo-preview"

@@ -3032,17 +3032,17 @@ function closeModal() {
 // ==========================================
 // MODAL: Nova Demanda Eventual
 // ==========================================
-function openDemandaEventualModal() {
-    // Verificar se existem rotinas eventuais cadastradas ANTES de abrir o modal
-    const todasRotinas = Store.getData().rotinasBase;
-    const rotinas = todasRotinas.filter(r => (r.frequencia || '').toLowerCase() === 'eventual');
 
+// Armazena todos os clientes para o dropdown
+let _evtClientesCache = [];
+
+function openDemandaEventualModal() {
+    // Verificar rotinas eventuais antes de abrir
+    const rotinas = Store.getData().rotinasBase.filter(r => (r.frequencia || '').toLowerCase() === 'eventual');
     if (rotinas.length === 0) {
-        alert('Não há rotinas eventuais cadastradas. Cadastre uma rotina com frequência "Eventual" primeiro.');
+        alert('Nao ha rotinas eventuais cadastradas. Cadastre uma rotina com frequencia "Eventual" primeiro.');
         return;
     }
-
-    const clientes = Store.getData().clientes.filter(c => c.ativo !== false);
 
     // Popular select de rotinas eventuais
     const rotinasSel = document.getElementById('evt-rotina-select');
@@ -3051,21 +3051,84 @@ function openDemandaEventualModal() {
         rotinasSel.innerHTML += `<option value="${r.id}">${r.nome} (${r.diaPrazoPadrao} d.c.)</option>`;
     });
 
-    // Popular select de clientes (ordem alfabética)
-    const clientesSel = document.getElementById('evt-cliente-select');
-    clientesSel.innerHTML = '<option value="">— Selecione o Cliente —</option>';
-    [...clientes].sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '', 'pt-BR'))
-        .forEach(c => {
-            clientesSel.innerHTML += `<option value="${c.id}">${c.razaoSocial}</option>`;
-        });
+    // Cachear clientes e popular dropdown customizado
+    _evtClientesCache = [...Store.getData().clientes.filter(c => c.ativo !== false)]
+        .sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '', 'pt-BR'));
+    filtrarClientesEventual('');
 
-    // Resetar preview de prazo e campo de busca
-    document.getElementById('evt-prazo-preview').style.display = 'none';
+    // Resetar estado do dropdown de clientes
+    document.getElementById('evt-cliente-select').value = '';
+    document.getElementById('evt-cliente-label').textContent = '— Selecione o Cliente —';
+    document.getElementById('evt-cliente-label').style.color = 'var(--text-muted)';
     document.getElementById('evt-cliente-busca').value = '';
+    document.getElementById('evt-cliente-dropdown').style.display = 'none';
+    document.getElementById('evt-chevron').style.transform = '';
+
+    // Resetar preview de prazo
+    document.getElementById('evt-prazo-preview').style.display = 'none';
 
     // Abrir modal
-    const modal = document.getElementById('modal-demanda-eventual');
-    modal.classList.add('active');
+    document.getElementById('modal-demanda-eventual').classList.add('active');
+
+    // Fechar dropdown ao clicar fora
+    setTimeout(() => {
+        document.addEventListener('click', _fecharDropdownFora, { once: false });
+    }, 0);
+}
+
+function _fecharDropdownFora(e) {
+    const dropdown = document.getElementById('evt-cliente-dropdown');
+    const trigger = document.getElementById('evt-cliente-trigger');
+    if (dropdown && !dropdown.contains(e.target) && trigger && !trigger.contains(e.target)) {
+        dropdown.style.display = 'none';
+        const chevron = document.getElementById('evt-chevron');
+        if (chevron) chevron.style.transform = '';
+    }
+}
+
+function toggleClienteDropdown() {
+    const dropdown = document.getElementById('evt-cliente-dropdown');
+    const chevron = document.getElementById('evt-chevron');
+    const isOpen = dropdown.style.display === 'block';
+    dropdown.style.display = isOpen ? 'none' : 'block';
+    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+    if (!isOpen) {
+        // Focar na busca ao abrir
+        setTimeout(() => document.getElementById('evt-cliente-busca').focus(), 50);
+    }
+}
+
+function filtrarClientesEventual(termo) {
+    const termoLower = (termo || '').toLowerCase().trim();
+    const filtrados = termoLower
+        ? _evtClientesCache.filter(c => (c.razaoSocial || '').toLowerCase().includes(termoLower))
+        : _evtClientesCache;
+
+    const lista = document.getElementById('evt-cliente-list');
+    lista.innerHTML = '';
+
+    if (filtrados.length === 0) {
+        lista.innerHTML = '<li style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem;">Nenhum cliente encontrado</li>';
+        return;
+    }
+
+    filtrados.forEach(c => {
+        const li = document.createElement('li');
+        li.style.cssText = 'padding:0.65rem 1rem; cursor:pointer; font-size:0.9rem; transition:background 0.15s; border-radius:4px; margin:0 0.3rem;';
+        li.textContent = c.razaoSocial;
+        li.onmouseenter = () => li.style.background = 'rgba(99,102,241,0.15)';
+        li.onmouseleave = () => li.style.background = '';
+        li.onclick = () => selecionarClienteEventual(c.id, c.razaoSocial);
+        lista.appendChild(li);
+    });
+}
+
+function selecionarClienteEventual(id, nome) {
+    document.getElementById('evt-cliente-select').value = id;
+    document.getElementById('evt-cliente-label').textContent = nome;
+    document.getElementById('evt-cliente-label').style.color = 'var(--text-main)';
+    document.getElementById('evt-cliente-dropdown').style.display = 'none';
+    document.getElementById('evt-chevron').style.transform = '';
 }
 
 function onEventualRotinaChange() {
@@ -3073,10 +3136,7 @@ function onEventualRotinaChange() {
     const preview = document.getElementById('evt-prazo-preview');
     const prazoText = document.getElementById('evt-prazo-text');
 
-    if (!rotinaId) {
-        preview.style.display = 'none';
-        return;
-    }
+    if (!rotinaId) { preview.style.display = 'none'; return; }
 
     const rotina = Store.getData().rotinasBase.find(r => r.id === parseInt(rotinaId));
     if (!rotina) return;
@@ -3085,36 +3145,16 @@ function onEventualRotinaChange() {
     const prazo = new Date();
     prazo.setDate(prazo.getDate() + dias);
     const prazoStr = prazo.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-
     prazoText.textContent = `Prazo estimado: ${prazoStr} (${dias} dias corridos a partir de hoje)`;
     preview.style.display = 'block';
 }
 
 function closeDemandaEventualModal() {
-    const modal = document.getElementById('modal-demanda-eventual');
-    modal.classList.remove('active');
+    document.getElementById('modal-demanda-eventual').classList.remove('active');
+    document.getElementById('evt-cliente-dropdown').style.display = 'none';
+    document.removeEventListener('click', _fecharDropdownFora);
 }
 
-// Filtra as opcoes do select de clientes conforme o usuario digita
-function filtrarClientesEventual(termo) {
-    const sel = document.getElementById('evt-cliente-select');
-    const termoLower = (termo || '').toLowerCase().trim();
-    // Guardar todos os clientes ativos no dataset do select para reuso
-    const clientes = Store.getData().clientes.filter(c => c.ativo !== false);
-    const ordenados = [...clientes].sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '', 'pt-BR'));
-    const filtrados = termoLower ? ordenados.filter(c => (c.razaoSocial || '').toLowerCase().includes(termoLower)) : ordenados;
-
-    // Preservar selecao atual
-    const valorAtual = sel.value;
-    sel.innerHTML = '<option value="">— Selecione o Cliente —</option>';
-    filtrados.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.razaoSocial;
-        if (String(c.id) === String(valorAtual)) opt.selected = true;
-        sel.appendChild(opt);
-    });
-}
 
 async function handleSaveDemandaEventual() {
     const rotinaId = document.getElementById('evt-rotina-select').value;
