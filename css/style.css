@@ -1614,7 +1614,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    padding: 9px 14px;
     border-radius: 10px;
     margin-bottom: 2px;
     border: none;
@@ -1622,8 +1622,26 @@ body {
     color: var(--text-muted);
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 0.9rem;
+    font-size: 0.87rem;
     font-weight: 500;
+    width: 100%;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.folder-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+    /* deixa o clique passar para o botão pai */
+}
+
+.folder-label i {
+    width: 16px;
+    text-align: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
 }
 
 .folder-item:hover {
@@ -1692,6 +1710,12 @@ body {
     font-size: 0.8rem;
 }
 
+.list-actions-minimal {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .list-actions-minimal button,
 .pagination-arrows button {
     background: transparent;
@@ -1702,6 +1726,12 @@ body {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    padding: 0;
+    flex-shrink: 0;
 }
 
 .list-actions-minimal button:hover,
@@ -1785,14 +1815,30 @@ body {
 }
 
 .msg-check {
-    opacity: 0.3;
+    opacity: 0.4;
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    accent-color: #6366f1;
+    transition: opacity 0.15s;
+}
+
+.msg-item-refined:hover .msg-check {
+    opacity: 1;
 }
 
 .msg-star {
     color: var(--text-muted);
     font-size: 0.9rem;
     cursor: pointer;
-    opacity: 0.5;
+    opacity: 0.4;
+    transition: all 0.15s;
+    line-height: 1;
+}
+
+.msg-star:hover {
+    opacity: 1;
+    color: #f59e0b;
 }
 
 .msg-star.active {

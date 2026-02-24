@@ -2531,91 +2531,110 @@ window.handleMessageSearch = function (query) {
     renderMensagens();
 };
 
-function initInboxTabs() {
-    const tabs = document.querySelectorAll('.folder-item');
-    tabs.forEach(tab => {
-        // Remove existing listener to avoid doubles by using named function or just being careful
-        // Better: just check if already initialized
-        if (tab.getAttribute('data-init')) return;
-        tab.setAttribute('data-init', 'true');
+// Inicialização do inbox usando event delegation para máxima robustez
+let _inboxDelegationInit = false;
 
-        tab.addEventListener('click', (e) => {
-            const folder = e.currentTarget.getAttribute('data-folder');
-            document.querySelectorAll('.folder-item').forEach(t => t.classList.remove('active'));
-            e.currentTarget.classList.add('active');
+function initInboxTabs() {
+    // Event delegation: registrar apenas uma vez no document
+    if (!_inboxDelegationInit) {
+        _inboxDelegationInit = true;
+
+        // === Delegação para pastas ===
+        document.addEventListener('click', (e) => {
+            // Busca o botão folder-item mais próximo a partir do clique
+            const tab = e.target.closest('.folder-item[data-folder]');
+            if (!tab) return;
+
+            // Verifica se está dentro da view de mensagens
+            if (!tab.closest('#view-mensagens')) return;
+
+            const folder = tab.getAttribute('data-folder');
+            document.querySelectorAll('#view-mensagens .folder-item').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
 
             const titles = {
                 'inbox': 'Entrada',
                 'important': 'Favoritas',
                 'sent': 'Itens Enviados',
+                'sent-items': 'Itens Enviados',
                 'system': 'Alertas do Sistema',
-                'trash': 'Lixeira (Histórico)'
+                'trash': 'Lixeira',
+                'office': 'Escritório',
+                'clients': 'Clientes'
             };
-            document.getElementById('inbox-folder-name').textContent = titles[folder] || 'Mensagens';
+
+            const nameEl = document.getElementById('inbox-folder-name');
+            if (nameEl) nameEl.textContent = titles[folder] || folder;
+
             currentInboxFolder = folder;
             renderMensagens();
             hideInboxReader();
         });
-    });
 
-    const backBtn = document.getElementById('btn-back-to-list');
-    if (backBtn) {
-        backBtn.onclick = () => hideInboxReader();
-    }
-
-    const refreshBtn = document.getElementById('btn-refresh-inbox-new');
-    if (refreshBtn) {
-        refreshBtn.onclick = () => {
-            refreshBtn.querySelector('i').classList.add('fa-spin');
+        // === Botão Atualizar ===
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('#btn-refresh-inbox-new');
+            if (!btn) return;
+            const icon = btn.querySelector('i');
+            if (icon) icon.classList.add('fa-spin');
             setTimeout(() => {
-                refreshBtn.querySelector('i').classList.remove('fa-spin');
+                if (icon) icon.classList.remove('fa-spin');
                 renderMensagens();
             }, 600);
-        };
-    }
+        });
 
-    // Botões de Suporte
-    const btnConfig = document.getElementById('btn-inbox-config');
-    if (btnConfig) btnConfig.onclick = () => alert('Configurações de Mensagens em breve...');
-    const btnHelp = document.getElementById('btn-inbox-help');
-    if (btnHelp) btnHelp.onclick = () => alert('Ajuda: Selecione mensagens para excluir ou marcar como lidas.');
+        // === Botão Voltar para lista ===
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#btn-back-to-list')) hideInboxReader();
+        });
 
-    // Seleção Múltipla
-    const selectAllCheck = document.getElementById('select-all-msgs');
-    if (selectAllCheck) {
-        selectAllCheck.onchange = (e) => {
-            const checks = document.querySelectorAll('.msg-check');
-            checks.forEach(c => c.checked = e.target.checked);
-            updateBulkActionsVisibility();
-        };
-    }
+        // === Botões de Suporte ===
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#btn-inbox-config')) {
+                alert('Configurações de Mensagens em breve...');
+            }
+            if (e.target.closest('#btn-inbox-help')) {
+                alert('Ajuda:\n• Clique nas pastas para navegar\n• Use ☆ para favoritar\n• Marque checkboxes para ações em massa\n• Lixeira mostra mensagens excluídas');
+            }
+        });
 
-    const btnBulkDelete = document.getElementById('btn-bulk-delete-msgs');
-    if (btnBulkDelete) {
-        btnBulkDelete.onclick = async () => {
+        // === Select All ===
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'select-all-msgs') {
+                document.querySelectorAll('.msg-check').forEach(c => c.checked = e.target.checked);
+                updateBulkActionsVisibility();
+            }
+        });
+
+        // === Exclusão em Massa ===
+        document.addEventListener('click', async (e) => {
+            if (!e.target.closest('#btn-bulk-delete-msgs')) return;
             const selected = document.querySelectorAll('.msg-check:checked');
             if (selected.length === 0) return;
             if (confirm(`Excluir ${selected.length} mensagens selecionadas?`)) {
                 for (let check of selected) {
-                    const id = check.closest('.msg-item-refined').getAttribute('data-msg-id');
-                    await Store.deleteMensagem(id, LOGGED_USER.nome);
+                    const item = check.closest('.msg-item-refined');
+                    if (item) {
+                        const id = item.getAttribute('data-msg-id');
+                        await Store.deleteMensagem(id, LOGGED_USER.nome);
+                    }
                 }
                 renderMensagens();
             }
-        };
-    }
+        });
 
-    const btnBulkRead = document.getElementById('btn-bulk-read-msgs');
-    if (btnBulkRead) {
-        btnBulkRead.onclick = async () => {
+        // === Marcar como Lidas em Massa ===
+        document.addEventListener('click', async (e) => {
+            if (!e.target.closest('#btn-bulk-read-msgs')) return;
             const selected = document.querySelectorAll('.msg-check:checked');
             if (selected.length === 0) return;
             for (let check of selected) {
-                const id = check.closest('.msg-item-refined').getAttribute('data-msg-id');
+                const item = check.closest('.msg-item-refined');
+                if (!item) continue;
+                const id = item.getAttribute('data-msg-id');
                 const msg = Store.getData().mensagens.find(m => m.id == id);
                 if (msg && !msg.lida) {
                     msg.lida = true;
-                    // API Call
                     try {
                         await fetch(`${API_BASE}/mensagens/${id}`, {
                             method: 'PUT',
@@ -2626,7 +2645,7 @@ function initInboxTabs() {
                 }
             }
             renderMensagens();
-        };
+        });
     }
 }
 
