@@ -250,6 +250,23 @@ async function initApp() {
         if (meuDesempenhoView && meuDesempenhoView.style.display === 'block') renderMeuDesempenho();
     });
 
+    // Event Listener Gestão de Competências
+    const btnAddComp = document.getElementById('btn-add-competencia');
+    if (btnAddComp) {
+        btnAddComp.addEventListener('click', async () => {
+            const compAtualAno = new Date().getFullYear();
+            const inputVal = prompt("Digite o ID da nova competência no formato YYYY-MM (Ex: 2024-03):", `${compAtualAno}-`);
+            if (inputVal && /^\d{4}-\d{2}$/.test(inputVal)) {
+                if (confirm(`Tem certeza que deseja adicionar a competência ${inputVal} e gerar as obrigações manualmente?`)) {
+                    await Store.addCompetenciaManual(inputVal);
+                    renderCompetenciasAdmin();
+                }
+            } else if (inputVal) {
+                alert("Formato inválido. Use YYYY-MM.");
+            }
+        });
+    }
+
     // Operational Search & Sort Listeners
     const opSearch = document.getElementById('operacional-search');
     if (opSearch) {
@@ -734,6 +751,7 @@ function setupNavigation() {
                 if (targetView === 'clientes') renderClientes();
                 if (targetView === 'rotinas') renderRotinas();
                 if (targetView === 'mensagens') renderMensagens();
+                if (targetView === 'competencias') renderCompetenciasAdmin();
                 if (targetView === 'settings') {
                     // Trigger the first tab by default or re-render active
                     initSettingsTabs();
@@ -1632,6 +1650,34 @@ function hideLoading() {
     }
 }
 
+// Controle do Overlay de Celebração (Early Release)
+function showSuccessOverlay(title = 'Parabéns!', message = 'Você concluiu a competência antecipadamente.') {
+    const overlay = document.getElementById('success-overlay');
+    const titleEl = document.getElementById('success-overlay-title');
+    const msgEl = document.getElementById('success-overlay-message');
+
+    if (overlay && titleEl && msgEl) {
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        // The display logic is flex by default, but hidden with opacity
+        overlay.style.pointerEvents = 'all';
+        overlay.style.opacity = '1';
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            hideSuccessOverlay();
+        }, 5000);
+    }
+}
+
+function hideSuccessOverlay() {
+    const overlay = document.getElementById('success-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+    }
+}
+
 // Funções Utilitárias Globais
 function toggleListVisibility(gridId, iconId) {
     const grid = document.getElementById(gridId);
@@ -2461,6 +2507,81 @@ async function handleDeleteRotina(id, btnElement = null) {
 }
 
 
+// ==========================================
+// VIEW: Gestão de Competências (Admin) 
+// ==========================================
+
+function renderCompetenciasAdmin() {
+    const tbody = document.querySelector('#competencias-admin-table tbody');
+    const totalKpi = document.getElementById('kpi-total-comp-admin');
+    const activeKpi = document.getElementById('kpi-active-comp-admin');
+
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    const meses = Store.getData().meses || [];
+
+    if (totalKpi) totalKpi.textContent = meses.length;
+
+    const ativo = meses.find(m => m.ativo);
+    if (activeKpi) activeKpi.textContent = ativo ? ativo.mes : 'Nenhum';
+
+    if (meses.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem;">Nenhuma competência registrada no sistema.</td></tr>`;
+        return;
+    }
+
+    // Sort descending by ID (YYYY-MM)
+    const sortedMeses = [...meses].sort((a, b) => b.id.localeCompare(a.id));
+
+    sortedMeses.forEach(m => {
+        const tr = document.createElement('tr');
+
+        let statusBadge = m.ativo
+            ? `<span class="badge" style="background:var(--success); color:#fff; border:none;"><i class="fa-solid fa-check-circle"></i> Mês Ativo (Atual)</span>`
+            : `<span class="badge"><i class="fa-solid fa-lock"></i> Histórico / Futuro</span>`;
+
+        tr.innerHTML = `
+            <td><strong style="color:var(--text-light);">${m.id}</strong></td>
+            <td>${m.mes}</td>
+            <td>${statusBadge}</td>
+            <td>
+                <div style="font-size: 0.8rem; color:var(--text-muted);">
+                    Tarefas: ${m.total_execucoes || 0} <br>
+                    Concluído: ${m.percent_concluido || 0}%
+                </div>
+            </td>
+            <td style="text-align: right;">
+                <button class="btn btn-outline btn-delete-comp" data-id="${m.id}" style="border-color:var(--danger); color:var(--danger); padding:0.4rem 0.8rem;" ${m.ativo ? 'disabled title="Não é possível apagar o mês atual"' : ''}>
+                    <i class="fa-solid fa-trash"></i> Apagar
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Attach Delete Events
+    document.querySelectorAll('.btn-delete-comp').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            const password = prompt(`ATENÇÃO: Você está prestes a apagar a competência ${id} INTEIRA, junto com todas as tarefas vinculadas a ela.\n\nEsta é uma ação destrutiva irreversível (Hard Delete).\n\nDigite "CONFIRMAR" para prosseguir:`);
+
+            if (password === 'CONFIRMAR') {
+                showLoading('Apagando Base de Dados', 'Isso pode demorar alguns instantes dependendo da quantidade de tarefas vinculadas a este mês...');
+                const success = await Store.deleteCompetencia(id);
+                hideLoading();
+                if (success) {
+                    renderCompetenciasAdmin();
+                } else {
+                    alert('Houve um erro na exclusão. Tente novamente.');
+                }
+            } else if (password !== null) {
+                alert('Exclusão cancelada: palavra de confirmação incorreta.');
+            }
+        });
+    });
+}
 
 // ==========================================
 

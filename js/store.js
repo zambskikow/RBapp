@@ -653,11 +653,11 @@ window.Store = {
                 }
             }
 
-            // Sempre alertar sobre a liberação
-            if (typeof showFeedbackToast === 'function') {
+            // Sempre alertar sobre a liberação usando o novo Overlay Full Screen
+            if (typeof showSuccessOverlay === 'function') {
+                showSuccessOverlay('Mês Liberado!', `A competência ${nextExt} foi gerada nas suas tarefas.`);
+            } else if (typeof showFeedbackToast === 'function') {
                 showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, 'success');
-            } else if (typeof window.showEarlyReleaseToast === 'function') {
-                window.showEarlyReleaseToast(nextExt);
             } else {
                 alert(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`);
             }
@@ -667,6 +667,125 @@ window.Store = {
             if (typeof renderMeuDesempenho === 'function') renderMeuDesempenho();
             if (typeof renderDashboard === 'function') renderDashboard();
         }
+    },
+
+    // --- GERENCIAMENTO DE COMPETÊNCIAS (Admin) ---
+    async addCompetenciaManual(anoMesId) {
+        // anoMesId format: YYYY-MM
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const [y, mStr] = anoMesId.split('-');
+        const monthIndex = parseInt(mStr) - 1;
+        const nomeExtenso = `${monthNames[monthIndex]} ${y}`;
+
+        // Verifica se já existe
+        if (db.meses.find(m => m.id === anoMesId)) {
+            alert(`A competência ${anoMesId} já existe no sistema.`);
+            return false;
+        }
+
+        const newMonth = {
+            id: anoMesId,
+            mes: nomeExtenso,
+            ativo: false,
+            percent_concluido: 0, atrasados: 0, concluidos: 0, total_execucoes: 0, vencendo: 0
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/meses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newMonth)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                db.meses.push(data[0]);
+                this.registerLog("Gestão de Competências", `Injetou manualmente a nova competência: ${anoMesId}`);
+
+                // Gera ativamente as obrigações para todos os clientes nessa competência
+                showLoading("Processando Mês", `Gerando estrutura mensal de ${nomeExtenso}...`);
+                for (let cliente of db.clientes) {
+                    const routinesToProcess = cliente.rotinasSelecionadas || [];
+                    for (const rotId of routinesToProcess) {
+                        const rotina = db.rotinasBase.find(r => r.id === rotId);
+                        if (!rotina) continue;
+                        if ((rotina.frequencia || '').toLowerCase() === 'eventual') continue;
+
+                        // Ignora já existentes (não deveria ter, mas bom garantir)
+                        const existsE = db.execucoes.find(e =>
+                            e.clienteId === cliente.id &&
+                            e.rotina === rotina.nome &&
+                            e.competencia === anoMesId
+                        );
+                        if (existsE) continue;
+
+                        let execDate = new Date(parseInt(y), monthIndex, 1);
+                        execDate.setMonth(execDate.getMonth() + 1);
+                        let execYStr = execDate.getFullYear();
+                        let execMStr = (execDate.getMonth() + 1).toString().padStart(2, '0');
+                        let diaStr = rotina.diaPrazoPadrao.toString().padStart(2, '0');
+                        let dateStr = `${execYStr}-${execMStr}-${diaStr}`;
+
+                        if (rotina.frequencia === 'Anual' && rotina.diaPrazoPadrao.toString().includes('/')) {
+                            const [diaAnual, mesAnual] = rotina.diaPrazoPadrao.toString().split('/');
+                            const anoAtual = new Date().getFullYear();
+                            dateStr = `${anoAtual}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
+                        }
+
+                        const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
+                            const text = typeof item === 'string' ? item : item.texto;
+                            return { id: idx + 1, texto: text, done: false };
+                        });
+
+                        await fetch(`${API_BASE}/execucoes`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                cliente_id: cliente.id, rotina: rotina.nome, competencia: anoMesId,
+                                dia_prazo: dateStr, drive_link: cliente.driveLink, responsavel: rotina.responsavel,
+                                subitems: subitems, eh_pai: true, feito: false,
+                                iniciado_em: new Date().toISOString().split('T')[0], checklist_gerado: true
+                            })
+                        }).then(r => r.json()).then(dataE => {
+                            db.execucoes.push({
+                                id: dataE[0] ? dataE[0].id : Date.now(),
+                                clienteId: cliente.id, rotina: rotina.nome, competencia: anoMesId, diaPrazo: dateStr, driveLink: cliente.driveLink,
+                                feito: false, feitoEm: null, responsavel: rotina.responsavel, iniciadoEm: new Date().toISOString().split('T')[0],
+                                checklistGerado: true, ehPai: true, subitems: subitems
+                            });
+                        }).catch(e => console.error(e));
+                    }
+                }
+                hideLoading();
+                return true;
+            }
+        } catch (e) {
+            console.error(e);
+            hideLoading();
+        }
+        return false;
+    },
+
+    async deleteCompetencia(compId) {
+        // Remover Mês
+        const idx = db.meses.findIndex(m => m.id === compId);
+        if (idx !== -1) {
+            const isAtivo = db.meses[idx].ativo;
+            db.meses.splice(idx, 1);
+            try {
+                await fetch(`${API_BASE}/meses/${compId}`, { method: 'DELETE' });
+                this.registerLog("Gestão de Competências", `Excluiu inteiramente a competência: ${compId} (e suas execuções vinculadas)`);
+            } catch (e) { console.error("Erro deletar mes", e); }
+        }
+
+        // Remover todas as execucoes sob essa competência
+        const toDeleteIds = db.execucoes.filter(e => e.competencia === compId).map(e => e.id);
+        db.execucoes = db.execucoes.filter(e => e.competencia !== compId);
+
+        for (const tid of toDeleteIds) {
+            try { await fetch(`${API_BASE}/execucoes/${tid}`, { method: 'DELETE' }); }
+            catch (err) { console.log(err); }
+        }
+        return true;
     },
 
     async addClient(clientData) {
