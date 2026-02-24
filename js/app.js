@@ -52,9 +52,9 @@ async function initApp() {
 
 
 
-    // Check local storage for session
+    // Check session storage for session
 
-    const storedSession = localStorage.getItem('fiscalapp_session');
+    const storedSession = sessionStorage.getItem('fiscalapp_session');
 
     if (storedSession) {
 
@@ -86,7 +86,7 @@ async function initApp() {
 
 
 
-            const savedView = localStorage.getItem('fiscalapp_current_view') || 'dashboard';
+            const savedView = sessionStorage.getItem('fiscalapp_current_view') || 'dashboard';
 
 
 
@@ -558,7 +558,7 @@ function handleLogin(e) {
                 if (firstNav) firstNav.click();
             }
 
-            localStorage.setItem('fiscalapp_session', auth.id);
+            sessionStorage.setItem('fiscalapp_session', auth.id);
 
             // Execute Auto-Backup if enabled
             checkAndRunAutoBackup();
@@ -571,7 +571,7 @@ function handleLogin(e) {
 function handleLogout() {
     Store.registerLog("Acesso", `${LOGGED_USER ? LOGGED_USER.nome : 'Usuário'} saiu do sistema.`);
     LOGGED_USER = null;
-    localStorage.removeItem('fiscalapp_session');
+    sessionStorage.removeItem('fiscalapp_session');
 
     // Smooth transition
     document.getElementById('main-app-container').classList.add('fade-out');
@@ -714,7 +714,7 @@ function setupNavigation() {
 
             // Switch views globally
             const targetView = link.getAttribute('data-view');
-            localStorage.setItem('fiscalapp_current_view', targetView);
+            sessionStorage.setItem('fiscalapp_current_view', targetView);
             document.querySelectorAll('.view-section').forEach(view => {
                 view.style.display = 'none';
                 view.classList.remove('active');
