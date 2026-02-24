@@ -497,25 +497,17 @@ window.Store = {
     async checkEmployeeCompetenciaCompletion(competenciaId) {
         const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
 
-        alert(`DEBUG: checkEmployeeCompetenciaCompletion -> User: ${username} | Comp: ${competenciaId}`);
-
         // Espelhar exatamente o que o usuário vê na interface (ignora órfãos)
         // Usar Store. ao invés de this. para evitar problemas de contexto (this undefined) em disparos assíncronos
         let execsUser = Store.getExecucoesWithDetails(username).filter(e => e.competencia === competenciaId);
 
         if (execsUser.length === 0) {
-            alert(`DEBUG: 0 rotinas encontradas para ${username} em ${competenciaId}! (Filtro pode estar bloqueando)`);
             return; // Nenhuma rotina atribuída
         }
 
         const incompletas = execsUser.filter(e => !e.feito);
 
-        if (incompletas.length > 0) {
-            alert(`DEBUG: Ainda faltam ${incompletas.length} rotinas de ${execsUser.length} não feitas.`);
-        }
-
         if (incompletas.length === 0) {
-            alert(`DEBUG: SUCESSO! 0 rotinas pendentes de ${execsUser.length}. Vai criar a próxima competência.`);
             console.log(`[Early Release] ${username} concluiu todas as tarefas da competência ${competenciaId}! Liberando próxima...`);
 
             // Calcular próxima competência
@@ -636,9 +628,18 @@ window.Store = {
             }
 
             // Sempre alertar sobre a liberação
-            if (typeof window.showEarlyReleaseToast === 'function') {
+            if (typeof showFeedbackToast === 'function') {
+                showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, 'success');
+            } else if (typeof window.showEarlyReleaseToast === 'function') {
                 window.showEarlyReleaseToast(nextExt);
+            } else {
+                alert(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`);
             }
+
+            // Forçar re-render dos paineis para a nova competência aparecer e as tarefas somarem aos KPIs
+            if (typeof renderOperacional === 'function') renderOperacional();
+            if (typeof renderMeuDesempenho === 'function') renderMeuDesempenho();
+            if (typeof renderDashboard === 'function') renderDashboard();
         }
     },
 
