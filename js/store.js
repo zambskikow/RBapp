@@ -53,7 +53,17 @@ window.Store = {
             db.clientes = await clientesRes.json() || [];
             db.meses = await mesesRes.json() || [];
             db.execucoes = await execucoesRes.json() || [];
-            db.mensagens = await mensagensRes.json() || [];
+            db.mensagens = (await mensagensRes.json()).map(m => ({
+                id: m.id,
+                remetente: m.remetente,
+                destinatario: m.destinatario,
+                texto: m.texto,
+                assunto: m.assunto || 'Sem Assunto',
+                lida: m.lida,
+                data: m.data,
+                excluidoPor: Array.isArray(m.excluido_por) ? m.excluido_por : (typeof m.excluido_por === 'string' ? JSON.parse(m.excluido_por) : []),
+                favorito: m.favorito || false
+            })) || [];
             db.logs = await logsRes.json() || [];
 
             // Try to set cargos (can fail if table doesn't exist yet, fallback to empty array)
@@ -904,7 +914,7 @@ window.Store = {
             assunto: assunto || 'Sem Assunto',
             lida: false,
             data: now,
-            excluidoPor: []
+            excluido_por: []
         };
         try {
             const res = await fetch(`${API_BASE}/mensagens`, {
@@ -915,15 +925,15 @@ window.Store = {
             if (res.ok) {
                 const data = await res.json();
                 const savedId = (data && data[0]) ? data[0].id : Date.now();
-                db.mensagens.push({ ...payload, id: savedId });
+                db.mensagens.push({ ...payload, excluidoPor: [], id: savedId });
             } else {
                 // Fallback local se API falhar
-                db.mensagens.push({ ...payload, id: Date.now() });
+                db.mensagens.push({ ...payload, excluidoPor: [], id: Date.now() });
                 console.warn("API falhou ao salvar mensagem, salvo localmente.");
             }
         } catch (e) {
             console.error("Erro ao enviar msg API:", e);
-            db.mensagens.push({ ...payload, id: Date.now() });
+            db.mensagens.push({ ...payload, excluidoPor: [], id: Date.now() });
         }
     },
 
@@ -939,7 +949,7 @@ window.Store = {
                 const res = await fetch(`${API_BASE}/mensagens/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ excluidoPor: m.excluidoPor })
+                    body: JSON.stringify({ excluido_por: m.excluidoPor })
                 });
                 if (!res.ok) {
                     console.warn(`API PUT mensagem ${id} retornou status ${res.status}`);

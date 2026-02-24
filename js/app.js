@@ -107,7 +107,7 @@ async function initApp() {
             renderRotinas();
 
             renderMensagens();
-
+            initInboxTabs();
             renderAuditoria();
 
             updateMensagensBadges();
@@ -2534,11 +2534,12 @@ window.handleMessageSearch = function (query) {
 function initInboxTabs() {
     const tabs = document.querySelectorAll('.folder-item');
     tabs.forEach(tab => {
-        // Remove existing listeners to avoid doubles
-        const newTab = tab.cloneNode(true);
-        tab.parentNode.replaceChild(newTab, tab);
+        // Remove existing listener to avoid doubles by using named function or just being careful
+        // Better: just check if already initialized
+        if (tab.getAttribute('data-init')) return;
+        tab.setAttribute('data-init', 'true');
 
-        newTab.addEventListener('click', (e) => {
+        tab.addEventListener('click', (e) => {
             const folder = e.currentTarget.getAttribute('data-folder');
             document.querySelectorAll('.folder-item').forEach(t => t.classList.remove('active'));
             e.currentTarget.classList.add('active');
@@ -2575,7 +2576,6 @@ function initInboxTabs() {
 }
 
 function renderMensagens() {
-    initInboxTabs();
     const container = document.getElementById('mensagens-container');
     if (!LOGGED_USER) return;
 
