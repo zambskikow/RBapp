@@ -4428,3 +4428,30 @@ function setupPasswordToggles() {
     });
 }
 
+// Handler para liberação antecipada de competência
+window.updateCompetenciaSelects = function (newCompId) {
+    const filters = [
+        document.getElementById('competencia-filter'),
+        document.getElementById('dash-competencia-filter'),
+        document.getElementById('meu-competencia-filter')
+    ];
+
+    const monthObj = Store.getData().meses.find(m => m.id === newCompId);
+    if (!monthObj) return;
+
+    filters.forEach(select => {
+        if (!select) return;
+        // Verifica se já existe
+        let exists = Array.from(select.options).some(opt => opt.value === newCompId);
+        if (!exists) {
+            const option = document.createElement('option');
+            option.value = newCompId;
+            option.textContent = monthObj.mes;
+            select.appendChild(option);
+        }
+    });
+};
+
+window.showEarlyReleaseToast = function (compName) {
+    showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${compName} foi liberada!`, 'success');
+};

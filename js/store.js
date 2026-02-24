@@ -436,6 +436,10 @@ window.Store = {
         });
 
         this.registerLog("Ação de Rotina", `Marcou rotina '${ex.rotina}' como ${isFeito ? 'Concluída' : 'Pendente'}`);
+
+        if (isFeito) {
+            await this.checkEmployeeCompetenciaCompletion(ex.competencia);
+        }
     },
 
     async deleteExecucao(id) {
@@ -476,6 +480,151 @@ window.Store = {
         });
 
         this.registerLog("Atualizou Checklist", `Checklist item id ${subId} (rotina ${ex.rotina}) - ${isDone ? 'Feito' : 'Desfeito'}`);
+
+        if (allDone && ex.feito) {
+            await this.checkEmployeeCompetenciaCompletion(ex.competencia);
+        }
+    },
+
+    async checkEmployeeCompetenciaCompletion(competenciaId) {
+        // Obter usuário logado (assumimos que o logado é o executor)
+        const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
+
+        // Se for admin vendo "Tudo", a verificação seria muito ampla. Vamos verificar as rotinas direcionadas a ele
+        let execsUser = db.execucoes.filter(e => e.competencia === competenciaId && e.responsavel && e.responsavel.includes(username));
+
+        if (execsUser.length === 0) return; // Nenhuma rotina atribuída
+
+        const incompletas = execsUser.filter(e => !e.feito);
+
+        if (incompletas.length === 0) {
+            console.log(`[Early Release] ${username} concluiu todas as tarefas da competência ${competenciaId}! Liberando próxima...`);
+
+            // Calcular próxima competência
+            let [y, m] = competenciaId.split('-');
+            let dateObj = new Date(parseInt(y), parseInt(m) - 1, 1);
+            dateObj.setMonth(dateObj.getMonth() + 1); // Próximo mês
+            const nextY = dateObj.getFullYear();
+            const nextMNum = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+            const nextCompId = `${nextY}-${nextMNum}`;
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const nextExt = `${monthNames[dateObj.getMonth()]} ${nextY}`;
+
+            // Verifica se a próxima competência já existe nos meses do sistema
+            let existsM = db.meses.find(mObj => mObj.id === nextCompId);
+            if (!existsM) {
+                const newMonth = {
+                    id: nextCompId,
+                    mes: nextExt,
+                    ativo: false, // Falso para não virar a competência global de todo mundo
+                    percent_concluido: 0, atrasados: 0, concluidos: 0, total_execucoes: 0, vencendo: 0
+                };
+
+                try {
+                    const res = await fetch(`${API_BASE}/meses`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newMonth)
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        db.meses.push(data[0]);
+                        // Disparar evento para atualizar dropdowns na UI
+                        if (typeof window.updateCompetenciaSelects === 'function') {
+                            window.updateCompetenciaSelects(nextCompId);
+                        }
+                    }
+                } catch (e) { console.error("Erro ao criar mês de liberação antecipada", e); }
+            }
+
+            // Gerar execuções para o username na próxima competência
+            let tarefasGeradas = 0;
+            for (let cliente of db.clientes) {
+                const routinesToProcess = cliente.rotinasSelecionadas || [];
+                for (const rotId of routinesToProcess) {
+                    const rotina = db.rotinasBase.find(r => r.id === rotId);
+                    if (!rotina) continue;
+
+                    // Só gera daquele responsável 
+                    if (!rotina.responsavel || !rotina.responsavel.includes(username)) continue;
+                    if ((rotina.frequencia || '').toLowerCase() === 'eventual') continue;
+
+                    // Verifica se já existe
+                    const existsE = db.execucoes.find(e =>
+                        e.clienteId === cliente.id &&
+                        e.rotina === rotina.nome &&
+                        e.competencia === nextCompId
+                    );
+
+                    if (!existsE) {
+                        // Calcular a execução (Competencia + 1)
+                        let execDate = new Date(parseInt(nextY), parseInt(nextMNum) - 1, 1);
+                        execDate.setMonth(execDate.getMonth() + 1);
+                        let execYStr = execDate.getFullYear();
+                        let execMStr = (execDate.getMonth() + 1).toString().padStart(2, '0');
+                        let diaStr = rotina.diaPrazoPadrao.toString().padStart(2, '0');
+                        let dateStr = `${execYStr}-${execMStr}-${diaStr}`;
+
+                        if (rotina.frequencia === 'Anual' && rotina.diaPrazoPadrao.toString().includes('/')) {
+                            const [diaAnual, mesAnual] = rotina.diaPrazoPadrao.toString().split('/');
+                            const anoAtual = new Date().getFullYear();
+                            dateStr = `${anoAtual}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
+                        }
+
+                        const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
+                            const text = typeof item === 'string' ? item : item.texto;
+                            return { id: idx + 1, texto: text, done: false };
+                        });
+
+                        try {
+                            const resE = await fetch(`${API_BASE}/execucoes`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    cliente_id: cliente.id,
+                                    rotina: rotina.nome,
+                                    competencia: nextCompId,
+                                    dia_prazo: dateStr,
+                                    drive_link: cliente.driveLink,
+                                    responsavel: rotina.responsavel,
+                                    subitems: subitems,
+                                    eh_pai: true,
+                                    feito: false,
+                                    iniciado_em: new Date().toISOString().split('T')[0],
+                                    checklist_gerado: true
+                                })
+                            });
+                            if (resE.ok) {
+                                const dataE = await resE.json();
+                                db.execucoes.push({
+                                    id: dataE[0] ? dataE[0].id : Date.now(),
+                                    clienteId: cliente.id,
+                                    rotina: rotina.nome,
+                                    competencia: nextCompId,
+                                    diaPrazo: dateStr,
+                                    driveLink: cliente.driveLink,
+                                    feito: false,
+                                    feitoEm: null,
+                                    responsavel: rotina.responsavel,
+                                    iniciadoEm: new Date().toISOString().split('T')[0],
+                                    checklistGerado: true,
+                                    ehPai: true,
+                                    subitems: subitems
+                                });
+                                tarefasGeradas++;
+                            }
+                        } catch (e) { console.error("Erro rede ao criar task release", e); }
+                    }
+                }
+            }
+
+            if (tarefasGeradas > 0) {
+                // Dispara confeti / notificação se tiver UI handling no window
+                if (typeof window.showEarlyReleaseToast === 'function') {
+                    window.showEarlyReleaseToast(nextExt);
+                }
+            }
+        }
     },
 
     async addClient(clientData) {
