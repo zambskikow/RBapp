@@ -1029,24 +1029,8 @@ window.Store = {
                     ehPai: true,
                     subitems: subitems
                 });
-
-                // Vincular cliente à rotina se ainda não estiver vinculado
-                const rotinasAtuais = cliente.rotinasSelecionadas || [];
-                if (!rotinasAtuais.includes(rotina.id)) {
-                    const novasRotinas = [...rotinasAtuais, rotina.id];
-                    cliente.rotinasSelecionadas = novasRotinas;
-                    try {
-                        await fetch(`${API_BASE}/clientes/${cliente.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ rotinas_selecionadas: novasRotinas })
-                        });
-                        console.log(`[criarExecucaoEventual] Cliente ${cliente.razaoSocial} vinculado à rotina ${rotina.nome}`);
-                    } catch (e) {
-                        console.error('[criarExecucaoEventual] Erro ao vincular cliente à rotina:', e);
-                    }
-                }
-
+                // Rotinas eventuais nao vinculam o cliente permanentemente.
+                // A execucao fica salva apenas na competencia atual (historico/auditoria).
                 this.registerLog('Demanda Eventual', `Criada demanda "${rotina.nome}" para ${cliente.razaoSocial} (prazo: ${dateStr})`);
                 return { ok: true };
             } else {
@@ -1077,6 +1061,12 @@ window.Store = {
         for (const rotId of routinesToProcess) {
             const rotina = db.rotinasBase.find(r => r.id === rotId);
             if (!rotina) continue;
+
+            // Rotinas eventuais são criadas apenas manualmente pelo painel operacional — nunca auto-geradas
+            if ((rotina.frequencia || '').toLowerCase() === 'eventual') {
+                console.log(`[Engine] Pulando rotina eventual "${rotina.nome}" — criação manual apenas.`);
+                continue;
+            }
 
             // Calcular data de prazo conforme a frequência da rotina
             let dateStr;
