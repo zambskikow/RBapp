@@ -2789,7 +2789,13 @@ function renderMenuReorderList() {
 
 async function saveMenuOrder() {
     const listContainer = document.getElementById('menu-reorder-list');
+    const saveBtn = document.getElementById('btn-save-menu-order');
+    const saveIcon = saveBtn ? saveBtn.querySelector('i') : null;
+
     if (!listContainer) return;
+
+    if (saveIcon) saveIcon.classList.add('icon-saving');
+    if (saveBtn) saveBtn.disabled = true;
 
     const items = listContainer.querySelectorAll('.reorder-item');
     const newOrder = Array.from(items).map(i => i.getAttribute('data-view'));
@@ -2807,7 +2813,10 @@ async function saveMenuOrder() {
         ...config,
         menu_order: newOrder
     });
+
     hideLoading();
+    if (saveIcon) saveIcon.classList.remove('icon-saving');
+    if (saveBtn) saveBtn.disabled = false;
 
     if (success) {
         // Re-apply immediately
