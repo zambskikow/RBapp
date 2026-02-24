@@ -2232,6 +2232,31 @@ async function handleSaveRotina(e) {
 
     const selectedClientIds = Array.from(document.querySelectorAll('input[name="cliente-sel"]:checked')).map(cb => parseInt(cb.value));
 
+    // Validação de campos obrigatórios
+    if (!nome.trim()) {
+        alert("O campo 'Nome da Rotina' é obrigatório.");
+        document.getElementById('rotina-nome').focus();
+        return;
+    }
+    if (!setor.trim()) {
+        alert("O campo 'Setor' é obrigatório.");
+        document.getElementById('rotina-setor').focus();
+        return;
+    }
+    if (!prazo.trim()) {
+        alert("O campo 'Prazo' é obrigatório.");
+        document.getElementById('rotina-prazo').focus();
+        return;
+    }
+    if (!responsavel) {
+        alert("Selecione ao menos um responsável pela rotina.");
+        return;
+    }
+    if (selectedClientIds.length === 0) {
+        alert("Selecione ao menos um cliente para esta rotina.");
+        return;
+    }
+
     // Validações conforme o tipo de frequência
     if (frequencia === 'Mensal' && (isNaN(prazo) || prazo < 1 || prazo > 31)) {
         alert("Para rotinas mensais, preencha um dia válido de 1 a 31.");
