@@ -877,9 +877,17 @@ window.Store = {
                     for (const rotId of removedRotinasIds) {
                         const rotina = db.rotinasBase.find(r => r.id === rotId);
                         if (rotina) {
-                            const taskToDelete = db.execucoes.find(e => e.clienteId === c.id && e.rotina === rotina.nome && e.competencia === currentComp);
-                            if (taskToDelete) {
-                                await this.deleteExecucao(taskToDelete.id);
+                            // Encontra todas as execuções (da competência atual ou futuras)
+                            // Isso garante que limpa tanto as obrigações deste mês quanto as 
+                            // que foram geradas antecipadamente (Early Release) para o mês que vem.
+                            const tasksToDelete = db.execucoes.filter(e =>
+                                e.clienteId === c.id &&
+                                e.rotina === rotina.nome &&
+                                e.competencia >= currentComp
+                            );
+
+                            for (const task of tasksToDelete) {
+                                await this.deleteExecucao(task.id);
                             }
                         }
                     }
