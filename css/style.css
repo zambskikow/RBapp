@@ -381,7 +381,7 @@ body {
 }
 
 .nav-item.active i {
-    color: var(--primary-light);
+    color: #fff;
 }
 
 .user-profile {
