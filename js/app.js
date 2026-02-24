@@ -504,9 +504,14 @@ async function initApp() {
     if (brandingForm) {
         brandingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = document.getElementById('brand-name').value;
-            const logo = document.getElementById('brand-logo-url').value;
-            await Store.updateBranding(name, logo);
+            const configData = {
+                brandName: document.getElementById('brand-name').value,
+                brandLogoUrl: document.getElementById('brand-logo-url').value,
+                accentColor: document.getElementById('brand-accent-color').value,
+                slogan: document.getElementById('brand-slogan').value,
+                theme: document.getElementById('brand-theme').value
+            };
+            await Store.updateBranding(configData);
             applyBranding();
             alert("Identidade visual personalizada com sucesso!");
         });
@@ -638,26 +643,62 @@ function applyBranding() {
     const config = Store.getData().config || {};
     const brandName = config.brandName || "RB|App";
     const brandLogoUrl = config.brandLogoUrl || "";
+    const accentColor = config.accentColor || "#6366f1";
+    const slogan = config.slogan || "";
+    const theme = config.theme || "glass";
 
-    // Atualizar Sidebar Logo
+    // 1. Aplicar Cores (CSS Variables)
+    document.documentElement.style.setProperty('--primary', accentColor);
+    document.documentElement.style.setProperty('--primary-light', accentColor + 'ee');
+    document.documentElement.style.setProperty('--accent', accentColor);
+
+    // 2. Aplicar Tema
+    document.body.className = `theme-${theme}`;
+    if (theme === 'light') {
+        document.documentElement.style.setProperty('--bg-main', '#f8fafc');
+        document.documentElement.style.setProperty('--bg-side', '#ffffff');
+        document.documentElement.style.setProperty('--text-main', '#1e293b');
+    } else {
+        document.documentElement.style.setProperty('--bg-main', '#0f172a');
+        document.documentElement.style.setProperty('--bg-side', '#1e293b');
+        document.documentElement.style.setProperty('--text-main', '#ffffff');
+    }
+
+    // 3. Atualizar Sidebar Logo e Slogan
     const sidebarLogo = document.querySelector('.sidebar .logo span');
     if (sidebarLogo) sidebarLogo.textContent = brandName;
 
-    // Atualizar Login Logo
+    // Adicionar slogan se existir (pode ser usado no dashboard ou sidebar)
+    const sidebarSlogan = document.querySelector('.sidebar .logo p');
+    if (sidebarSlogan) {
+        sidebarSlogan.textContent = slogan;
+        sidebarSlogan.style.display = slogan ? 'block' : 'none';
+    }
+
+    // 4. Atualizar Login Logo
     const loginLogo = document.querySelector('.login-logo');
     if (loginLogo) {
         if (brandLogoUrl) {
-            loginLogo.innerHTML = `<img src="${brandLogoUrl}" alt="${brandName}" style="max-height: 50px; border-radius: 8px;">`;
+            loginLogo.innerHTML = `<img src="${brandLogoUrl}" alt="${brandName}" style="max-height: 60px; border-radius: 8px; margin-bottom: 10px;">
+                                   <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-main);">${brandName}</div>`;
         } else {
-            loginLogo.innerHTML = `<i class="fa-solid fa-chart-line"></i> ${brandName}`;
+            loginLogo.innerHTML = `<i class="fa-solid fa-chart-line" style="font-size: 3rem; color: var(--primary);"></i> 
+                                   <div style="font-size: 1.5rem; font-weight: 800; margin-top: 5px;">${brandName}</div>`;
         }
     }
 
-    // Preencher campos no painel de configurações se estiverem vazios
+    // 5. Sincronizar campos do formulário
     const inputName = document.getElementById('brand-name');
+    const inputColor = document.getElementById('brand-accent-color');
+    const inputSlogan = document.getElementById('brand-slogan');
     const inputLogo = document.getElementById('brand-logo-url');
-    if (inputName && !inputName.value) inputName.value = brandName;
-    if (inputLogo && !inputLogo.value) inputLogo.value = brandLogoUrl;
+    const selectTheme = document.getElementById('brand-theme');
+
+    if (inputName) inputName.value = brandName;
+    if (inputColor) inputColor.value = accentColor;
+    if (inputSlogan) inputSlogan.value = slogan;
+    if (inputLogo) inputLogo.value = brandLogoUrl;
+    if (selectTheme) selectTheme.value = theme;
 }
 
 function setupNavigation() {

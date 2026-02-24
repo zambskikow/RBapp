@@ -25,7 +25,10 @@ let db = {
         autoBackup: false,
         lastBackupData: null,
         brandName: "RB|App",
-        brandLogoUrl: ""
+        brandLogoUrl: "",
+        accentColor: "#6366f1",
+        slogan: "Sua contabilidade inteligente",
+        theme: "glass"
     },
     cargos: [],
     marketing_posts: []
@@ -92,6 +95,9 @@ window.Store = {
                     const c = configData[0];
                     db.config.brandName = c.brand_name || db.config.brandName;
                     db.config.brandLogoUrl = c.brand_logo_url || db.config.brandLogoUrl;
+                    db.config.accentColor = c.accent_color || db.config.accentColor;
+                    db.config.slogan = c.slogan || db.config.slogan;
+                    db.config.theme = c.theme || db.config.theme;
                 }
             } catch (e) { }
 
@@ -898,7 +904,7 @@ window.Store = {
 
         if (auth.telas_permitidas.length === 0) {
             if (auth.permissao === 'Gerente') {
-                auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'settings'];
+                auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings'];
             } else {
                 auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
             }
@@ -1277,16 +1283,21 @@ window.Store = {
         }
     },
 
-    async updateBranding(name, logoUrl) {
-        db.config.brandName = name;
-        db.config.brandLogoUrl = logoUrl;
+    async updateBranding(configData) {
+        db.config = { ...db.config, ...configData };
         try {
             await fetch(`${API_BASE}/global_config`, {
-                method: 'POST', // Usando POST para update/upsert simplificado
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ brand_name: name, brand_logo_url: logoUrl })
+                body: JSON.stringify({
+                    brand_name: db.config.brandName,
+                    brand_logo_url: db.config.brandLogoUrl,
+                    accent_color: db.config.accentColor,
+                    slogan: db.config.slogan,
+                    theme: db.config.theme
+                })
             });
-            this.registerLog("Sistema", `Identidade visual atualizada para: ${name}`);
+            this.registerLog("Sistema", `Identidade visual atualizada.`);
         } catch (e) { console.error(e); }
     }
 };

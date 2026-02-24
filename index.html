@@ -52,7 +52,10 @@
         <aside class="sidebar glass-panel">
             <div class="logo">
                 <i class="fa-solid fa-chart-line"></i>
-                <span>RB|App</span>
+                <div style="display: flex; flex-direction: column;">
+                    <span>RB|App</span>
+                    <p style="font-size: 0.65rem; opacity: 0.6; margin: 0; font-weight: 400; display: none;"></p>
+                </div>
             </div>
             <nav class="nav-menu">
                 <a href="#" class="nav-item active" data-view="dashboard">
@@ -1609,48 +1612,74 @@
                             </div>
                         </div>
 
-                    </div>
+                        <!-- TAB: Personalização / Branding -->
+                        <div class="settings-pane fade-in" id="set-branding" style="display: none;">
+                            <div style="margin-bottom: 2rem;">
+                                <h2 style="font-size: 1.25rem;">Personalização da Marca</h2>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Altere o nome e a identidade
+                                    visual do seu portal.</p>
+                            </div>
 
-                    <!-- TAB: Personalização / Branding -->
-                    <div class="settings-pane fade-in" id="set-branding" style="display: none;">
-                        <div style="margin-bottom: 2rem;">
-                            <h2 style="font-size: 1.25rem;">Personalização da Marca</h2>
-                            <p style="color: var(--text-muted); font-size: 0.9rem;">Altere o nome e a identidade
-                                visual do seu portal.</p>
-                        </div>
-
-                        <div class="glass-card" style="max-width: 600px; padding: 2rem;">
-                            <form id="form-branding">
-                                <div class="form-group" style="margin-bottom: 1.5rem;">
-                                    <label>Nome da Empresa (Exibição no Topo)</label>
-                                    <input type="text" id="brand-name" class="glass-input"
-                                        placeholder="Ex: RB Contabilidade">
-                                </div>
-                                <div class="form-group" style="margin-bottom: 1.5rem;">
-                                    <label>URL do Logotipo (PNG/SVG transparente)</label>
-                                    <div style="display: flex; gap: 1rem;">
-                                        <input type="text" id="brand-logo-url" class="glass-input"
-                                            placeholder="https://exemplo.com/logo.png" style="flex: 1;">
-                                        <div id="brand-logo-preview"
-                                            style="width: 46px; height: 46px; background: rgba(255,255,255,0.05); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-glass);">
-                                            <i class="fa-solid fa-image" style="opacity: 0.3;"></i>
+                            <div class="glass-card" style="max-width: 600px; padding: 2rem;">
+                                <form id="form-branding">
+                                    <div
+                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                                        <div class="form-group">
+                                            <label>Nome da Empresa</label>
+                                            <input type="text" id="brand-name" class="glass-input"
+                                                placeholder="Ex: RB Contabilidade">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Cor de Destaque</label>
+                                            <div style="display: flex; gap: 10px; align-items: center;">
+                                                <input type="color" id="brand-accent-color" class="glass-input"
+                                                    style="width: 50px; height: 46px; padding: 5px; cursor: pointer;">
+                                                <span style="font-size: 0.8rem; opacity: 0.7;">Primária Sistema</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fa-solid fa-floppy-disk"></i> Salvar Identidade
-                                    </button>
-                                </div>
-                            </form>
+
+                                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                                        <label>Slogan da Empresa (Opcional)</label>
+                                        <input type="text" id="brand-slogan" class="glass-input"
+                                            placeholder="Ex: Inteligência Fiscal para seu negócio">
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                                        <label>URL do Logotipo (PNG/SVG transparente)</label>
+                                        <div style="display: flex; gap: 1rem;">
+                                            <input type="text" id="brand-logo-url" class="glass-input"
+                                                placeholder="https://exemplo.com/logo.png" style="flex: 1;">
+                                            <div id="brand-logo-preview"
+                                                style="width: 46px; height: 46px; background: rgba(255,255,255,0.05); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-glass);">
+                                                <i class="fa-solid fa-image" style="opacity: 0.3;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 2rem;">
+                                        <label>Tema do Sistema</label>
+                                        <select id="brand-theme" class="glass-select" style="width: 100%;">
+                                            <option value="glass">Vibrante Glass (Padrão)</option>
+                                            <option value="dark">Deep Dark (OLED)</option>
+                                            <option value="light">Soft Light (Claro)</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="display: flex; justify-content: flex-end;">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fa-solid fa-floppy-disk"></i> Salvar Identidade
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </div>
 
-                </div> <!-- End Settings Content Panes -->
-            </div> <!-- End Settings Layout -->
-    </div>
+                    </div> <!-- End Settings Content Panes -->
+                </div> <!-- End Settings Layout -->
+            </div>
 
-    </main>
+        </main>
     </div>
 
     <!-- Details and Checklist Modal -->
