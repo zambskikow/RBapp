@@ -1625,6 +1625,26 @@ function renderClientes() {
 }
 
 
+// Controle de Loading Global
+function showLoading(title = 'Processando...', message = 'Por favor, aguarde um momento.') {
+    const overlay = document.getElementById('global-loading-overlay');
+    const titleEl = document.getElementById('loading-title');
+    const msgEl = document.getElementById('loading-message');
+
+    if (overlay && titleEl && msgEl) {
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        overlay.classList.add('active');
+    }
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('global-loading-overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+}
+
 // Funções Utilitárias Globais
 function toggleListVisibility(gridId, iconId) {
     const grid = document.getElementById(gridId);
@@ -2386,6 +2406,7 @@ async function handleSaveRotina(e) {
         alert("Selecione ao menos um responsável pela rotina.");
         return;
     }
+
     // Validações conforme o tipo de frequência
     if (frequencia === 'Mensal' && (isNaN(prazo) || prazo < 1 || prazo > 31)) {
         alert("Para rotinas mensais, preencha um dia válido de 1 a 31.");
@@ -2400,17 +2421,26 @@ async function handleSaveRotina(e) {
         return;
     }
 
-    if (id) {
-        await Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
-    } else {
-        await Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
+    showLoading('Salvando Rotina', 'Processando vinculação de clientes e gerando tarefas...');
+
+    try {
+        if (id) {
+            await Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
+        } else {
+            await Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
+        }
+
+        renderRotinas();
+        renderOperacional();
+        renderDashboard();
+
+        closeRotinaModal();
+    } catch (error) {
+        console.error("Erro ao salvar rotina:", error);
+        alert("Ocorreu um erro ao salvar a rotina. Tente novamente.");
+    } finally {
+        hideLoading();
     }
-
-    renderRotinas();
-    renderOperacional();
-    renderDashboard();
-
-    closeRotinaModal();
 }
 
 
@@ -2426,6 +2456,8 @@ async function handleDeleteRotina(id, btnElement = null) {
             if (icon) icon.classList.add('delete-pop');
         }
 
+        showLoading('Excluindo Rotina', `Removendo '${rotina.nome}' e todas as tarefas vinculadas...`);
+
         try {
             // Pequeno delay para a animação aparecer antes da remoção
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -2435,6 +2467,8 @@ async function handleDeleteRotina(id, btnElement = null) {
         } catch (error) {
             console.error(error);
             alert("Ocorreu um erro ao excluir a rotina. Verifique o console.");
+        } finally {
+            hideLoading();
         }
     }
 }
