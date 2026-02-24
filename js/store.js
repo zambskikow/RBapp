@@ -61,7 +61,7 @@ window.Store = {
                 assunto: m.assunto || 'Sem Assunto',
                 lida: m.lida,
                 data: m.data,
-                excluidoPor: Array.isArray(m.excluido_por) ? m.excluido_por : (typeof m.excluido_por === 'string' ? JSON.parse(m.excluido_por) : []),
+                excluido_por: Array.isArray(m.excluido_por) ? m.excluido_por : (typeof m.excluido_por === 'string' ? JSON.parse(m.excluido_por) : []),
                 favorito: m.favorito || false
             })) || [];
             db.logs = await logsRes.json() || [];
@@ -914,7 +914,8 @@ window.Store = {
             assunto: assunto || 'Sem Assunto',
             lida: false,
             data: now,
-            excluido_por: []
+            excluido_por: [],
+            favorito: false
         };
         try {
             const res = await fetch(`${API_BASE}/mensagens`, {

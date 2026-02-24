@@ -152,10 +152,12 @@ class MensagemCreate(BaseModel):
     lida: bool = False
     data: str | None = None
     excluido_por: list = []
+    favorito: bool = False
 
 class MensagemUpdate(BaseModel):
     lida: bool | None = None
     excluido_por: list | None = None
+    favorito: bool | None = None
 
 class CargoCreate(BaseModel):
     nome_cargo: str
@@ -334,6 +336,9 @@ def update_mensagem(msg_id: int, updates: MensagemUpdate):
         update_data["lida"] = updates.lida
     if updates.excluido_por is not None:
         update_data["excluido_por"] = updates.excluido_por
+    if updates.favorito is not None:
+        update_data["favorito"] = updates.favorito
+    
     if not update_data:
         return {"detail": "Nenhum campo para atualizar"}
     response = supabase.table("mensagens").update(update_data).eq("id", msg_id).execute()

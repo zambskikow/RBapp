@@ -1085,8 +1085,10 @@
                         </div>
 
                         <div class="nav-panel-bottom">
-                            <button class="nav-bottom-item"><i class="fa-solid fa-gear"></i> Configurações</button>
-                            <button class="nav-bottom-item"><i class="fa-solid fa-circle-question"></i> Ajuda</button>
+                            <button class="nav-bottom-item" id="btn-inbox-config"><i class="fa-solid fa-gear"></i>
+                                Configurações</button>
+                            <button class="nav-bottom-item" id="btn-inbox-help"><i
+                                    class="fa-solid fa-circle-question"></i> Ajuda</button>
                         </div>
                     </aside>
 
@@ -1101,6 +1103,11 @@
                                 <div class="list-actions-minimal">
                                     <button title="Atualizar" id="btn-refresh-inbox-new"><i
                                             class="fa-solid fa-rotate-right"></i></button>
+                                    <button title="Excluir Selecionados" id="btn-bulk-delete-msgs"
+                                        style="display:none; color: #ef4444;"><i
+                                            class="fa-solid fa-trash-can"></i></button>
+                                    <button title="Marcar como lidas" id="btn-bulk-read-msgs" style="display:none;"><i
+                                            class="fa-solid fa-envelope-open"></i></button>
                                     <button title="Mais opções"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                                 </div>
                                 <div class="list-pagination-minimal">

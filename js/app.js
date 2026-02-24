@@ -2573,9 +2573,77 @@ function initInboxTabs() {
             }, 600);
         };
     }
+
+    // Botões de Suporte
+    const btnConfig = document.getElementById('btn-inbox-config');
+    if (btnConfig) btnConfig.onclick = () => alert('Configurações de Mensagens em breve...');
+    const btnHelp = document.getElementById('btn-inbox-help');
+    if (btnHelp) btnHelp.onclick = () => alert('Ajuda: Selecione mensagens para excluir ou marcar como lidas.');
+
+    // Seleção Múltipla
+    const selectAllCheck = document.getElementById('select-all-msgs');
+    if (selectAllCheck) {
+        selectAllCheck.onchange = (e) => {
+            const checks = document.querySelectorAll('.msg-check');
+            checks.forEach(c => c.checked = e.target.checked);
+            updateBulkActionsVisibility();
+        };
+    }
+
+    const btnBulkDelete = document.getElementById('btn-bulk-delete-msgs');
+    if (btnBulkDelete) {
+        btnBulkDelete.onclick = async () => {
+            const selected = document.querySelectorAll('.msg-check:checked');
+            if (selected.length === 0) return;
+            if (confirm(`Excluir ${selected.length} mensagens selecionadas?`)) {
+                for (let check of selected) {
+                    const id = check.closest('.msg-item-refined').getAttribute('data-msg-id');
+                    await Store.deleteMensagem(id, LOGGED_USER.nome);
+                }
+                renderMensagens();
+            }
+        };
+    }
+
+    const btnBulkRead = document.getElementById('btn-bulk-read-msgs');
+    if (btnBulkRead) {
+        btnBulkRead.onclick = async () => {
+            const selected = document.querySelectorAll('.msg-check:checked');
+            if (selected.length === 0) return;
+            for (let check of selected) {
+                const id = check.closest('.msg-item-refined').getAttribute('data-msg-id');
+                const msg = Store.getData().mensagens.find(m => m.id == id);
+                if (msg && !msg.lida) {
+                    msg.lida = true;
+                    // API Call
+                    try {
+                        await fetch(`${API_BASE}/mensagens/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ lida: true })
+                        });
+                    } catch (e) { }
+                }
+            }
+            renderMensagens();
+        };
+    }
+}
+
+function updateBulkActionsVisibility() {
+    const selectedCount = document.querySelectorAll('.msg-check:checked').length;
+    const bulkDelete = document.getElementById('btn-bulk-delete-msgs');
+    const bulkRead = document.getElementById('btn-bulk-read-msgs');
+    if (bulkDelete) bulkDelete.style.display = selectedCount > 0 ? 'inline-flex' : 'none';
+    if (bulkRead) bulkRead.style.display = selectedCount > 0 ? 'inline-flex' : 'none';
 }
 
 function renderMensagens() {
+    // Reset bulk actions visibility
+    updateBulkActionsVisibility();
+    const selectAllCheck = document.getElementById('select-all-msgs');
+    if (selectAllCheck) selectAllCheck.checked = false;
+
     const container = document.getElementById('mensagens-container');
     if (!LOGGED_USER) return;
 
@@ -2638,7 +2706,7 @@ function renderMensagens() {
 
         div.innerHTML = `
             <div class="msg-refined-left">
-                <input type="checkbox" class="msg-check" onclick="event.stopPropagation()">
+                <input type="checkbox" class="msg-check" onclick="event.stopPropagation(); updateBulkActionsVisibility()">
                 <i class="fa-solid fa-star msg-star ${m.favorito ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorito(${m.id})"></i>
             </div>
             <div class="msg-refined-avatar">${initials}</div>
@@ -2670,11 +2738,11 @@ function renderMensagens() {
     updateMensagensBadges();
 }
 
-window.toggleFavorito = function (id) {
+window.toggleFavorito = async function (id) {
     const msg = Store.getData().mensagens.find(m => m.id == id);
     if (msg) {
         msg.favorito = !msg.favorito;
-        // Opcional: Notificar API
+        await Store.toggleFavorito(id, msg.favorito);
         renderMensagens();
     }
 };
@@ -3030,8 +3098,6 @@ function renderChecklist() {
     const task = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
 
     currentOpenTask = task;
-
-
 
     const container = document.getElementById('modal-checklist');
 
@@ -4174,6 +4240,4 @@ function setupPasswordToggles() {
         });
     });
 }
-
-
 
