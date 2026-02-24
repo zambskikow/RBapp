@@ -616,14 +616,15 @@ function handleLogout() {
 function applyUserPermissions(auth) {
     const permitidas = auth.telas_permitidas || [];
 
+    // Master Admin bypass: Manager account or "Gerente" permission gets everything
+    const isMasterAdmin = auth.nome === 'Manager' || auth.permissao === 'Gerente';
+
     // Loop through all navigation links and show/hide based on array
     document.querySelectorAll('.nav-item').forEach(navItem => {
         const view = navItem.getAttribute('data-view');
         if (!view) return; // Skip non-view links like logout
 
-        const isGerenteObj = ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(auth.permissao) || auth.nome === 'Manager';
-
-        if (permitidas.includes(view) || (isGerenteObj && view === 'competencias')) {
+        if (isMasterAdmin || permitidas.includes(view)) {
             navItem.style.display = 'flex'; // our UI uses flex for all nav-items
         } else {
             navItem.style.display = 'none';
@@ -633,7 +634,7 @@ function applyUserPermissions(auth) {
     // Hide/Show specific inner buttons based on permissions
     const btnSetores = document.getElementById('btn-manage-setores');
     if (btnSetores) {
-        if (auth.permissao === 'Gerente' || permitidas.includes('settings')) {
+        if (isMasterAdmin || permitidas.includes('settings')) {
             btnSetores.style.display = 'inline-block';
         } else {
             btnSetores.style.display = 'none';
@@ -642,7 +643,7 @@ function applyUserPermissions(auth) {
 
     const adminNavDivider = document.getElementById('admin-nav-divider');
     if (adminNavDivider) {
-        if (auth.permissao === 'Gerente' || permitidas.includes('settings')) {
+        if (isMasterAdmin || permitidas.includes('settings')) {
             adminNavDivider.style.display = 'block';
         } else {
             adminNavDivider.style.display = 'none';
