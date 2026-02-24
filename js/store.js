@@ -255,7 +255,9 @@ window.Store = {
     // UI Engine gets filtered from the local Cache (which was populated via loadFromStorage mapping)
     getExecucoesWithDetails(userFilter = 'All') {
         const tToday = new Date().setHours(0, 0, 0, 0);
-        let execs = db.execucoes.map(ex => {
+        // Filtrar execuções órfãs: ignorar tarefas cuja rotina foi excluída do sistema
+        const rotinasAtivas = new Set(db.rotinasBase.map(r => r.nome));
+        let execs = db.execucoes.filter(ex => rotinasAtivas.has(ex.rotina)).map(ex => {
             const client = db.clientes.find(c => c.id === ex.clienteId);
             const dPrazo = ex.diaPrazo ? new Date(ex.diaPrazo + "T00:00:00").setHours(0, 0, 0, 0) : tToday;
 
