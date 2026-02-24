@@ -431,6 +431,14 @@ async function initApp() {
         });
     }
 
+    const sortClientesRotina = document.getElementById('sort-clientes-rotina');
+    if (sortClientesRotina) {
+        sortClientesRotina.addEventListener('change', (e) => {
+            const rotinaId = document.getElementById('rotina-id').value;
+            renderRoutineClientsGrid(e.target.value, rotinaId ? parseInt(rotinaId) : null);
+        });
+    }
+
     const notificationBtn = document.getElementById('btn-notification');
     if (notificationBtn) {
         notificationBtn.addEventListener('click', () => {
@@ -2070,19 +2078,10 @@ function openRotinaModal(id = null) {
 
     selectFreq.onchange = (e) => updateUIForFreq(e.target.value);
 
-    // Dynamic loading of Clientes checkboxes
-    const clientesGrid = document.getElementById('clientes-checkbox-grid');
-    if (clientesGrid) {
-        clientesGrid.innerHTML = '';
-        Store.getData().clientes.forEach(c => {
-            clientesGrid.innerHTML += `
-                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
-                    <input type="checkbox" name="cliente-sel" id="cliente-cb-${c.id}" value="${c.id}" class="custom-checkbox" ${isOperacional ? 'disabled' : ''}>
-                    ${c.razaoSocial}
-                </label>
-            `;
-        });
-    }
+    // Dynamic loading of Clientes checkboxes with sorting
+    const sortMode = document.getElementById('sort-clientes-rotina')?.value || 'az';
+    renderRoutineClientsGrid(sortMode, id);
+
     const saveBtn = document.getElementById('btn-save-rotina-detail');
     if (saveBtn) saveBtn.style.display = isOperacional ? 'none' : 'inline-block';
     const resetChecklistBtn = document.getElementById('btn-add-checklist-item');
@@ -2105,14 +2104,6 @@ function openRotinaModal(id = null) {
             });
 
             currentChecklistBuilder = [...(rotina.checklistPadrao || [])];
-
-            // Check the clients that have this routine
-            Store.getData().clientes.forEach(c => {
-                if (c.rotinasSelecionadas && c.rotinasSelecionadas.includes(id)) {
-                    const cb = document.getElementById(`cliente-cb-${c.id}`);
-                    if (cb) cb.checked = true;
-                }
-            });
         }
     } else {
         title.innerHTML = '<i class="fa-solid fa-layer-group highlight-text"></i> Nova Rotina';
@@ -2128,6 +2119,57 @@ function openRotinaModal(id = null) {
     renderChecklistBuilderPreview();
     document.getElementById('rotinas-list-panel').style.display = 'none';
     document.getElementById('rotinas-detail-panel').style.display = 'block';
+
+    // Garantir que a lista de clientes esteja aberta e o chevron correto
+    const grid = document.getElementById('clientes-checkbox-grid');
+    const icon = document.getElementById('icon-cli');
+    if (grid && icon) {
+        grid.style.display = 'grid';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+
+/**
+ * Renderiza a grid de clientes no modal de rotinas com suporte a ordenação
+ */
+function renderRoutineClientsGrid(sortMode = 'az', rotinaId = null) {
+    const clientesGrid = document.getElementById('clientes-checkbox-grid');
+    if (!clientesGrid) return;
+
+    let clientes = [...Store.getData().clientes];
+    const isOperacional = LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'operacional';
+
+    // Aplicar Ordenação
+    clientes.sort((a, b) => {
+        if (sortMode === 'az') return a.razaoSocial.localeCompare(b.razaoSocial, 'pt-BR');
+        if (sortMode === 'za') return b.razaoSocial.localeCompare(a.razaoSocial, 'pt-BR');
+        if (sortMode === 'regime') return (a.regime || '').localeCompare(b.regime || '', 'pt-BR');
+        return 0;
+    });
+
+    // Guardar estados atuais dos checkboxes para não perder ao re-renderizar por ordenação
+    const selectedIds = Array.from(document.querySelectorAll('input[name="cliente-sel"]:checked')).map(cb => parseInt(cb.value));
+
+    // Se for abertura inicial de uma rotina existente, marcar os já vinculados se selectedIds estiver vazio
+    const finalSelectedIds = (selectedIds.length === 0 && rotinaId)
+        ? clientes.filter(c => c.rotinasSelecionadas && c.rotinasSelecionadas.includes(rotinaId)).map(c => c.id)
+        : selectedIds;
+
+    clientesGrid.innerHTML = '';
+    clientes.forEach(c => {
+        const isChecked = finalSelectedIds.includes(c.id);
+        clientesGrid.innerHTML += `
+            <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
+                <input type="checkbox" name="cliente-sel" id="cliente-cb-${c.id}" value="${c.id}" class="custom-checkbox" 
+                    ${isOperacional ? 'disabled' : ''} ${isChecked ? 'checked' : ''}>
+                <div>
+                    <strong>${c.razaoSocial}</strong><br>
+                    <small style="opacity:0.6; font-size:0.7rem;">${c.regime || 'Não Informado'}</small>
+                </div>
+            </label>
+        `;
+    });
 }
 
 function closeRotinaModal() {
