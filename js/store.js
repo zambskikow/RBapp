@@ -911,13 +911,16 @@ window.Store = {
         const idx = db.mensagens.findIndex(m => m.id == id);
         if (idx !== -1) {
             const m = db.mensagens[idx];
-            db.mensagens.splice(idx, 1);
+            db.mensagens.splice(idx, 1); // Remover localmente imediatamente
             try {
                 const res = await fetch(`${API_BASE}/mensagens/${id}`, { method: 'DELETE' });
-                if (!res.ok) throw new Error("API Delete Failed");
+                // APIs REST retornam 200 ou 204 em DELETE bem-sucedido
+                if (!res.ok && res.status !== 204) {
+                    throw new Error(`API Delete retornou status ${res.status}`);
+                }
             } catch (e) {
-                console.warn("Falha ao deletar msg API, revertendo local:", e);
-                db.mensagens.push(m); // Rollback shallow
+                console.warn("Falha ao deletar msg na API:", e);
+                db.mensagens.push(m); // Rollback local apenas em erro real
                 return false;
             }
             this.registerLog("Excluiu Mensagem", `ID: ${id}`);

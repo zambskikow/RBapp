@@ -2673,14 +2673,21 @@ function loadMessageIntoReader(id) {
     }
 
     btnDelete.onclick = async () => {
-        if (confirm("Deseja mesmo excluir esta mensagem da sua visualização?")) {
-            const success = await Store.deleteMensagem(id);
+        if (confirm("Deseja mesmo excluir esta mensagem?")) {
+            // Garantir que o id é numerico para a URL da API
+            const numId = parseInt(id);
+            btnDelete.disabled = true;
+            btnDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            const success = await Store.deleteMensagem(numId);
+            btnDelete.disabled = false;
+            btnDelete.innerHTML = '<i class="fa-solid fa-trash"></i>';
             if (success) {
-                showFeedbackToast("Mensagem excluída com sucesso.", "success");
+                currentLoadedMessageId = null;
                 hideInboxReader();
                 renderMensagens();
+                showFeedbackToast("Mensagem excluida com sucesso.", "success");
             } else {
-                showFeedbackToast("Erro ao excluir mensagem.", "error");
+                showFeedbackToast("Erro ao excluir mensagem. Tente novamente.", "error");
             }
         }
     };
@@ -2722,23 +2729,66 @@ function closeNovaMensagemModal() {
 
 async function handleSendMensagem(e) {
     e.preventDefault();
+
+    // Capturar valores ANTES de qualquer reset do form
     const dest = document.getElementById('msg-destinatario').value;
-    const assunto = document.getElementById('msg-assunto').value || 'Sem Assunto';
-    const texto = document.getElementById('msg-texto').value;
+    const assunto = document.getElementById('msg-assunto').value.trim() || 'Sem Assunto';
+    const texto = document.getElementById('msg-texto').value.trim();
+
+    if (!dest) { alert('Selecione um destinatario.'); return; }
+    if (!texto) { alert('Escreva uma mensagem antes de enviar.'); return; }
 
     await Store.sendMensagem(LOGGED_USER.nome, dest, texto, assunto);
 
     closeNovaMensagemModal();
     triggerPaperPlaneAnimation();
+    mostrarAnimacaoMensagemEnviada();
 
     setTimeout(() => {
-        showFeedbackToast(`Mensagem enviada para ${dest}!`, 'success');
-        // If we're looking at sent items, refresh
-        if (currentInboxFolder === 'sent') {
-            renderMensagens();
-        }
-    }, 1500);
+        if (currentInboxFolder === 'sent') renderMensagens();
+    }, 1600);
 }
+
+function mostrarAnimacaoMensagemEnviada() {
+    // Remover overlay anterior se existir
+    const existente = document.getElementById('msg-send-overlay');
+    if (existente) existente.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'msg-send-overlay';
+    overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 99998;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+        animation: fadeInOverlay 0.3s ease;
+        pointer-events: none;
+    `;
+
+    overlay.innerHTML = `
+        <style>
+            @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } }
+            @keyframes fadeOutOverlay { from { opacity:1; } to { opacity:0; } }
+            @keyframes popIn { from { transform: scale(0.5); opacity:0; } to { transform: scale(1); opacity:1; } }
+            @keyframes flyUp { 0% { transform: translateY(0) rotate(0deg); opacity:1; } 100% { transform: translateY(-60px) rotate(-15deg); opacity:0; } }
+        </style>
+        <div style="text-align:center; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);">
+            <div style="width:80px; height:80px; background:linear-gradient(135deg,#6366f1,#8b5cf6); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; box-shadow:0 0 40px rgba(99,102,241,0.5);">
+                <i class="fa-solid fa-paper-plane" style="color:#fff; font-size:2rem; animation: flyUp 1s ease 0.3s forwards;"></i>
+            </div>
+            <p style="color:#fff; font-size:1.1rem; font-weight:600; margin:0;">Mensagem enviada!</p>
+            <p style="color:rgba(255,255,255,0.6); font-size:0.85rem; margin:0.3rem 0 0;">Seu recado foi entregue com sucesso</p>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Remover após 1.8s com fade out
+    setTimeout(() => {
+        overlay.style.animation = 'fadeOutOverlay 0.4s ease forwards';
+        setTimeout(() => overlay.remove(), 400);
+    }, 1400);
+}
+
 
 function triggerPaperPlaneAnimation() {
     const container = document.getElementById('paper-plane-container');
