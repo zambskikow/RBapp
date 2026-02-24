@@ -3158,3 +3158,79 @@ body {
         padding: 1.5rem !important;
     }
 }
+/* Power Off / Shutdown Animation */
+.shutdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.shutdown-overlay.active {
+    pointer-events: auto;
+    animation: shutdown-main 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+.shutdown-overlay::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: #fff;
+    box-shadow: 0 0 20px #fff;
+    opacity: 0;
+    transform: scaleX(0);
+}
+
+.shutdown-overlay.active::after {
+    animation: shutdown-line 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes shutdown-main {
+    0% {
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes shutdown-line {
+    0% {
+        transform: scaleX(0);
+        opacity: 0;
+    }
+    10% {
+        transform: scaleX(1);
+        opacity: 1;
+    }
+    40% {
+        transform: scaleX(1) scaleY(1);
+        opacity: 1;
+    }
+    60% {
+        transform: scaleX(1) scaleY(0.005);
+        opacity: 1;
+    }
+    80% {
+        transform: scaleX(0.005) scaleY(0.005);
+        opacity: 1;
+    }
+    100% {
+        transform: scaleX(0) scaleY(0);
+        opacity: 0;
+    }
+}
+

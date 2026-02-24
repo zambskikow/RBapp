@@ -570,14 +570,18 @@ function handleLogin(e) {
 
 function handleLogout() {
     Store.registerLog("Acesso", `${LOGGED_USER ? LOGGED_USER.nome : 'Usuário'} saiu do sistema.`);
-    LOGGED_USER = null;
-    sessionStorage.removeItem('fiscalapp_session');
 
-    // Smooth transition
-    document.getElementById('main-app-container').classList.add('fade-out');
+    // Disparar animação de shutdown
+    const overlay = document.getElementById('shutdown-overlay');
+    if (overlay) {
+        overlay.classList.add('active');
+    }
+
     setTimeout(() => {
+        LOGGED_USER = null;
+        sessionStorage.removeItem('fiscalapp_session');
         window.location.reload();
-    }, 300);
+    }, 850); // Um pouco mais que a animação CSS (800ms)
 }
 
 function applyUserPermissions(auth) {
