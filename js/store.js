@@ -580,15 +580,22 @@ window.Store = {
     },
 
     async deleteRotinaBase(id) {
-        // if (typeof LOGGED_USER === 'undefined' || !LOGGED_USER || LOGGED_USER.permissao !== 'Gerente') {
-        //    console.warn("Ação de exclusão bloqueada devido a nível de permissão.");
-        //    return;
-        // }
-
         const rotinaIndex = db.rotinasBase.findIndex(r => r.id === id);
         if (rotinaIndex === -1) return;
 
         const rotinaNome = db.rotinasBase[rotinaIndex].nome;
+
+        // Excluir todas as execuções vinculadas a esta rotina
+        const execucoesVinculadas = db.execucoes.filter(e => e.rotina === rotinaNome);
+        for (const exec of execucoesVinculadas) {
+            try {
+                await fetch(`${API_BASE}/execucoes/${exec.id}`, { method: 'DELETE' });
+            } catch (e) {
+                console.error(`[deleteRotinaBase] Erro ao excluir execução ${exec.id} da rotina ${rotinaNome}:`, e);
+            }
+        }
+        // Remover do cache local
+        db.execucoes = db.execucoes.filter(e => e.rotina !== rotinaNome);
 
         try {
             const res = await fetch(`${API_BASE}/rotinas_base/${id}`, {
