@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentOperacionalUser = 'All';
 
 let currentCompetencia = '2026-02';
+// Set para rastrear grupos de rotinas que o usuário abriu manualmente
+// Preserva o estado aberto mesmo após re-renderização do painel operacional
+const operacionalGruposAbertos = new Set();
 
 let LOGGED_USER = null; // Replaced hardcoded string
 
@@ -1195,6 +1198,19 @@ function renderOperacional() {
     animateValue('kpi-operacional-late', 0, opLate, 500);
 
     const container = document.getElementById('operacional-groups-container');
+
+    // Capturar quais grupos estão atualmente abertos (não collapsed) antes de re-renderizar
+    // Isso preserva o estado quando o usuário abre uma lista com >10 clientes e executa uma tarefa
+    container.querySelectorAll('.routine-group[data-rotina]').forEach(g => {
+        const content = g.querySelector('.routine-group-content');
+        const rotinaKey = g.getAttribute('data-rotina');
+        if (content && !content.classList.contains('collapsed')) {
+            operacionalGruposAbertos.add(rotinaKey);
+        } else if (content && content.classList.contains('collapsed')) {
+            operacionalGruposAbertos.delete(rotinaKey);
+        }
+    });
+
     container.innerHTML = '';
 
     if (tasks.length === 0) {
@@ -1255,12 +1271,17 @@ function renderOperacional() {
 
         const groupDiv = document.createElement('div');
         groupDiv.className = 'routine-group fade-in';
+        groupDiv.setAttribute('data-rotina', rotinaName);
         const doneCount = groupTasks.filter(t => t.feito).length;
 
-        const isCollapsed = groupTasks.length > 10;
+        // Regra de colapso:
+        // - Grupos com >10 clientes começam colapsados por padrão
+        // - Mas se o usuário abriu manualmente o grupo antes do re-render, mantém aberto
+        const foiAbertoManualmente = operacionalGruposAbertos.has(rotinaName);
+        const isCollapsed = groupTasks.length > 10 && !foiAbertoManualmente;
 
         let tableHtml = `
-            <div class="routine-group-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="this.nextElementSibling.classList.toggle('collapsed'); this.querySelector('.chevron-icon').classList.toggle('fa-rotate-180')">
+            <div class="routine-group-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="this.nextElementSibling.classList.toggle('collapsed'); this.querySelector('.chevron-icon').classList.toggle('fa-rotate-180'); var rn=this.closest('[data-rotina]').getAttribute('data-rotina'); if(this.nextElementSibling.classList.contains('collapsed')){ operacionalGruposAbertos.delete(rn); } else { operacionalGruposAbertos.add(rn); }">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <i class="fa-solid fa-chevron-up chevron-icon ${isCollapsed ? 'fa-rotate-180' : ''}" style="transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text-muted);"></i>
                     <h2><i class="fa-solid fa-layer-group"></i> ${rotinaName}</h2>
