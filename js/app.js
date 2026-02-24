@@ -2252,11 +2252,6 @@ async function handleSaveRotina(e) {
         alert("Selecione ao menos um responsável pela rotina.");
         return;
     }
-    if (selectedClientIds.length === 0) {
-        alert("Selecione ao menos um cliente para esta rotina.");
-        return;
-    }
-
     // Validações conforme o tipo de frequência
     if (frequencia === 'Mensal' && (isNaN(prazo) || prazo < 1 || prazo > 31)) {
         alert("Para rotinas mensais, preencha um dia válido de 1 a 31.");
