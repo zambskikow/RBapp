@@ -1029,6 +1029,24 @@ window.Store = {
                     ehPai: true,
                     subitems: subitems
                 });
+
+                // Vincular cliente à rotina se ainda não estiver vinculado
+                const rotinasAtuais = cliente.rotinasSelecionadas || [];
+                if (!rotinasAtuais.includes(rotina.id)) {
+                    const novasRotinas = [...rotinasAtuais, rotina.id];
+                    cliente.rotinasSelecionadas = novasRotinas;
+                    try {
+                        await fetch(`${API_BASE}/clientes/${cliente.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ rotinas_selecionadas: novasRotinas })
+                        });
+                        console.log(`[criarExecucaoEventual] Cliente ${cliente.razaoSocial} vinculado à rotina ${rotina.nome}`);
+                    } catch (e) {
+                        console.error('[criarExecucaoEventual] Erro ao vincular cliente à rotina:', e);
+                    }
+                }
+
                 this.registerLog('Demanda Eventual', `Criada demanda "${rotina.nome}" para ${cliente.razaoSocial} (prazo: ${dateStr})`);
                 return { ok: true };
             } else {
