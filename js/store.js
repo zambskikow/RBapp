@@ -894,26 +894,37 @@ window.Store = {
         return null;
     },
 
-    // Additional methods mock
+    // Envio de mensagens com persistência no Supabase
     async sendMensagem(remetente, destinatario, texto, assunto = 'Sem Assunto') {
-        const m = {
-            id: Date.now(),
+        const now = new Date().toISOString();
+        const payload = {
             remetente,
             destinatario,
             texto,
             assunto: assunto || 'Sem Assunto',
             lida: false,
-            data: new Date().toISOString(),
-            excluidoPor: [] // Novo campo para soft delete
+            data: now,
+            excluidoPor: []
         };
-        db.mensagens.push(m);
         try {
-            await fetch(`${API_BASE}/mensagens`, {
+            const res = await fetch(`${API_BASE}/mensagens`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(m)
+                body: JSON.stringify(payload)
             });
-        } catch (e) { console.error("Erro ao enviar msg API:", e); }
+            if (res.ok) {
+                const data = await res.json();
+                const savedId = (data && data[0]) ? data[0].id : Date.now();
+                db.mensagens.push({ ...payload, id: savedId });
+            } else {
+                // Fallback local se API falhar
+                db.mensagens.push({ ...payload, id: Date.now() });
+                console.warn("API falhou ao salvar mensagem, salvo localmente.");
+            }
+        } catch (e) {
+            console.error("Erro ao enviar msg API:", e);
+            db.mensagens.push({ ...payload, id: Date.now() });
+        }
     },
 
     async deleteMensagem(id, usuario) {
@@ -924,13 +935,15 @@ window.Store = {
                 m.excluidoPor.push(usuario);
             }
             try {
-                // Notificando API sobre a exclusão lógica (se suportado)
-                // Ou apenas salvando o estado
-                await fetch(`${API_BASE}/mensagens/${id}`, {
+                // Soft delete: envia lista de usuários que excluíram (msg permanece no banco)
+                const res = await fetch(`${API_BASE}/mensagens/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ excluidoPor: m.excluidoPor })
                 });
+                if (!res.ok) {
+                    console.warn(`API PUT mensagem ${id} retornou status ${res.status}`);
+                }
             } catch (e) {
                 console.warn("Falha ao registrar exclusão na API:", e);
             }

@@ -2583,9 +2583,11 @@ function renderMensagens() {
     if (currentInboxFolder === 'inbox') {
         msgs = Store.getMensagensPara(LOGGED_USER.nome).filter(m => m.remetente !== 'Sistema');
     } else if (currentInboxFolder === 'important') {
-        // Filtra mensagens marcadas como favoritas (campo opcional favorito: true)
+        // Filtra mensagens favoritas que não foram excluídas pelo usuário
         msgs = Store.getData().mensagens.filter(m =>
-            m.favorito && (m.destinatario === LOGGED_USER.nome || m.remetente === LOGGED_USER.nome)
+            m.favorito &&
+            (m.destinatario === LOGGED_USER.nome || m.remetente === LOGGED_USER.nome) &&
+            !(m.excluidoPor || []).includes(LOGGED_USER.nome)
         ).sort((a, b) => new Date(b.data) - new Date(a.data));
     } else if (currentInboxFolder === 'sent') {
         msgs = Store.getMensagensEnviadas(LOGGED_USER.nome);
@@ -2597,12 +2599,12 @@ function renderMensagens() {
         ).sort((a, b) => new Date(b.data) - new Date(a.data));
     }
 
-    // Filtro de Busca
+    // Filtro de Busca (protege contra campos undefined)
     if (currentMsgSearch) {
         msgs = msgs.filter(m =>
-            m.assunto.toLowerCase().includes(currentMsgSearch) ||
-            m.texto.toLowerCase().includes(currentMsgSearch) ||
-            m.remetente.toLowerCase().includes(currentMsgSearch)
+            (m.assunto || '').toLowerCase().includes(currentMsgSearch) ||
+            (m.texto || '').toLowerCase().includes(currentMsgSearch) ||
+            (m.remetente || '').toLowerCase().includes(currentMsgSearch)
         );
     }
 
@@ -2622,6 +2624,7 @@ function renderMensagens() {
     msgs.forEach(m => {
         const div = document.createElement('div');
         div.className = `msg-item-refined fade-in ${m.id === currentLoadedMessageId ? 'active' : ''}`;
+        div.setAttribute('data-msg-id', m.id);
         if (!m.lida && m.destinatario === LOGGED_USER.nome) {
             div.classList.add('unread');
         }
@@ -2688,13 +2691,12 @@ function loadMessageIntoReader(id) {
         updateMensagensBadges();
     }
 
-    // UI Feedback na lista
-    document.querySelectorAll('.msg-item-refined').forEach(el => el.classList.remove('active'));
-    // Tentar localizar o item na lista DOM
-    const listItems = document.querySelectorAll('.msg-item-refined');
-    listItems.forEach(item => {
-        if (item.querySelector('.msg-subject-line').textContent === (msg.assunto || 'Sem Assunto')) {
-            item.classList.add('active');
+    // UI Feedback na lista - selecionar item ativo por ID
+    document.querySelectorAll('.msg-item-refined').forEach(el => {
+        el.classList.remove('active');
+        if (el.getAttribute('data-msg-id') == id) {
+            el.classList.add('active');
+            el.classList.remove('unread');
         }
     });
 
@@ -2775,11 +2777,9 @@ function openNovaMensagemModal(prefillDest = null, prefillSubj = "") {
 
     document.getElementById('nova-mensagem-form').reset();
 
-    // Inject custom invisible Subject field logic temporarily or if HTML adds it
+    // Preencher destino e assunto se for resposta
     if (prefillDest) select.value = prefillDest;
 
-    // Notice: there's no subject input in original HTML, so we just pre-fill texto if doing a reply
-    let textArea = document.getElementById('msg-texto');
     let subjectInput = document.getElementById('msg-assunto');
 
     if (prefillSubj) {
