@@ -648,27 +648,21 @@ function applyBranding() {
     const theme = config.theme || "glass";
 
     // 1. Aplicar Cores (CSS Variables)
-    document.documentElement.style.setProperty('--primary', accentColor);
-    document.documentElement.style.setProperty('--primary-light', accentColor + 'ee');
-    document.documentElement.style.setProperty('--accent', accentColor);
+    const root = document.documentElement;
+    root.style.setProperty('--primary', accentColor);
+    root.style.setProperty('--primary-light', accentColor + 'ee');
+    root.style.setProperty('--accent', accentColor);
+    root.style.setProperty('--accent-glow', accentColor + '40'); // 25% opacity
 
-    // 2. Aplicar Tema
-    document.body.className = `theme-${theme}`;
-    if (theme === 'light') {
-        document.documentElement.style.setProperty('--bg-main', '#f8fafc');
-        document.documentElement.style.setProperty('--bg-side', '#ffffff');
-        document.documentElement.style.setProperty('--text-main', '#1e293b');
-    } else {
-        document.documentElement.style.setProperty('--bg-main', '#0f172a');
-        document.documentElement.style.setProperty('--bg-side', '#1e293b');
-        document.documentElement.style.setProperty('--text-main', '#ffffff');
-    }
+    // 2. Aplicar Classe de Tema ao BODY
+    // Remove todas as classes de tema anteriores
+    document.body.classList.remove('theme-glass', 'theme-dark', 'theme-light');
+    document.body.classList.add(`theme-${theme}`);
 
     // 3. Atualizar Sidebar Logo e Slogan
     const sidebarLogo = document.querySelector('.sidebar .logo span');
     if (sidebarLogo) sidebarLogo.textContent = brandName;
 
-    // Adicionar slogan se existir (pode ser usado no dashboard ou sidebar)
     const sidebarSlogan = document.querySelector('.sidebar .logo p');
     if (sidebarSlogan) {
         sidebarSlogan.textContent = slogan;
@@ -687,7 +681,7 @@ function applyBranding() {
         }
     }
 
-    // 5. Sincronizar campos do formulário
+    // 5. Sincronizar campos do formulário de personalização
     const inputName = document.getElementById('brand-name');
     const inputColor = document.getElementById('brand-accent-color');
     const inputSlogan = document.getElementById('brand-slogan');
