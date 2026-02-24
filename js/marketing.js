@@ -49,22 +49,69 @@ const Marketing = {
         if (btnToday) btnToday.onclick = () => { this.currentDate = new Date(); this.renderCalendar(); };
 
         const btnAddEquipe = document.getElementById('btn-mk-add-equipe');
-        if (btnAddEquipe) btnAddEquipe.onclick = () => this.openAddEquipeModal();
+        if (btnAddEquipe) btnAddEquipe.onclick = () => this.openEquipeModal();
     },
 
-    openAddEquipeModal() {
-        const funcId = prompt("Digite o ID do Funcionário para adicionar à Equipe de Marketing:");
-        if (!funcId) return;
-        const funcao = prompt("Qual a função? (Ex: Social Media, Designer, Copywriter)");
-        if (!funcao) return;
+    openEquipeModal() {
+        const modal = document.getElementById('modal-marketing-equipe');
+        const form = document.getElementById('form-marketing-equipe');
+        if (form) form.reset();
 
-        Store.addMarketingEquipeMember({
-            funcionario_id: parseInt(funcId),
-            funcao: funcao,
-            permissoes: ['marketing']
-        }).then(res => {
-            if (res) this.renderEquipe();
-        });
+        // Popular select de funcionários no modal
+        const select = document.getElementById('mk-equipe-funcionario');
+        if (select) {
+            select.innerHTML = '<option value="">Selecione um funcionário...</option>';
+            const funcs = Store.getData().funcionarios || [];
+            funcs.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.innerText = f.nome;
+                select.appendChild(opt);
+            });
+        }
+
+        modal.classList.add('active');
+    },
+
+    closeEquipeModal() {
+        document.getElementById('modal-marketing-equipe').classList.remove('active');
+    },
+
+    async saveEquipeMember() {
+        const funcId = document.getElementById('mk-equipe-funcionario').value;
+        const funcao = document.getElementById('mk-equipe-funcao').value;
+
+        if (!funcId) {
+            alert("Por favor, selecione um funcionário.");
+            return;
+        }
+
+        const btn = document.querySelector('#modal-marketing-equipe .btn-primary');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...';
+        btn.disabled = true;
+
+        try {
+            const res = await Store.addMarketingEquipeMember({
+                funcionario_id: parseInt(funcId),
+                funcao: funcao,
+                permissoes: ['marketing']
+            });
+
+            if (res) {
+                if (window.confetti) window.confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                this.closeEquipeModal();
+                this.renderEquipe();
+            } else {
+                alert("Erro ao adicionar membro à equipe.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     },
 
     switchTab(tabId) {
@@ -209,13 +256,13 @@ const Marketing = {
             </div>
             <h4 style="font-size: 0.85rem; margin: 0.3rem 0; font-weight:600; line-height:1.2;">${post.titulo}</h4>
             <p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.3; margin-top:0.5rem;">
-                <i class="fa-solid fa-rectangle-ad"></i> ${post.tipo || 'Post'}
+                <i class="fa-solid fa-clapperboard"></i> ${post.tipo || 'Post'}
             </p>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top:0.5rem;">
-                <span style="font-size: 0.65rem; opacity: 0.6;"><i class="fa-regular fa-calendar"></i> ${post.data_prevista ? post.data_prevista.split('-').reverse().join('/') : 'S/D'}</span>
+                <span style="font-size: 0.65rem; opacity: 0.6;"><i class="fa-solid fa-calendar-day"></i> ${post.data_prevista ? post.data_prevista.split('-').reverse().join('/') : 'S/D'}</span>
                 <div class="kanban-card-actions">
-                    <button class="action-btn-mini" onclick="Marketing.editPost(${post.id})"><i class="fa-solid fa-pen"></i></button>
-                    <button class="action-btn-mini" onclick="Marketing.showPostDetails(${post.id})"><i class="fa-solid fa-eye"></i></button>
+                    <button class="action-btn-mini" onclick="Marketing.editPost(${post.id})" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button class="action-btn-mini" onclick="Marketing.showPostDetails(${post.id})" title="Ver Detalhes"><i class="fa-solid fa-circle-info"></i></button>
                 </div>
             </div>
         `;
@@ -289,7 +336,7 @@ const Marketing = {
                 const item = document.createElement('div');
                 item.className = 'calendar-event';
                 item.style.borderLeft = `3px solid ${this.getBadgeColor(p.plataforma)}`;
-                item.innerText = p.titulo;
+                item.innerHTML = `<i class="fa-solid fa-circle" style="font-size:0.4rem; margin-right:4px;"></i> ${p.titulo}`;
                 item.onclick = () => this.editPost(p.id);
                 dayEl.appendChild(item);
             });
@@ -400,12 +447,32 @@ const Marketing = {
             prioridade: document.querySelector('input[name="mk-prioridade"]:checked').value
         };
 
-        if (id) postData.id = parseInt(id);
+        if (!postData.titulo) {
+            alert("O título do post é obrigatório.");
+            return;
+        }
 
-        const saved = await Store.saveMarketingPost(postData);
-        if (saved) {
-            this.closePostModal();
-            this.renderCurrentTab();
+        const btn = document.querySelector('#modal-marketing-post .btn-primary');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...';
+        btn.disabled = true;
+
+        try {
+            if (id) postData.id = parseInt(id);
+            const saved = await Store.saveMarketingPost(postData);
+            if (saved) {
+                if (window.confetti) window.confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                this.closePostModal();
+                this.renderCurrentTab();
+            } else {
+                alert("Erro ao salvar o conteúdo. Verifique o servidor.");
+            }
+        } catch (e) {
+            console.error("Erro no salvamento do post:", e);
+            alert("Erro crítico ao salvar.");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     },
 
@@ -427,13 +494,35 @@ const Marketing = {
             periodo_inicio: document.getElementById('mk-camp-inicio').value,
             periodo_fim: document.getElementById('mk-camp-fim').value,
             orcamento: parseFloat(document.getElementById('mk-camp-orcamento').value) || 0,
-            plataforma: 'Meta Ads' // Default simplificado
+            plataforma: 'Meta Ads',
+            status: 'Planejamento'
         };
 
-        const saved = await Store.saveMarketingCampanha(campData);
-        if (saved) {
-            this.closeCampanhaModal();
-            this.renderCampanhas();
+        if (!campData.nome) {
+            alert("O nome da campanha é obrigatório.");
+            return;
+        }
+
+        const btn = document.querySelector('#modal-marketing-campanha .btn-primary');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...';
+        btn.disabled = true;
+
+        try {
+            const saved = await Store.saveMarketingCampanha(campData);
+            if (saved) {
+                if (window.confetti) window.confetti({ particleCount: 100, spread: 50, origin: { y: 0.6 } });
+                this.closeCampanhaModal();
+                this.renderCampanhas();
+            } else {
+                alert("Erro ao salvar campanha.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     },
 

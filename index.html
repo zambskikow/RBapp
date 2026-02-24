@@ -148,7 +148,7 @@
                         <i class="fa-solid fa-chart-line"></i> Dashboard
                     </button>
                     <button type="button" class="modal-tab-btn" data-marketing-tab="mk-tab-kanban">
-                        <i class="fa-solid fa-columns-pixel"></i> Kanban de Conteúdo
+                        <i class="fa-solid fa-table-columns"></i> Kanban de Conteúdo
                     </button>
                     <button type="button" class="modal-tab-btn" data-marketing-tab="mk-tab-calendario">
                         <i class="fa-solid fa-calendar-days"></i> Calendário Editorial
@@ -2261,6 +2261,42 @@
             <footer class="modal-footer">
                 <button class="btn btn-secondary" onclick="Marketing.closeCampanhaModal()">Cancelar</button>
                 <button class="btn btn-primary" onclick="Marketing.saveCampanha()">Salvar Campanha</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal: Adicionar Membro Equipe Marketing -->
+    <div id="modal-marketing-equipe" class="modal-overlay">
+        <div class="glass-card modal-content" style="max-width: 450px;">
+            <header class="modal-header">
+                <h2><i class="fa-solid fa-user-plus"></i> Adicionar à Equipe</h2>
+                <button class="close-modal" onclick="Marketing.closeEquipeModal()">&times;</button>
+            </header>
+            <div class="modal-body">
+                <form id="form-marketing-equipe">
+                    <div class="form-group">
+                        <label>Funcionário</label>
+                        <select id="mk-equipe-funcionario" class="glass-select" style="width:100%;" required>
+                            <option value="">Selecione um funcionário...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top:1.5rem;">
+                        <label>Função no Marketing</label>
+                        <select id="mk-equipe-funcao" class="glass-select" style="width:100%;" required>
+                            <option value="Social Media">Social Media</option>
+                            <option value="Designer">Designer</option>
+                            <option value="Copywriter">Copywriter</option>
+                            <option value="Gestor de Tráfego">Gestor de Tráfego</option>
+                            <option value="Editor de Vídeo">Editor de Vídeo</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" onclick="Marketing.closeEquipeModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="Marketing.saveEquipeMember()">
+                    <i class="fa-solid fa-save"></i> Adicionar Membro
+                </button>
             </footer>
         </div>
     </div>
