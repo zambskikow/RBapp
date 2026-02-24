@@ -74,7 +74,6 @@
                 </button>
             </div>
             <nav class="nav-menu">
-                <div class="nav-category">Visão Geral</div>
                 <a href="#" class="nav-item active" data-view="dashboard">
                     <i class="fa-solid fa-gauge"></i>
                     <span>Manager Dashboard</span>
@@ -84,7 +83,6 @@
                     <span>Meu Desempenho</span>
                 </a>
 
-                <div class="nav-category">Gestão Rotineira</div>
                 <a href="#" class="nav-item" data-view="operacional">
                     <i class="fa-solid fa-list-check"></i>
                     <span>Painel Operacional</span>
@@ -98,7 +96,6 @@
                     <span>Gestão de Rotinas</span>
                 </a>
 
-                <div class="nav-category">Comunicação e Marketing</div>
                 <a href="#" class="nav-item" data-view="mensagens">
                     <i class="fa-solid fa-envelope"></i>
                     <span>Mensagens</span>
@@ -108,7 +105,6 @@
                     <span>Comunicação</span>
                 </a>
 
-                <div class="nav-category" id="admin-category-header" style="display: none;">Sistema e Lançamentos</div>
                 <a href="#" class="nav-item" data-view="competencias" id="nav-competencias" style="display: none;">
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>Gestão de Competências</span>
@@ -1523,45 +1519,52 @@
                 </div>
             </div>
 
-            <!-- Global Settings Hub View -->
             <div id="view-settings" class="view-section" style="display: none;">
                 <header class="section-header">
                     <div>
-                        <h1><i class="fa-solid fa-gear highlight-text"></i> Painel de Controle Administrativo</h1>
-                        <p class="subtitle">Centro de Comando do Sistema. Acesse as opções pelo menu lateral abaixo.
-                        </p>
+                        <h1><i class="fa-solid fa-gear highlight-text"></i> Painel de Controle</h1>
+                        <p class="subtitle">Gerencie as configurações e acessos do sistema</p>
                     </div>
                 </header>
 
-                <div class="settings-layout" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <!-- Settings Top Menu (Tabs) -->
-                    <div class="glass-panel settings-tabs-header" style="padding: 0.75rem; width: 100%;">
-                        <nav class="settings-menu">
+                <div class="settings-layout-modern">
+                    <!-- Internal Settings Sidebar -->
+                    <aside class="settings-sidebar-mini">
+                        <nav class="settings-nav-list">
+                            <div class="settings-nav-group">Sistema</div>
                             <button class="settings-tab-btn active" data-target="set-rbac">
-                                <i class="fa-solid fa-shield-halved"></i> Segurança e Acessos
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>Segurança e Acessos</span>
                             </button>
                             <button class="settings-tab-btn" data-target="set-equipe">
-                                <i class="fa-solid fa-users"></i> Contas e Equipe
+                                <i class="fa-solid fa-users"></i>
+                                <span>Contas e Equipe</span>
                             </button>
                             <button class="settings-tab-btn" data-target="set-backup">
-                                <i class="fa-solid fa-cloud-arrow-down"></i> Backups de Sistema
+                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                                <span>Backups</span>
                             </button>
-                            <div class="nav-divider-v"></div>
+
+                            <div class="settings-nav-group">Auditoria</div>
                             <button class="settings-tab-btn" data-target="set-auditoria">
-                                <i class="fa-solid fa-clipboard-list"></i> Logs de Atividade
+                                <i class="fa-solid fa-clipboard-list"></i>
+                                <span>Logs de Atividade</span>
                             </button>
                             <button class="settings-tab-btn" data-target="set-auditoria-comp">
-                                <i class="fa-solid fa-magnifying-glass-chart"></i> Auditoria de Competência
+                                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                                <span>Auditoria Entregas</span>
                             </button>
-                            <div class="nav-divider-v"></div>
+
+                            <div class="settings-nav-group">Personalização</div>
                             <button class="settings-tab-btn" data-target="set-branding">
-                                <i class="fa-solid fa-pen-to-square"></i> Personalização
+                                <i class="fa-solid fa-palette"></i>
+                                <span>Layout e Ordem</span>
                             </button>
                         </nav>
-                    </div>
+                    </aside>
 
-                    <!-- Settings Content Panes -->
-                    <div class="settings-content">
+                    <!-- Settings Right Content Area -->
+                    <div class="settings-content-area">
 
                         <!-- TAB: Segurança / Cargos / RBAC -->
                         <div class="settings-pane active fade-in" id="set-rbac">

@@ -401,27 +401,6 @@ body {
     color: #fff;
 }
 
-/* Categorias do Menu Lateral (Sanfona/Grupo) */
-.nav-category {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    letter-spacing: 1px;
-    font-weight: 700;
-    margin: 1.2rem 0 0.4rem 0.8rem;
-    opacity: 0.7;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-.sidebar.collapsed .nav-category {
-    opacity: 0;
-    height: 0;
-    margin: 0;
-    padding: 0;
-}
-
 .user-profile {
     display: flex;
     align-items: center;
@@ -3516,109 +3495,138 @@ body {
 }
 
 .reorder-item.dragging {
-    opacity: 0.5;
-    background: var(--primary-light);
+    opacity: 0.4;
+    border: 2px dashed var(--primary-light);
+    background: rgba(99, 102, 241, 0.1);
     cursor: grabbing;
+    transform: scale(1.02);
 }
 
-.reorder-item i {
-    color: var(--text-muted);
-    font-size: 1rem;
+.drag-placeholder {
+    height: 48px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5rem;
 }
 
 .reorder-item .drag-handle {
     margin-left: auto;
-    opacity: 0.5;
+    opacity: 0.4;
+    cursor: grab;
+    padding: 5px;
 }
 
-/* Global Settings Hub - Horizontal Tabs */
-.settings-tabs-header {
-    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
-    margin-bottom: 1rem;
-}
-
-.settings-menu {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    /* Garante uma única linha */
-    gap: 0.5rem;
-    padding: 0.5rem;
-    overflow-x: auto;
-    /* Scroll horizontal se necessário */
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* IE/Edge */
-}
-
-.settings-menu::-webkit-scrollbar {
-    display: none;
-    /* Chrome/Safari */
-}
-
-.settings-tab-btn {
-    text-align: center;
-    padding: 0.75rem 1.25rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    white-space: nowrap;
-}
-
-.settings-tab-btn i {
-    font-size: 1.1rem;
-    opacity: 0.7;
-}
-
-.settings-tab-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
-}
-
-.settings-tab-btn.active {
-    background: rgba(99, 102, 241, 0.15);
-    color: var(--primary-light);
-    border-color: rgba(99, 102, 241, 0.3);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.settings-tab-btn.active i {
+.reorder-item .drag-handle:hover {
     opacity: 1;
     color: var(--primary-light);
 }
 
-.nav-divider-v {
-    width: 1px;
-    height: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 0 0.5rem;
-    align-self: center;
+/* =====================================================================
+   PAINEL DE CONTROLE (SETTINGS) - NOVO LAYOUT SIDEBAR INTERNO
+   ===================================================================== */
+.settings-layout-modern {
+    display: flex;
+    gap: 2rem;
+    min-height: 600px;
 }
 
-@media (max-width: 768px) {
-    .settings-menu {
+.settings-sidebar-mini {
+    width: 280px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 1rem;
+    border: 1px solid var(--border-glass);
+}
+
+.settings-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.settings-nav-group {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    font-weight: 700;
+    margin: 1.5rem 0 0.5rem 0.5rem;
+}
+
+.settings-nav-group:first-child {
+    margin-top: 0;
+}
+
+.settings-tab-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.8rem 1rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.settings-tab-btn i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.settings-tab-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-main);
+}
+
+.settings-tab-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+}
+
+.settings-tab-btn.active i {
+    color: #fff;
+}
+
+.settings-content-area {
+    flex: 1;
+    min-width: 0;
+    /* Prevents overflow */
+}
+
+@media (max-width: 1024px) {
+    .settings-layout-modern {
         flex-direction: column;
+    }
+
+    .settings-sidebar-mini {
         width: 100%;
+        padding: 1rem;
+    }
+
+    .settings-nav-list {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+    .settings-nav-group {
+        display: none;
     }
 
     .settings-tab-btn {
-        width: 100%;
-        text-align: left;
-    }
-
-    .nav-divider-v {
-        width: 100%;
-        height: 1px;
-        margin: 0.25rem 0;
+        width: auto;
+        white-space: nowrap;
     }
 }
 

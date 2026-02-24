@@ -2771,11 +2771,16 @@ function renderMenuReorderList() {
 
     listContainer.addEventListener('dragover', e => {
         e.preventDefault();
-        const draggingItem = document.querySelector('.dragging');
+        const draggingItem = document.querySelector('.reorder-item.dragging');
+        if (!draggingItem) return;
+
         const siblings = [...listContainer.querySelectorAll('.reorder-item:not(.dragging)')];
 
-        const nextSibling = siblings.find(sibling => {
-            return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+        // Encontrar o elemento sobre o qual o mouse está passando
+        let nextSibling = siblings.find(sibling => {
+            const box = sibling.getBoundingClientRect();
+            const offset = e.clientY - box.top - box.height / 2;
+            return offset < 0;
         });
 
         listContainer.insertBefore(draggingItem, nextSibling);
@@ -4713,9 +4718,6 @@ function initSettingsTabs() {
 
             // Set active class to clicked tab
             tab.classList.add("active");
-
-            // Scroll suave para a aba selecionada (útil em mobile e telas pequenas)
-            tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
             const targetId = tab.getAttribute("data-target");
             const targetPane = document.getElementById(targetId);
