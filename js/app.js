@@ -3033,22 +3033,28 @@ function closeModal() {
 // MODAL: Nova Demanda Eventual
 // ==========================================
 function openDemandaEventualModal() {
-    const modal = document.getElementById('modal-demanda-eventual');
+    // Verificar se existem rotinas eventuais cadastradas ANTES de abrir o modal
+    const todasRotinas = Store.getData().rotinasBase;
+    const rotinas = todasRotinas.filter(r => (r.frequencia || '').toLowerCase() === 'eventual');
 
-    // Listar apenas rotinas com frequência Eventual
-    const rotinas = Store.getData().rotinasBase.filter(r => r.frequencia === 'Eventual');
+    if (rotinas.length === 0) {
+        alert('Não há rotinas eventuais cadastradas. Cadastre uma rotina com frequência "Eventual" primeiro.');
+        return;
+    }
+
     const clientes = Store.getData().clientes.filter(c => c.ativo !== false);
 
+    // Popular select de rotinas eventuais
     const rotinasSel = document.getElementById('evt-rotina-select');
-    const clientesSel = document.getElementById('evt-cliente-select');
-
     rotinasSel.innerHTML = '<option value="">— Selecione a Rotina —</option>';
     rotinas.forEach(r => {
         rotinasSel.innerHTML += `<option value="${r.id}">${r.nome} (${r.diaPrazoPadrao} d.c.)</option>`;
     });
 
+    // Popular select de clientes (ordem alfabética)
+    const clientesSel = document.getElementById('evt-cliente-select');
     clientesSel.innerHTML = '<option value="">— Selecione o Cliente —</option>';
-    clientes.sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '', 'pt-BR'))
+    [...clientes].sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '', 'pt-BR'))
         .forEach(c => {
             clientesSel.innerHTML += `<option value="${c.id}">${c.razaoSocial}</option>`;
         });
@@ -3056,12 +3062,9 @@ function openDemandaEventualModal() {
     // Resetar preview de prazo
     document.getElementById('evt-prazo-preview').style.display = 'none';
 
-    if (rotinas.length === 0) {
-        alert('Não há rotinas eventuais cadastradas. Cadastre uma rotina com frequência "Eventual" primeiro.');
-        return;
-    }
-
-    modal.style.display = 'flex';
+    // Abrir modal
+    const modal = document.getElementById('modal-demanda-eventual');
+    modal.style.cssText = 'display:flex !important; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;';
 }
 
 function onEventualRotinaChange() {
@@ -3087,7 +3090,8 @@ function onEventualRotinaChange() {
 }
 
 function closeDemandaEventualModal() {
-    document.getElementById('modal-demanda-eventual').style.display = 'none';
+    const modal = document.getElementById('modal-demanda-eventual');
+    modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;';
 }
 
 async function handleSaveDemandaEventual() {
