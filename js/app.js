@@ -4714,6 +4714,9 @@ function initSettingsTabs() {
             // Set active class to clicked tab
             tab.classList.add("active");
 
+            // Scroll suave para a aba selecionada (útil em mobile e telas pequenas)
+            tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
             const targetId = tab.getAttribute("data-target");
             const targetPane = document.getElementById(targetId);
             if (targetPane) {
