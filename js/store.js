@@ -28,7 +28,8 @@ let db = {
         brandLogoUrl: "",
         accentColor: "#6366f1",
         slogan: "Sua contabilidade inteligente",
-        theme: "glass"
+        theme: "glass",
+        menuOrder: []
     },
     cargos: [],
     marketing_posts: [],
@@ -120,11 +121,18 @@ window.Store = {
                     db.config.accentColor = c.accent_color || db.config.accentColor;
                     db.config.slogan = c.slogan || db.config.slogan;
                     db.config.theme = c.theme || db.config.theme;
-                    let mOrder = c.menu_order || db.config.menuOrder;
-                    if (typeof mOrder === 'string') {
-                        try { mOrder = JSON.parse(mOrder); } catch (e) { console.error("Erro parse menuOrder", e); }
+                    let mOrder = c.menu_order || c.menuOrder || db.config.menuOrder;
+                    if (typeof mOrder === 'string' && mOrder.trim() !== "") {
+                        try {
+                            mOrder = JSON.parse(mOrder);
+                        } catch (e) {
+                            console.error("Erro ao parsear menuOrder do BD:", e);
+                            // Tentar lidar com strings separadas por vírgula se o JSON falhar
+                            if (mOrder.includes(',')) mOrder = mOrder.split(',').map(s => s.trim());
+                        }
                     }
                     db.config.menuOrder = Array.isArray(mOrder) ? mOrder : [];
+                    db.config.menu_order = db.config.menuOrder; // Garantir sincronia local
                 }
             } catch (e) { }
 
@@ -1777,11 +1785,18 @@ window.Store = {
                     accent_color: newConfig.accentColor || db.config.accentColor,
                     slogan: newConfig.slogan || db.config.slogan,
                     theme: newConfig.theme || db.config.theme,
-                    menu_order: newConfig.menu_order || newConfig.menuOrder
+                    menu_order: newConfig.menu_order || newConfig.menuOrder || db.config.menuOrder
                 })
             });
             if (res.ok) {
-                db.config = { ...db.config, ...newConfig };
+                // Atualizar cache local garantindo que as duas variantes existam
+                const updatedOrder = newConfig.menu_order || newConfig.menuOrder || db.config.menuOrder;
+                db.config = {
+                    ...db.config,
+                    ...newConfig,
+                    menuOrder: updatedOrder,
+                    menu_order: updatedOrder
+                };
                 this.registerLog("Sistema", `Configurações globais atualizadas.`);
                 return true;
             }
