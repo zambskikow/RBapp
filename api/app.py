@@ -180,6 +180,75 @@ class ExecucaoCreate(BaseModel):
     eh_pai: bool = True
     subitems: list = []
 
+class MarketingPostCreate(BaseModel):
+    titulo: str
+    cliente_id: int | None = None
+    plataforma: str
+    tipo: str
+    status: str = "Ideia"
+    data_prevista: str | None = None
+    responsavel_id: int | None = None
+    copy: str | None = None
+    arquivos: list[str] = []
+    checklist: list = []
+    prioridade: str = "Normal"
+
+class MarketingPostUpdate(BaseModel):
+    titulo: str | None = None
+    status: str | None = None
+    data_prevista: str | None = None
+    responsavel_id: int | None = None
+    copy: str | None = None
+    arquivos: list[str] | None = None
+    checklist: list | None = None
+    comentarios: list | None = None
+    historico: list | None = None
+    prioridade: str | None = None
+
+class MarketingCampanhaCreate(BaseModel):
+    nome: str
+    objetivo: str
+    plataforma: str
+    orcamento: float | None = 0
+    periodo_inicio: str | None = None
+    periodo_fim: str | None = None
+    kpi_principal: str | None = None
+    status: str = "Planejamento"
+    metricas: dict = {}
+
+class MarketingCampanhaUpdate(BaseModel):
+    nome: str | None = None
+    objetivo: str | None = None
+    plataforma: str | None = None
+    orcamento: float | None = None
+    periodo_inicio: str | None = None
+    periodo_fim: str | None = None
+    status: str | None = None
+    metricas: dict | None = None
+
+class MarketingEquipeCreate(BaseModel):
+    funcionario_id: int
+    funcao: str
+    permissoes: list = []
+
+class MarketingEquipeUpdate(BaseModel):
+    funcao: str | None = None
+    permissoes: list | None = None
+
+class MarketingMetricaCreate(BaseModel):
+    plataforma: str
+    seguidores: int | None = None
+    engajamento: float | None = None
+    leads_whatsapp: int | None = None
+    posts_publicados: int | None = None
+
+class GlobalConfigUpdate(BaseModel):
+    brand_name: str | None = None
+    brand_logo_url: str | None = None
+    accent_color: str | None = None
+    slogan: str | None = None
+    theme: str | None = None
+
 # --- API Endpoints ---
 
 @app.get("/api/status")
@@ -374,6 +443,91 @@ def update_cargo(cargo_id: int, updates: CargoUpdate):
 @app.delete("/api/cargos/{cargo_id}")
 def delete_cargo(cargo_id: int):
     response = supabase.table("cargos_permissoes").delete().eq("id", cargo_id).execute()
+    return response.data
+
+# --- Marketing Posts ---
+@app.get("/api/marketing_posts")
+def get_marketing_posts():
+    response = supabase.table("marketing_posts").select("*").execute()
+    return response.data
+
+@app.post("/api/marketing_posts")
+def create_marketing_post(post: MarketingPostCreate):
+    response = supabase.table("marketing_posts").insert(post.model_dump()).execute()
+    return response.data
+
+@app.put("/api/marketing_posts/{post_id}")
+def update_marketing_post(post_id: int, updates: MarketingPostUpdate):
+    response = supabase.table("marketing_posts").update(updates.model_dump(exclude_unset=True)).eq("id", post_id).execute()
+    return response.data
+
+@app.delete("/api/marketing_posts/{post_id}")
+def delete_marketing_post(post_id: int):
+    response = supabase.table("marketing_posts").delete().eq("id", post_id).execute()
+    return response.data
+
+# --- Marketing Campanhas ---
+@app.get("/api/marketing_campanhas")
+def get_marketing_campanhas():
+    response = supabase.table("marketing_campanhas").select("*").execute()
+    return response.data
+
+@app.post("/api/marketing_campanhas")
+def create_marketing_campanha(campanha: MarketingCampanhaCreate):
+    response = supabase.table("marketing_campanhas").insert(campanha.model_dump()).execute()
+    return response.data
+
+@app.put("/api/marketing_campanhas/{campanha_id}")
+def update_marketing_campanha(campanha_id: int, updates: MarketingCampanhaUpdate):
+    response = supabase.table("marketing_campanhas").update(updates.model_dump(exclude_unset=True)).eq("id", campanha_id).execute()
+    return response.data
+
+@app.delete("/api/marketing_campanhas/{campanha_id}")
+def delete_marketing_campanha(campanha_id: int):
+    response = supabase.table("marketing_campanhas").delete().eq("id", campanha_id).execute()
+    return response.data
+
+# --- Marketing Equipe ---
+@app.get("/api/marketing_equipe")
+def get_marketing_equipe():
+    response = supabase.table("marketing_equipe").select("*").execute()
+    return response.data
+
+@app.post("/api/marketing_equipe")
+def create_marketing_equipe(equipe: MarketingEquipeCreate):
+    response = supabase.table("marketing_equipe").insert(equipe.model_dump()).execute()
+    return response.data
+
+@app.put("/api/marketing_equipe/{id}")
+def update_marketing_equipe(id: int, updates: MarketingEquipeUpdate):
+    response = supabase.table("marketing_equipe").update(updates.model_dump(exclude_unset=True)).eq("id", id).execute()
+    return response.data
+
+@app.delete("/api/marketing_equipe/{id}")
+def delete_marketing_equipe(id: int):
+    response = supabase.table("marketing_equipe").delete().eq("id", id).execute()
+    return response.data
+
+# --- Marketing Metricas ---
+@app.get("/api/marketing_metricas")
+def get_marketing_metricas():
+    response = supabase.table("marketing_metricas").select("*").order("data_referencia", desc=True).limit(100).execute()
+    return response.data
+
+@app.post("/api/marketing_metricas")
+def create_marketing_metrica(metrica: MarketingMetricaCreate):
+    response = supabase.table("marketing_metricas").insert(metrica.model_dump()).execute()
+    return response.data
+
+# --- Global Config ---
+@app.get("/api/global_config")
+def get_global_config():
+    response = supabase.table("global_config").select("*").execute()
+    return response.data
+
+@app.put("/api/global_config/{id}")
+def update_global_config(id: int, updates: GlobalConfigUpdate):
+    response = supabase.table("global_config").update(updates.model_dump(exclude_unset=True)).eq("id", id).execute()
     return response.data
 
 if __name__ == "__main__":

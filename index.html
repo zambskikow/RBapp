@@ -133,8 +133,8 @@
             <div id="view-marketing" class="view-section" style="display: none;">
                 <header class="section-header">
                     <div class="section-title-group">
-                        <h1><i class="fa-solid fa-bullhorn highlight-text"></i> Painel de Comunicação</h1>
-                        <p class="subtitle">Gestão de redes sociais, artes e conteúdos integrados</p>
+                        <h1><i class="fa-solid fa-bullhorn highlight-text"></i> Gestão de Marketing Profissional</h1>
+                        <p class="subtitle">Planejamento, conteúdo e métricas nível agência</p>
                     </div>
                     <div class="header-actions">
                         <button class="btn btn-primary" id="btn-new-marketing-post">
@@ -143,58 +143,217 @@
                     </div>
                 </header>
 
-                <div class="kanban-board-container" style="overflow-x: auto; padding-bottom: 2rem;">
-                    <div class="kanban-board"
-                        style="display: grid; grid-template-columns: repeat(5, 300px); gap: 1.5rem; min-width: 1575px;">
+                <nav class="modal-tabs marketing-tabs" style="margin-bottom: 2rem;">
+                    <button type="button" class="modal-tab-btn active" data-marketing-tab="mk-tab-dashboard">
+                        <i class="fa-solid fa-chart-line"></i> Dashboard
+                    </button>
+                    <button type="button" class="modal-tab-btn" data-marketing-tab="mk-tab-kanban">
+                        <i class="fa-solid fa-columns-pixel"></i> Kanban de Conteúdo
+                    </button>
+                    <button type="button" class="modal-tab-btn" data-marketing-tab="mk-tab-calendario">
+                        <i class="fa-solid fa-calendar-days"></i> Calendário Editorial
+                    </button>
+                    <button type="button" class="modal-tab-btn" data-marketing-tab="mk-tab-campanhas">
+                        <i class="fa-solid fa-rocket"></i> Gestão de Campanhas
+                    </button>
+                    <button type="button" class="modal-tab-btn" data-marketing-tab="mk-tab-equipe">
+                        <i class="fa-solid fa-users-gear"></i> Equipe e Permissões
+                    </button>
+                </nav>
 
-                        <!-- Coluna 1: Ideias / Backlog -->
-                        <div class="kanban-column" id="mk-col-ideia">
-                            <div class="kanban-col-header">
-                                <h3><i class="fa-solid fa-lightbulb" style="color: var(--warning);"></i> Ideias</h3>
-                                <span class="count-badge">0</span>
+                <!-- 1. DASHBOARD MARKETING -->
+                <div id="mk-tab-dashboard" class="marketing-tab-content active">
+                    <div class="kpi-dashboard-grid"
+                        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                        <div class="glass-card kpi-chip" style="background: rgba(99, 102, 241, 0.05);">
+                            <div class="kpi-chip-icon"><i class="fa-solid fa-paper-plane"></i></div>
+                            <div class="kpi-chip-info">
+                                <span class="kpi-chip-label">Publicados (Mês)</span>
+                                <span class="kpi-chip-value" id="mk-kpi-publicados">0</span>
                             </div>
-                            <div class="kanban-cards-area" data-status="Ideia"></div>
                         </div>
-
-                        <!-- Coluna 2: Redação / Legendas -->
-                        <div class="kanban-column" id="mk-col-texto">
-                            <div class="kanban-col-header">
-                                <h3><i class="fa-solid fa-pen-nib" style="color: var(--primary-light);"></i> Texto e
-                                    Legenda</h3>
-                                <span class="count-badge">0</span>
+                        <div class="glass-card kpi-chip" style="background: rgba(245, 158, 11, 0.05);">
+                            <div class="kpi-chip-icon" style="color: var(--warning);"><i class="fa-solid fa-clock"></i>
                             </div>
-                            <div class="kanban-cards-area" data-status="Texto"></div>
-                        </div>
-
-                        <!-- Coluna 3: Design / Artes -->
-                        <div class="kanban-column" id="mk-col-design">
-                            <div class="kanban-col-header">
-                                <h3><i class="fa-solid fa-palette" style="color: var(--accent);"></i> Design e Artes
-                                </h3>
-                                <span class="count-badge">0</span>
+                            <div class="kpi-chip-info">
+                                <span class="kpi-chip-label">Agendados</span>
+                                <span class="kpi-chip-value" id="mk-kpi-agendados">0</span>
                             </div>
-                            <div class="kanban-cards-area" data-status="Design"></div>
                         </div>
-
-                        <!-- Coluna 4: Agendado -->
-                        <div class="kanban-column" id="mk-col-agendado">
-                            <div class="kanban-col-header">
-                                <h3><i class="fa-solid fa-clock" style="color: var(--success);"></i> Agendado</h3>
-                                <span class="count-badge">0</span>
+                        <div class="glass-card kpi-chip" style="background: rgba(16, 185, 129, 0.05);">
+                            <div class="kpi-chip-icon" style="color: var(--success);"><i class="fa-solid fa-heart"></i>
                             </div>
-                            <div class="kanban-cards-area" data-status="Agendado"></div>
-                        </div>
-
-                        <!-- Coluna 5: Publicado -->
-                        <div class="kanban-column" id="mk-col-postado">
-                            <div class="kanban-col-header">
-                                <h3><i class="fa-solid fa-check-double" style="color: var(--text-muted);"></i>
-                                    Publicado</h3>
-                                <span class="count-badge">0</span>
+                            <div class="kpi-chip-info">
+                                <span class="kpi-chip-label">Engajamento</span>
+                                <span class="kpi-chip-value" id="mk-kpi-engajamento">0%</span>
                             </div>
-                            <div class="kanban-cards-area" data-status="Publicado"></div>
                         </div>
+                        <div class="glass-card kpi-chip" style="background: rgba(59, 130, 246, 0.05);">
+                            <div class="kpi-chip-icon" style="color: #3B82F6;"><i class="fa-brands fa-whatsapp"></i>
+                            </div>
+                            <div class="kpi-chip-info">
+                                <span class="kpi-chip-label">Leads WhatsApp</span>
+                                <span class="kpi-chip-value" id="mk-kpi-leads">0</span>
+                            </div>
+                        </div>
+                    </div>
 
+                    <div class="charts-grid" style="grid-template-columns: 1fr 1fr; margin-top:2rem; gap:1.5rem;">
+                        <div class="glass-card chart-container">
+                            <h3>Crescimento de Seguidores</h3>
+                            <div class="chart-wrapper"><canvas id="mk-followers-chart"></canvas></div>
+                        </div>
+                        <div class="glass-card chart-container">
+                            <h3>Performance por Plataforma</h3>
+                            <div class="chart-wrapper"><canvas id="mk-platform-chart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. KANBAN MARKETING -->
+                <div id="mk-tab-kanban" class="marketing-tab-content" style="display:none;">
+                    <div class="operacional-controls" style="margin-bottom: 2rem;">
+                        <div class="search-wrapper">
+                            <i class="fa-solid fa-filter"></i>
+                            <select id="mk-kanban-filter-plataforma" class="glass-select"
+                                style="border:none; background:transparent;">
+                                <option value="All">Todas Plataformas</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="WhatsApp">WhatsApp</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <select id="mk-kanban-filter-responsavel" class="glass-select">
+                                <option value="All">Todos Responsáveis</option>
+                            </select>
+                            <button class="btn btn-secondary" id="btn-mk-refresh-kanban"><i
+                                    class="fa-solid fa-rotate"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="kanban-board-container" style="overflow-x: auto; padding-bottom: 2rem;">
+                        <div class="kanban-board"
+                            style="display: grid; grid-template-columns: repeat(8, 300px); gap: 1.5rem; min-width: 2500px;">
+                            <!-- Colunas do Módulo Profissional -->
+                            <div class="kanban-column" id="mk-col-ideias">
+                                <div class="kanban-col-header">
+                                    <h3>💡 Ideias</h3><span class="count-badge">0</span>
+                                </div>
+                                <div class="kanban-cards-area" data-status="Ideia"></div>
+                            </div>
+                            <div class="kanban-column" id="mk-col-planejamento">
+                                <div class="kanban-col-header">
+                                    <h3>📝 Planejamento</h3><span class="count-badge">0</span>
+                                </div>
+                                <div class="kanban-cards-area" data-status="Planejamento"></div>
+                            </div>
+                            <div class="kanban-column" id="mk-col-producao">
+                                <div class="kanban-col-header">
+                                    <h3>🎬 Em Produção</h3><span class="count-badge">0</span>
+                                </div>
+                                <div class="kanban-cards-area" data-status="Produção"></div>
+                            </div>
+                            <div class="kanban-column" id="mk-col-design">
+                                <div class="kanban-col-header">
+                                    <h3>🎨 Em Design</h3><span class="count-badge">0</span>
+                                </div>
+                                <div class="kanban-cards-area" data-status="Design"></div>
+                            </div>
+                            <div class="kanban-column" id="mk-col-revisao">
+                                <div class="kanban-col-header">
+                                    <h3>🔍 Em Revisão</h3><span class="count-badge">0</span>
+                                </div>
+                                <div class="kanban-cards-area" data-status="Revisão"></div>
+                            </div>
+                            <div class="kanban-column" id="mk-col-aprovado">
+                                <div class="kanban-col-header">
+                                    <h3>✅ Aprovado</h3><span class="count-badge">0</span>
+                                </div>
+                                <div class="kanban-cards-area" data-status="Aprovado"></div>
+                            </div>
+                            <div class="kanban-column" id="mk-col-agendado">
+                                <div class="kanban-col-header">
+                                    <h3>📅 Agendado</h3><span class="count-badge">0</span>
+                                </div>
+                                <div class="kanban-cards-area" data-status="Agendado"></div>
+                            </div>
+                            <div class="kanban-column" id="mk-col-publicado">
+                                <div class="kanban-col-header">
+                                    <h3>🚀 Publicado</h3><span class="count-badge">0</span>
+                                </div>
+                                <div class="kanban-cards-area" data-status="Publicado"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. CALENDÁRIO EDITORIAL -->
+                <div id="mk-tab-calendario" class="marketing-tab-content" style="display:none;">
+                    <div class="glass-card" style="padding: 2rem; min-height: 600px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+                            <h2 id="mk-calendar-month-year">Fevereiro 2026</h2>
+                            <div style="display:flex; gap:0.5rem;">
+                                <button class="btn btn-outline" id="btn-mk-prev-month"><i
+                                        class="fa-solid fa-chevron-left"></i></button>
+                                <button class="btn btn-outline" id="btn-mk-next-month"><i
+                                        class="fa-solid fa-chevron-right"></i></button>
+                                <button class="btn btn-primary" id="btn-mk-today">Hoje</button>
+                            </div>
+                        </div>
+                        <div id="mk-calendar-grid" class="calendar-grid">
+                            <!-- Injected by marketing.js -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. GESTÃO DE CAMPANHAS -->
+                <div id="mk-tab-campanhas" class="marketing-tab-content" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                        <h2>Campanhas Ativas</h2>
+                        <button class="btn btn-primary" id="btn-mk-new-campanha"><i class="fa-solid fa-plus"></i> Nova
+                            Campanha</button>
+                    </div>
+                    <div class="glass-card full-table-container">
+                        <table class="data-table" id="mk-campanhas-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Objetivo</th>
+                                    <th>Plataforma</th>
+                                    <th>Orçamento</th>
+                                    <th>Período</th>
+                                    <th>ROI</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 5. EQUIPE MARKETING -->
+                <div id="mk-tab-equipe" class="marketing-tab-content" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                        <h2>Gestão de Equipe de Marketing</h2>
+                        <button class="btn btn-primary" id="btn-mk-add-equipe"><i class="fa-solid fa-user-plus"></i>
+                            Adicionar Membro</button>
+                    </div>
+                    <div class="glass-card full-table-container">
+                        <table class="data-table" id="mk-equipe-table">
+                            <thead>
+                                <tr>
+                                    <th>Membro</th>
+                                    <th>Função</th>
+                                    <th>Tarefas Ativas</th>
+                                    <th>Produtividade</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1988,6 +2147,121 @@
                     <i class="fa-solid fa-check"></i> Confirmar Demanda
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal: Novo/Editar Post de Marketing -->
+    <div id="modal-marketing-post" class="modal-overlay">
+        <div class="glass-card modal-content" style="max-width: 600px;">
+            <header class="modal-header">
+                <h2><i class="fa-solid fa-file-pen"></i> Detalhes do Conteúdo</h2>
+                <button class="close-modal" onclick="Marketing.closePostModal()">&times;</button>
+            </header>
+            <div class="modal-body">
+                <form id="form-marketing-post">
+                    <input type="hidden" id="mk-post-id">
+                    <div class="form-group">
+                        <label>Título do Post / Ideia</label>
+                        <input type="text" id="mk-post-titulo" class="glass-select" style="width:100%;" required
+                            placeholder="Ex: Dicas de Imposto de Renda">
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;">
+                        <div class="form-group">
+                            <label>Plataforma</label>
+                            <select id="mk-post-plataforma" class="glass-select" style="width:100%;">
+                                <option value="Instagram">Instagram</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="WhatsApp">WhatsApp Business</option>
+                                <option value="LinkedIn">LinkedIn</option>
+                                <option value="YouTube">YouTube</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Formato</label>
+                            <select id="mk-post-tipo" class="glass-select" style="width:100%;">
+                                <option value="Post">Post Estático</option>
+                                <option value="Carrossel">Carrossel</option>
+                                <option value="Reels">Reels / Vídeo Curto</option>
+                                <option value="Story">Story</option>
+                                <option value="Vídeo">Vídeo Longo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;">
+                        <div class="form-group">
+                            <label>Data de Publicação</label>
+                            <input type="date" id="mk-post-data" class="glass-select" style="width:100%;">
+                        </div>
+                        <div class="form-group">
+                            <label>Responsável</label>
+                            <select id="mk-post-responsavel" class="glass-select" style="width:100%;">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Legenda / Copywriting</label>
+                        <textarea id="mk-post-copy" class="glass-select"
+                            style="width:100%; height:120px; font-family:inherit; padding:1rem;"
+                            placeholder="Escreva aqui a legenda do post..."></textarea>
+                    </div>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Prioridade</label>
+                        <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+                            <label><input type="radio" name="mk-prioridade" value="Alta"> Alta</label>
+                            <label><input type="radio" name="mk-prioridade" value="Normal" checked> Normal</label>
+                            <label><input type="radio" name="mk-prioridade" value="Baixa"> Baixa</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" onclick="Marketing.closePostModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="Marketing.savePost()">Salvar Conteúdo</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal: Nova/Editar Campanha -->
+    <div id="modal-marketing-campanha" class="modal-overlay">
+        <div class="glass-card modal-content" style="max-width: 500px;">
+            <header class="modal-header">
+                <h2><i class="fa-solid fa-rocket"></i> Detalhes da Campanha</h2>
+                <button class="close-modal" onclick="Marketing.closeCampanhaModal()">&times;</button>
+            </header>
+            <div class="modal-body">
+                <form id="form-marketing-campanha">
+                    <input type="hidden" id="mk-camp-id">
+                    <div class="form-group">
+                        <label>Nome da Campanha</label>
+                        <input type="text" id="mk-camp-nome" class="glass-select" style="width:100%;" required>
+                    </div>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Objetivo Estratégico</label>
+                        <input type="text" id="mk-camp-objetivo" class="glass-select" style="width:100%;"
+                            placeholder="Ex: Captação de Clientes IRPF">
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;">
+                        <div class="form-group">
+                            <label>Início</label>
+                            <input type="date" id="mk-camp-inicio" class="glass-select" style="width:100%;">
+                        </div>
+                        <div class="form-group">
+                            <label>Fim</label>
+                            <input type="date" id="mk-camp-fim" class="glass-select" style="width:100%;">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Orçamento Previsto (R$)</label>
+                        <input type="number" id="mk-camp-orcamento" class="glass-select" style="width:100%;"
+                            step="0.01">
+                    </div>
+                </form>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn btn-secondary" onclick="Marketing.closeCampanhaModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="Marketing.saveCampanha()">Salvar Campanha</button>
+            </footer>
         </div>
     </div>
 

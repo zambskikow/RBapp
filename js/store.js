@@ -31,7 +31,10 @@ let db = {
         theme: "glass"
     },
     cargos: [],
-    marketing_posts: []
+    marketing_posts: [],
+    marketing_campanhas: [],
+    marketing_equipe: [],
+    marketing_metricas: []
 };
 
 window.Store = {
@@ -44,7 +47,8 @@ window.Store = {
             const [
                 setoresRes, funcionariosRes, rotinasBaseRes,
                 clientesRes, mesesRes, execucoesRes, mensagensRes, logsRes, cargosRes,
-                marketing_postsRes, global_configRes
+                marketing_postsRes, marketing_campanhasRes, marketing_equipeRes,
+                marketing_metricasRes, global_configRes
             ] = await Promise.all([
                 fetch(`${API_BASE}/setores`),
                 fetch(`${API_BASE}/funcionarios`),
@@ -56,6 +60,9 @@ window.Store = {
                 fetch(`${API_BASE}/logs`),
                 fetch(`${API_BASE}/cargos`),
                 fetch(`${API_BASE}/marketing_posts`),
+                fetch(`${API_BASE}/marketing_campanhas`),
+                fetch(`${API_BASE}/marketing_equipe`),
+                fetch(`${API_BASE}/marketing_metricas`),
                 fetch(`${API_BASE}/global_config`)
             ]);
 
@@ -88,6 +95,21 @@ window.Store = {
                 const marketingData = await marketing_postsRes.json();
                 db.marketing_posts = Array.isArray(marketingData) ? marketingData : [];
             } catch (e) { db.marketing_posts = []; }
+
+            try {
+                const campanhasData = await marketing_campanhasRes.json();
+                db.marketing_campanhas = Array.isArray(campanhasData) ? campanhasData : [];
+            } catch (e) { db.marketing_campanhas = []; }
+
+            try {
+                const equipeData = await marketing_equipeRes.json();
+                db.marketing_equipe = Array.isArray(equipeData) ? equipeData : [];
+            } catch (e) { db.marketing_equipe = []; }
+
+            try {
+                const metricsData = await marketing_metricasRes.json();
+                db.marketing_metricas = Array.isArray(metricsData) ? metricsData : [];
+            } catch (e) { db.marketing_metricas = []; }
 
             try {
                 const configData = await global_configRes.json();
@@ -766,6 +788,96 @@ window.Store = {
         }
     },
 
+    async updateMarketingPostStatus(id, newStatus) {
+        const post = db.marketing_posts.find(p => p.id === id);
+        if (post) {
+            post.status = newStatus;
+            // Registrar no histórico
+            const historyItem = {
+                data: new Date().toISOString(),
+                user: (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema",
+                action: `Alterou status para ${newStatus}`
+            };
+            if (!post.historico) post.historico = [];
+            post.historico.push(historyItem);
+
+            await fetch(`${API_BASE}/marketing_posts/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus, historico: post.historico })
+            });
+        }
+    },
+
+    async saveMarketingPost(postData) {
+        const isEdit = !!postData.id;
+        const url = isEdit ? `${API_BASE}/marketing_posts/${postData.id}` : `${API_BASE}/marketing_posts`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(postData)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const savedPost = Array.isArray(data) ? data[0] : data;
+            if (isEdit) {
+                const idx = db.marketing_posts.findIndex(p => p.id === savedPost.id);
+                if (idx !== -1) db.marketing_posts[idx] = savedPost;
+            } else {
+                db.marketing_posts.push(savedPost);
+            }
+            return savedPost;
+        }
+        return null;
+    },
+
+    async saveMarketingCampanha(campData) {
+        const isEdit = !!campData.id;
+        const url = isEdit ? `${API_BASE}/marketing_campanhas/${campData.id}` : `${API_BASE}/marketing_campanhas`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(campData)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const savedCamp = Array.isArray(data) ? data[0] : data;
+            if (isEdit) {
+                const idx = db.marketing_campanhas.findIndex(c => c.id === savedCamp.id);
+                if (idx !== -1) db.marketing_campanhas[idx] = savedCamp;
+            } else {
+                db.marketing_campanhas.push(savedCamp);
+            }
+            return savedCamp;
+        }
+        return null;
+    },
+
+    async updateBranding(configData) {
+        // Encontrar o ID da configuração real no banco (geralmente ID 1)
+        // Se não houver global_configRes na carga inicial, precisamos de um jeito de pegar o ID.
+        // Vamos assumir que existe pelo menos uma config.
+        const res = await fetch(`${API_BASE}/global_config/1`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                brand_name: configData.brandName,
+                brand_logo_url: configData.brandLogoUrl,
+                accent_color: configData.accentColor,
+                slogan: configData.slogan,
+                theme: configData.theme
+            })
+        });
+        if (res.ok) {
+            db.config = { ...db.config, ...configData };
+        }
+    },
     async editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = [], responsavel = "") {
         const r = db.rotinasBase.find(x => x.id === parseInt(id));
         if (r) {
@@ -1248,24 +1360,32 @@ window.Store = {
     // -----------------------------------------------------------------
     // MARKETING METHODS
     // -----------------------------------------------------------------
-    async addMarketingPost(postData) {
+    async saveMarketingPost(postData) {
+        const isEdit = !!postData.id;
+        const url = isEdit ? `${API_BASE}/marketing_posts/${postData.id}` : `${API_BASE}/marketing_posts`;
+        const method = isEdit ? 'PUT' : 'POST';
+
         try {
-            const res = await fetch(`${API_BASE}/marketing_posts`, {
-                method: 'POST',
+            const res = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(postData)
             });
+
             if (res.ok) {
                 const data = await res.json();
-                db.marketing_posts.push(data[0]);
-                this.registerLog("Comunicação", `Novo card criado: ${postData.titulo}`);
-                return data[0];
+                const savedPost = Array.isArray(data) ? data[0] : data;
+                if (isEdit) {
+                    const idx = db.marketing_posts.findIndex(p => p.id === savedPost.id);
+                    if (idx !== -1) db.marketing_posts[idx] = savedPost;
+                } else {
+                    db.marketing_posts.push(savedPost);
+                }
+                this.registerLog("Comunicação", `${isEdit ? 'Atualizou' : 'Criou'} conteúdo: ${postData.titulo}`);
+                return savedPost;
             }
-        } catch (e) { console.error(e); }
-        // Fallback local
-        const localPost = { id: Date.now(), ...postData };
-        db.marketing_posts.push(localPost);
-        return localPost;
+        } catch (e) { console.error("Erro ao salvar post marketing:", e); }
+        return null;
     },
 
     async updateMarketingPostStatus(id, newStatus) {
@@ -1278,26 +1398,76 @@ window.Store = {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: newStatus })
                 });
-                this.registerLog("Comunicação", `Movel card #${id} para '${newStatus}'`);
+                this.registerLog("Comunicação", `Moveu card #${id} para '${newStatus}'`);
             } catch (e) { console.error(e); }
         }
     },
 
-    async updateBranding(configData) {
-        db.config = { ...db.config, ...configData };
+    async saveMarketingCampanha(campData) {
+        const isEdit = !!campData.id;
+        const url = isEdit ? `${API_BASE}/marketing_campanhas/${campData.id}` : `${API_BASE}/marketing_campanhas`;
+        const method = isEdit ? 'PUT' : 'POST';
+
         try {
-            await fetch(`${API_BASE}/global_config`, {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(campData)
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const savedCamp = Array.isArray(data) ? data[0] : data;
+                if (isEdit) {
+                    const idx = db.marketing_campanhas.findIndex(c => c.id === savedCamp.id);
+                    if (idx !== -1) db.marketing_campanhas[idx] = savedCamp;
+                } else {
+                    db.marketing_campanhas.push(savedCamp);
+                }
+                this.registerLog("Campanha", `${isEdit ? 'Atualizou' : 'Lançou'} campanha: ${campData.nome}`);
+                return savedCamp;
+            }
+        } catch (e) { console.error("Erro ao salvar campanha:", e); }
+        return null;
+    },
+
+    async addMarketingEquipeMember(memberData) {
+        try {
+            const res = await fetch(`${API_BASE}/marketing_equipe`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(memberData)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                db.marketing_equipe.push(data[0]);
+                return data[0];
+            }
+        } catch (e) { console.error(e); }
+        return null;
+    },
+
+    async updateBranding(configData) {
+        // Objeto db.config já é atualizado localmente pela UI se necessário,
+        // mas aqui garantimos o PUT para o banco (global_config/1 assumido)
+        try {
+            const res = await fetch(`${API_BASE}/global_config/1`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    brand_name: db.config.brandName,
-                    brand_logo_url: db.config.brandLogoUrl,
-                    accent_color: db.config.accentColor,
-                    slogan: db.config.slogan,
-                    theme: db.config.theme
+                    brand_name: configData.brandName,
+                    brand_logo_url: configData.brandLogoUrl,
+                    accent_color: configData.accentColor,
+                    slogan: configData.slogan,
+                    theme: configData.theme
                 })
             });
-            this.registerLog("Sistema", `Identidade visual atualizada.`);
+            if (res.ok) {
+                db.config = { ...db.config, ...configData };
+                this.registerLog("Sistema", `Identidade visual atualizada.`);
+                return true;
+            }
         } catch (e) { console.error(e); }
+        return false;
     }
 };

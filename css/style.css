@@ -2857,3 +2857,101 @@ body {
     flex: 1 1 150px;
     min-width: 140px;
 }
+
+/* --- Módulo de Marketing Profissional --- */
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.calendar-day-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.calendar-day {
+    background: var(--bg-surface);
+    min-height: 120px;
+    padding: 0.5rem;
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.calendar-day:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.calendar-day.empty {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.day-number {
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0.5;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.calendar-event {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.calendar-event:hover {
+    transform: scale(1.02);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+    transform: scale(0.95) rotate(2deg);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+
+.marketing-tab-content {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom Scrollbar para Kanban Horizontal */
+.kanban-board-container::-webkit-scrollbar {
+    height: 10px;
+}
+
+.kanban-board-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+
+.kanban-board-container::-webkit-scrollbar-thumb {
+    background: var(--border-glass-light);
+    border-radius: 10px;
+}
+
+.kanban-board-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-light);
+}
