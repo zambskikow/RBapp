@@ -181,22 +181,20 @@ async function initApp() {
 
 
     // Set default values based on the store's active month
-
     const activeMonth = Store.getData().meses.find(m => m.ativo) || Store.getData().meses[0];
+    const savedCompetencia = localStorage.getItem('lastCompetencia');
 
-    if (activeMonth) {
-
+    if (savedCompetencia && Store.getData().meses.find(m => m.id === savedCompetencia)) {
+        currentCompetencia = savedCompetencia;
+    } else if (activeMonth) {
         currentCompetencia = activeMonth.id;
-
-        compFilter.value = currentCompetencia;
-
-        dashCompFilter.value = currentCompetencia;
-
-        meuCompFilter.value = currentCompetencia;
-
     } else {
         currentCompetencia = `${nowApp.getFullYear()}-${(nowApp.getMonth() + 1).toString().padStart(2, '0')}`; // Fallback
     }
+
+    compFilter.value = currentCompetencia;
+    dashCompFilter.value = currentCompetencia;
+    meuCompFilter.value = currentCompetencia;
 
 
 
@@ -242,6 +240,7 @@ async function initApp() {
 
     compFilter.addEventListener('change', (e) => {
         currentCompetencia = e.target.value;
+        localStorage.setItem('lastCompetencia', currentCompetencia);
         dashCompFilter.value = currentCompetencia;
         meuCompFilter.value = currentCompetencia;
         renderOperacional();
@@ -311,37 +310,25 @@ async function initApp() {
 
 
     dashCompFilter.addEventListener('change', (e) => {
-
         currentCompetencia = e.target.value;
-
+        localStorage.setItem('lastCompetencia', currentCompetencia);
         compFilter.value = currentCompetencia;
-
         meuCompFilter.value = currentCompetencia;
-
         renderDashboard();
-
         renderOperacional();
-
         renderMeuDesempenho();
-
     });
 
 
 
     meuCompFilter.addEventListener('change', (e) => {
-
         currentCompetencia = e.target.value;
-
+        localStorage.setItem('lastCompetencia', currentCompetencia);
         compFilter.value = currentCompetencia;
-
         dashCompFilter.value = currentCompetencia;
-
         renderMeuDesempenho();
-
         renderOperacional();
-
         renderDashboard();
-
     });
 
 
