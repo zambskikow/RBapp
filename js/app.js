@@ -200,26 +200,24 @@ async function initApp() {
 
 
 
-    // 2.5 Toggle Sidebar
-
     const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
-
+    const btnCloseSidebar = document.getElementById('btn-close-sidebar');
     const sidebar = document.querySelector('.sidebar');
 
     if (btnToggleSidebar && sidebar) {
-
         btnToggleSidebar.addEventListener('click', () => {
-
-            sidebar.classList.toggle('collapsed');
-
-            if (window.innerWidth <= 992) {
-
-                sidebar.classList.toggle('mobile-open');
-
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('mobile-open');
+            } else {
+                sidebar.classList.toggle('collapsed');
             }
-
         });
+    }
 
+    if (btnCloseSidebar && sidebar) {
+        btnCloseSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+        });
     }
 
 
@@ -727,6 +725,12 @@ function setupNavigation() {
                 viewEl.style.display = 'block';
                 // Small delay to trigger CSS animation
                 setTimeout(() => viewEl.classList.add('active'), 10);
+
+                // Fechar sidebar no mobile após navegar
+                if (window.innerWidth <= 768) {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar) sidebar.classList.remove('mobile-open');
+                }
 
                 if (targetView === 'marketing') {
                     Marketing.init();

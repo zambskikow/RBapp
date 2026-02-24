@@ -2988,6 +2988,148 @@ body {
     border-radius: 10px;
 }
 
-.kanban-board-container::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-light);
+
+/* ==========================================================================
+   RESPONSIVIDADE (MEDIA QUERIES)
+   ========================================================================== */
+
+/* TABLETS (Laptops pequenos e iPads) */
+@media (max-width: 1024px) {
+    :root {
+        --sidebar-width: 240px;
+    }
+
+    .topbar {
+        padding: 0 1.5rem;
+    }
+
+    .view-section {
+        padding: 1.5rem 1.5rem 3rem;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* CELULARES (Smartphones) */
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width: 280px;
+        /* Largura total quando aberta */
+        --topbar-height: 70px;
+    }
+
+    body {
+        overflow: auto;
+        /* Permitir scroll no body se necessário */
+    }
+
+    .app-container {
+        flex-direction: column;
+    }
+
+    /* Sidebar Mobile Overlay */
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        bottom: 0;
+        width: var(--sidebar-width);
+        z-index: 1000;
+        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar.mobile-open {
+        left: 0;
+    }
+
+    .sidebar.collapsed {
+        width: var(--sidebar-width);
+        /* Não colapsar no mobile, apenas esconder */
+    }
+
+    .mobile-only-btn {
+        display: flex !important;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: var(--text-main);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    /* Topbar Ajustes */
+    .topbar {
+        padding: 0 1rem;
+        gap: 0.5rem;
+    }
+
+    .date-display {
+        display: none !important;
+        /* Esconder data no mobile para ganhar espaço */
+    }
+
+    .topbar-actions {
+        gap: 0.5rem;
+    }
+
+    #btn-logout span {
+        display: none;
+        /* Esconder texto 'Sair' */
+    }
+
+    #btn-logout {
+        padding: 0.5rem;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Grids e Layout de Conteúdo */
+    .view-section {
+        padding: 1rem 1rem 2rem;
+    }
+
+    .section-header {
+        margin-bottom: 1.5rem;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+
+    /* KPI Adjustments */
+    .kpi-dashboard-grid,
+    .kpi-desempenho-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+    }
+
+    .kpi-chip {
+        padding: 0.75rem;
+    }
+
+    .kpi-scroll-row {
+        gap: 0.5rem;
+    }
+
+    /* Modais */
+    .modal-content {
+        width: 95% !important;
+        margin: 10px auto;
+        padding: 1.5rem !important;
+    }
 }
