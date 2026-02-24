@@ -896,53 +896,86 @@ window.Store = {
 
     // Additional methods mock
     async sendMensagem(remetente, destinatario, texto, assunto = 'Sem Assunto') {
-        const m = { id: Date.now(), remetente, destinatario, texto, assunto, lida: false, data: new Date().toISOString() };
+        const m = {
+            id: Date.now(),
+            remetente,
+            destinatario,
+            texto,
+            assunto: assunto || 'Sem Assunto',
+            lida: false,
+            data: new Date().toISOString(),
+            excluidoPor: [] // Novo campo para soft delete
+        };
         db.mensagens.push(m);
         try {
             await fetch(`${API_BASE}/mensagens`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ remetente, destinatario, texto, assunto, lida: false })
+                body: JSON.stringify(m)
             });
         } catch (e) { console.error("Erro ao enviar msg API:", e); }
     },
 
-    async deleteMensagem(id) {
-        const idx = db.mensagens.findIndex(m => m.id == id);
-        if (idx !== -1) {
-            const m = db.mensagens[idx];
-            db.mensagens.splice(idx, 1); // Remover localmente imediatamente
-            try {
-                const res = await fetch(`${API_BASE}/mensagens/${id}`, { method: 'DELETE' });
-                // APIs REST retornam 200 ou 204 em DELETE bem-sucedido
-                if (!res.ok && res.status !== 204) {
-                    throw new Error(`API Delete retornou status ${res.status}`);
-                }
-            } catch (e) {
-                console.warn("Falha ao deletar msg na API:", e);
-                db.mensagens.push(m); // Rollback local apenas em erro real
-                return false;
+    async deleteMensagem(id, usuario) {
+        const m = db.mensagens.find(msg => msg.id == id);
+        if (m) {
+            if (!m.excluidoPor) m.excluidoPor = [];
+            if (!m.excluidoPor.includes(usuario)) {
+                m.excluidoPor.push(usuario);
             }
-            this.registerLog("Excluiu Mensagem", `ID: ${id}`);
+            try {
+                // Notificando API sobre a exclusão lógica (se suportado)
+                // Ou apenas salvando o estado
+                await fetch(`${API_BASE}/mensagens/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ excluidoPor: m.excluidoPor })
+                });
+            } catch (e) {
+                console.warn("Falha ao registrar exclusão na API:", e);
+            }
+            this.registerLog("Excluiu Mensagem (Soft)", `Usuário: ${usuario}, MsgID: ${id}`);
             return true;
         }
         return false;
     },
 
     getMensagensPara(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario).sort((a, b) => new Date(b.data) - new Date(a.data));
+        return db.mensagens
+            .filter(m => m.destinatario === usuario && !(m.excluidoPor || []).includes(usuario))
+            .sort((a, b) => new Date(b.data) - new Date(a.data));
+    },
+
+    getMensagensEnviadas(usuario) {
+        return db.mensagens
+            .filter(m => m.remetente === usuario && !(m.excluidoPor || []).includes(usuario))
+            .sort((a, b) => new Date(b.data) - new Date(a.data));
     },
 
     getUnreadCount(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario && !m.lida).length;
+        return db.mensagens.filter(m =>
+            m.destinatario === usuario &&
+            !m.lida &&
+            !(m.excluidoPor || []).includes(usuario)
+        ).length;
     },
 
     getUnreadInboxCount(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario && !m.lida && m.remetente !== 'Sistema').length;
+        return db.mensagens.filter(m =>
+            m.destinatario === usuario &&
+            !m.lida &&
+            m.remetente !== 'Sistema' &&
+            !(m.excluidoPor || []).includes(usuario)
+        ).length;
     },
 
     getUnreadSystemCount(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario && !m.lida && m.remetente === 'Sistema').length;
+        return db.mensagens.filter(m =>
+            m.destinatario === usuario &&
+            !m.lida &&
+            m.remetente === 'Sistema' &&
+            !(m.excluidoPor || []).includes(usuario)
+        ).length;
     },
 
     async markMensagemLida(id) {

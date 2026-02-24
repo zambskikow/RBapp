@@ -2505,7 +2505,7 @@ function updateMensagensBadges() {
     const inboxBadge = document.getElementById('inbox-unread-badge');
     if (inboxBadge) {
         if (unreadInbox > 0) {
-            inboxBadge.style.display = 'inline-block';
+            inboxBadge.style.display = 'block';
             inboxBadge.textContent = unreadInbox;
         } else {
             inboxBadge.style.display = 'none';
@@ -2516,7 +2516,7 @@ function updateMensagensBadges() {
     const systemBadge = document.getElementById('system-unread-badge');
     if (systemBadge) {
         if (unreadSystem > 0) {
-            systemBadge.style.display = 'inline-block';
+            systemBadge.style.display = 'block';
             systemBadge.textContent = unreadSystem;
         } else {
             systemBadge.style.display = 'none';
@@ -2524,8 +2524,15 @@ function updateMensagensBadges() {
     }
 }
 
+let currentMsgSearch = '';
+
+window.handleMessageSearch = function (query) {
+    currentMsgSearch = query.toLowerCase();
+    renderMensagens();
+};
+
 function initInboxTabs() {
-    const tabs = document.querySelectorAll('.inbox-menu-item');
+    const tabs = document.querySelectorAll('.folder-item');
     tabs.forEach(tab => {
         // Remove existing listeners to avoid doubles
         const newTab = tab.cloneNode(true);
@@ -2533,32 +2540,37 @@ function initInboxTabs() {
 
         newTab.addEventListener('click', (e) => {
             const folder = e.currentTarget.getAttribute('data-folder');
-            document.querySelectorAll('.inbox-menu-item').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.folder-item').forEach(t => t.classList.remove('active'));
             e.currentTarget.classList.add('active');
 
             const titles = {
-                'inbox': 'Caixa de Entrada',
+                'inbox': 'Entrada',
+                'important': 'Favoritas',
                 'sent': 'Itens Enviados',
-                'system': 'Alertas do Sistema'
+                'system': 'Alertas do Sistema',
+                'trash': 'Lixeira (Histórico)'
             };
-            document.getElementById('inbox-current-folder-title').textContent = titles[folder];
+            document.getElementById('inbox-folder-name').textContent = titles[folder] || 'Mensagens';
             currentInboxFolder = folder;
             renderMensagens();
             hideInboxReader();
         });
     });
 
-    const refreshBtn = document.getElementById('btn-refresh-inbox');
+    const backBtn = document.getElementById('btn-back-to-list');
+    if (backBtn) {
+        backBtn.onclick = () => hideInboxReader();
+    }
+
+    const refreshBtn = document.getElementById('btn-refresh-inbox-new');
     if (refreshBtn) {
-        const newRefresh = refreshBtn.cloneNode(true);
-        refreshBtn.parentNode.replaceChild(newRefresh, refreshBtn);
-        newRefresh.addEventListener('click', () => {
-            newRefresh.querySelector('i').classList.add('fa-spin');
+        refreshBtn.onclick = () => {
+            refreshBtn.querySelector('i').classList.add('fa-spin');
             setTimeout(() => {
-                newRefresh.querySelector('i').classList.remove('fa-spin');
+                refreshBtn.querySelector('i').classList.remove('fa-spin');
                 renderMensagens();
-            }, 500);
-        });
+            }, 600);
+        };
     }
 }
 
@@ -2570,20 +2582,37 @@ function renderMensagens() {
     let msgs = [];
     if (currentInboxFolder === 'inbox') {
         msgs = Store.getMensagensPara(LOGGED_USER.nome).filter(m => m.remetente !== 'Sistema');
+    } else if (currentInboxFolder === 'important') {
+        // Filtra mensagens marcadas como favoritas (campo opcional favorito: true)
+        msgs = Store.getData().mensagens.filter(m =>
+            m.favorito && (m.destinatario === LOGGED_USER.nome || m.remetente === LOGGED_USER.nome)
+        ).sort((a, b) => new Date(b.data) - new Date(a.data));
     } else if (currentInboxFolder === 'sent') {
-        msgs = Store.getData().mensagens.filter(m => m.remetente === LOGGED_USER.nome);
-        msgs.sort((a, b) => new Date(b.data) - new Date(a.data));
+        msgs = Store.getMensagensEnviadas(LOGGED_USER.nome);
     } else if (currentInboxFolder === 'system') {
         msgs = Store.getMensagensPara(LOGGED_USER.nome).filter(m => m.remetente === 'Sistema');
+    } else if (currentInboxFolder === 'trash') {
+        msgs = Store.getData().mensagens.filter(m =>
+            (m.excluidoPor || []).includes(LOGGED_USER.nome) && (m.destinatario === LOGGED_USER.nome || m.remetente === LOGGED_USER.nome)
+        ).sort((a, b) => new Date(b.data) - new Date(a.data));
+    }
+
+    // Filtro de Busca
+    if (currentMsgSearch) {
+        msgs = msgs.filter(m =>
+            m.assunto.toLowerCase().includes(currentMsgSearch) ||
+            m.texto.toLowerCase().includes(currentMsgSearch) ||
+            m.remetente.toLowerCase().includes(currentMsgSearch)
+        );
     }
 
     container.innerHTML = '';
 
     if (msgs.length === 0) {
         container.innerHTML = `
-            <div style="padding: 2rem; text-align: center; color: var(--text-muted); display:flex; flex-direction:column; align-items:center; gap: 1rem;">
-                <i class="fa-regular fa-folder-open" style="font-size: 2.5rem;"></i>
-                <span>Nenhuma mensagem nesta pasta.</span>
+            <div style="padding: 3rem 2rem; text-align: center; color: var(--text-muted); opacity: 0.5;">
+                <i class="fa-solid fa-cloud" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
+                <p>Nenhuma mensagem encontrada.</p>
             </div>
         `;
         updateMensagensBadges();
@@ -2591,103 +2620,138 @@ function renderMensagens() {
     }
 
     msgs.forEach(m => {
-        const d = new Date(m.data);
-        const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-
-        // Shorten preview text
-        const snippet = m.texto.length > 50 ? m.texto.substring(0, 50) + '...' : m.texto;
-        const subject = m.assunto || 'Sem Assunto';
-        const displayUser = currentInboxFolder === 'sent' ? `Para: ${m.destinatario}` : m.remetente;
-
         const div = document.createElement('div');
-        div.className = `msg-item fade-in ${m.id === currentLoadedMessageId ? 'active' : ''}`;
-        if (!m.lida && currentInboxFolder !== 'sent') {
+        div.className = `msg-item-refined fade-in ${m.id === currentLoadedMessageId ? 'active' : ''}`;
+        if (!m.lida && m.destinatario === LOGGED_USER.nome) {
             div.classList.add('unread');
         }
 
+        const date = new Date(m.data);
+        const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        const snippet = m.texto.substring(0, 50) + (m.texto.length > 50 ? '...' : '');
+        const sender = currentInboxFolder === 'sent' ? m.destinatario : m.remetente;
+        const initials = sender.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
         div.innerHTML = `
-            <div class="msg-header">
-                <span style="font-weight: ${!m.lida && currentInboxFolder !== 'sent' ? '700' : '500'}; color: var(--text-main);">${displayUser}</span>
-                <span>${dateStr}</span>
+            <div class="msg-refined-left">
+                <input type="checkbox" class="msg-check" onclick="event.stopPropagation()">
+                <i class="fa-solid fa-star msg-star ${m.favorito ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorito(${m.id})"></i>
             </div>
-            <p class="msg-subject">${subject}</p>
-            <p class="msg-preview">${snippet}</p>
+            <div class="msg-refined-avatar">${initials}</div>
+            <div class="msg-refined-content">
+                <div class="msg-content-top">
+                    <span class="msg-sender-name">${sender}</span>
+                    <span class="msg-time">${timeStr}</span>
+                </div>
+                <div class="msg-content-mid">
+                    <h4 class="msg-subject-line">${m.assunto || 'Sem Assunto'}</h4>
+                </div>
+                <div class="msg-content-bot">
+                    <p class="msg-preview-line">${snippet}</p>
+                    <div class="msg-item-indicators">
+                        ${m.anexos ? '<i class="fa-solid fa-paperclip"></i>' : ''}
+                    </div>
+                </div>
+            </div>
         `;
 
-        div.addEventListener('click', () => loadMessageIntoReader(m.id));
+        div.onclick = () => loadMessageIntoReader(m.id);
         container.appendChild(div);
     });
+
+    // Update pagination info if needed
+    const countInfo = document.getElementById('msgs-count-info');
+    if (countInfo) countInfo.textContent = msgs.length > 0 ? `1 - ${msgs.length} de ${msgs.length}` : '0 - 0 de 0';
 
     updateMensagensBadges();
 }
 
+window.toggleFavorito = function (id) {
+    const msg = Store.getData().mensagens.find(m => m.id == id);
+    if (msg) {
+        msg.favorito = !msg.favorito;
+        // Opcional: Notificar API
+        renderMensagens();
+    }
+};
+
 function loadMessageIntoReader(id) {
-    const msg = Store.getData().mensagens.find(m => m.id == id); // Changed to loose comparison as per instruction
+    const msg = Store.getData().mensagens.find(m => m.id == id);
     if (!msg) return;
 
     currentLoadedMessageId = id;
 
-    // If it's in the inbox, mark as read
-    if (currentInboxFolder === 'inbox' && !msg.lida) {
+    // Se estiver lendo algo não lido do inbox ou system, marca como lida
+    if ((currentInboxFolder === 'inbox' || currentInboxFolder === 'system') && !msg.lida) {
         Store.markMensagemLida(id);
         updateMensagensBadges();
     }
 
-    // Update active state on list visually without full render to avoid jump
-    document.querySelectorAll('.msg-item').forEach(el => el.classList.remove('active', 'unread'));
-    renderMensagens();
+    // UI Feedback na lista
+    document.querySelectorAll('.msg-item-refined').forEach(el => el.classList.remove('active'));
+    // Tentar localizar o item na lista DOM
+    const listItems = document.querySelectorAll('.msg-item-refined');
+    listItems.forEach(item => {
+        if (item.querySelector('.msg-subject-line').textContent === (msg.assunto || 'Sem Assunto')) {
+            item.classList.add('active');
+        }
+    });
 
     document.querySelector('.empty-reader-state').style.display = 'none';
-    const reader = document.querySelector('.reader-content');
+    const reader = document.querySelector('.reader-content-refined');
     reader.style.display = 'flex';
 
-    // Re-trigger animation
+    // Refresh animation
     reader.classList.remove('fade-in');
     void reader.offsetWidth;
     reader.classList.add('fade-in');
 
-    const subjectObj = msg.assunto || 'Nova Mensagem Automática';
-    document.getElementById('reader-subject').textContent = subjectObj;
+    const subjectStr = msg.assunto || 'Sem Assunto';
+    document.getElementById('reader-subject').textContent = subjectStr;
 
-    const displayUser = currentInboxFolder === 'sent' ? `Enviado para: ${msg.destinatario}` : msg.remetente;
+    // Avatar text (iniciais)
+    const senderName = msg.remetente || 'S';
+    document.getElementById('reader-avatar-text').textContent = senderName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    document.getElementById('reader-email-text').textContent = `${senderName.toLowerCase().replace(/ /g, '.')}@fiscal.app`;
+
+    const displayUser = currentInboxFolder === 'sent' ? `Para: ${msg.destinatario}` : msg.remetente;
     document.getElementById('reader-from').textContent = displayUser;
 
     const d = new Date(msg.data);
-    document.getElementById('reader-date').textContent = `${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
+    document.getElementById('reader-date').textContent = `${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
 
-    // Format text
-    const paragraphs = msg.texto.split('\n').filter(p => p.trim() !== '').map(p => `<p style="margin-bottom:1rem;">${p}</p>`).join('');
+    // Formatar o texto em parágrafos
+    const paragraphs = msg.texto.split('\n').filter(p => p.trim() !== '').map(p => `<p style="margin-bottom:1.2rem;">${p}</p>`).join('');
     document.getElementById('reader-body-content').innerHTML = paragraphs;
 
-    // Actions
+    // Botões de ação
     const btnReply = document.getElementById('btn-reply-msg');
     const btnDelete = document.getElementById('btn-delete-msg');
 
-    if (currentInboxFolder === 'inbox' || currentInboxFolder === 'system') {
-        btnReply.style.display = currentInboxFolder === 'system' ? 'none' : 'inline-block';
-        btnReply.onclick = () => {
-            openNovaMensagemModal(msg.remetente, `Re: ${subjectObj}`);
-        };
-    } else {
-        btnReply.style.display = 'none';
+    // Só permite responder no Inbox (se não for Sistema)
+    const canReply = currentInboxFolder === 'inbox' && msg.remetente !== 'Sistema';
+    btnReply.style.display = canReply ? 'flex' : 'none';
+    if (canReply) {
+        btnReply.onclick = () => openNovaMensagemModal(msg.remetente, `Re: ${subjectStr}`);
     }
 
+    btnDelete.style.display = currentInboxFolder === 'trash' ? 'none' : 'flex';
     btnDelete.onclick = async () => {
-        if (confirm("Deseja mesmo excluir esta mensagem?")) {
-            // Garantir que o id é numerico para a URL da API
-            const numId = parseInt(id);
+        if (confirm("Deseja mesmo arquivar esta mensagem? (Ela ficará disponível na Lixeira para auditoria)")) {
             btnDelete.disabled = true;
             btnDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            const success = await Store.deleteMensagem(numId);
+            const success = await Store.deleteMensagem(id, LOGGED_USER.nome);
             btnDelete.disabled = false;
             btnDelete.innerHTML = '<i class="fa-solid fa-trash"></i>';
+
             if (success) {
                 currentLoadedMessageId = null;
                 hideInboxReader();
                 renderMensagens();
-                showFeedbackToast("Mensagem excluida com sucesso.", "success");
+                showFeedbackToast("Mensagem arquivada com sucesso.", "success");
             } else {
-                showFeedbackToast("Erro ao excluir mensagem. Tente novamente.", "error");
+                showFeedbackToast("Erro ao arquivar mensagem.", "error");
             }
         }
     };
@@ -2695,8 +2759,10 @@ function loadMessageIntoReader(id) {
 
 function hideInboxReader() {
     currentLoadedMessageId = null;
-    document.querySelector('.empty-reader-state').style.display = 'flex';
-    document.querySelector('.reader-content').style.display = 'none';
+    const emptyState = document.querySelector('.empty-reader-state');
+    const readerContent = document.querySelector('.reader-content-refined');
+    if (emptyState) emptyState.style.display = 'flex';
+    if (readerContent) readerContent.style.display = 'none';
 }
 
 function openNovaMensagemModal(prefillDest = null, prefillSubj = "") {
