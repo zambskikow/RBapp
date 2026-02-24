@@ -120,7 +120,11 @@ window.Store = {
                     db.config.accentColor = c.accent_color || db.config.accentColor;
                     db.config.slogan = c.slogan || db.config.slogan;
                     db.config.theme = c.theme || db.config.theme;
-                    db.config.menuOrder = c.menu_order || db.config.menuOrder;
+                    let mOrder = c.menu_order || db.config.menuOrder;
+                    if (typeof mOrder === 'string') {
+                        try { mOrder = JSON.parse(mOrder); } catch (e) { console.error("Erro parse menuOrder", e); }
+                    }
+                    db.config.menuOrder = Array.isArray(mOrder) ? mOrder : [];
                 }
             } catch (e) { }
 
@@ -186,7 +190,11 @@ window.Store = {
         } catch (error) {
             console.error("Erro ao puxar dados do banco:", error);
             // Fallback for visual offline testing if needed, or notify user
-            showNotify("Erro de Conexão", "Erro de conexão com o banco de dados. Tente atualizar a página.", "error");
+            if (typeof window.showNotify === 'function') {
+                window.showNotify("Erro de Conexão", "Erro de conexão com o banco de dados. Tente atualizar a página.", "error");
+            } else {
+                console.error("Erro de conexão com o banco de dados.");
+            }
             return false;
         }
     },
@@ -660,7 +668,7 @@ window.Store = {
             } else if (typeof showFeedbackToast === 'function') {
                 showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, 'success');
             } else {
-                showNotify("Parabéns!", `Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, "success");
+                window.showNotify("Parabéns!", `Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, "success");
             }
 
             // Forçar re-render dos paineis para a nova competência aparecer e as tarefas somarem aos KPIs
@@ -680,7 +688,7 @@ window.Store = {
 
         // Verifica se já existe
         if (db.meses.find(m => m.id === anoMesId)) {
-            showNotify("Aviso", `A competência ${anoMesId} já existe no sistema.`, "info");
+            window.showNotify("Aviso", `A competência ${anoMesId} já existe no sistema.`, "info");
             return false;
         }
 
@@ -848,7 +856,7 @@ window.Store = {
         } else {
             const errorMsg = await res.text();
             console.error('Erro API addClient:', res.status, errorMsg);
-            showNotify("Erro ao Cadastrar", `Erro ao cadastrar cliente (${res.status}). Verifique a estrutura do banco.`, "error");
+            window.showNotify("Erro ao Cadastrar", `Erro ao cadastrar cliente (${res.status}). Verifique a estrutura do banco.`, "error");
             return null;
         }
 
@@ -929,7 +937,7 @@ window.Store = {
             } else {
                 const errorData = await res.json().catch(() => ({}));
                 console.error('API POST erro:', res.status, errorData);
-                showNotify("Erro ao Salvar", `Erro ao salvar rotina (${res.status}). Verifique a estrutura do banco.`, "error");
+                window.showNotify("Erro ao Salvar", `Erro ao salvar rotina (${res.status}). Verifique a estrutura do banco.`, "error");
 
                 const localId = Date.now();
                 const newRot = {
@@ -1073,7 +1081,7 @@ window.Store = {
                 if (!res.ok) {
                     const errorMsg = await res.text();
                     console.warn('API PUT cliente falhou.', res.status, errorMsg);
-                    showNotify("Erro ao Salvar", `Erro ao salvar alterações (${res.status}). Verifique a estrutura do banco.`, "error");
+                    window.showNotify("Erro ao Salvar", `Erro ao salvar alterações (${res.status}). Verifique a estrutura do banco.`, "error");
                 }
 
 
@@ -1186,7 +1194,7 @@ window.Store = {
                 if (!res.ok) {
                     const errorData = await res.json().catch(() => ({}));
                     console.error('API PUT erro:', res.status, errorData);
-                    showNotify("Erro ao Atualizar", `Erro ao atualizar rotina no banco de dados (${res.status}).`, "error");
+                    window.showNotify("Erro ao Atualizar", `Erro ao atualizar rotina no banco de dados (${res.status}).`, "error");
                 }
             } catch (e) {
                 console.error("Erro ao editar rotina base via API:", e);

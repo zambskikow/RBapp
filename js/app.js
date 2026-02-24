@@ -3068,7 +3068,7 @@ function initInboxTabs() {
                 showNotify("Informação", "Configurações de Mensagens em breve...", "info");
             }
             if (e.target.closest('#btn-inbox-help')) {
-                alert('Ajuda:\n• Clique nas pastas para navegar\n• Use ☆ para favoritar\n• Marque checkboxes para ações em massa\n• Lixeira mostra mensagens excluídas');
+                showNotify("Ajuda das Mensagens", "• Clique nas pastas para navegar\n• Use ☆ para favoritar\n• Marque checkboxes para ações em massa", "info");
             }
         });
 
@@ -3859,7 +3859,7 @@ async function handleSaveDemandaEventual() {
         renderDashboard();
         showFeedbackToast('Demanda eventual criada com sucesso!', 'success');
     } else {
-        alert(result.msg || 'Erro ao criar demanda eventual.');
+        showNotify("Aviso", result.msg || 'Erro ao criar demanda eventual.', "warning");
     }
 }
 
