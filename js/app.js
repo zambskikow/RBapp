@@ -262,7 +262,7 @@ async function initApp() {
                     renderCompetenciasAdmin();
                 }
             } else if (inputVal) {
-                alert("Formato inválido. Use YYYY-MM.");
+                showNotify("Atenção", "Formato inválido. Use YYYY-MM.", "warning");
             }
         });
     }
@@ -284,7 +284,7 @@ async function initApp() {
                     closeDeleteCompetenciaModal();
                     renderCompetenciasAdmin();
                 } else {
-                    alert('Houve um erro na exclusão. Tente novamente.');
+                    showNotify("Erro", "Houve um erro na exclusão. Tente novamente.", "error");
                     btnConfirmDeleteComp.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir';
                     btnConfirmDeleteComp.disabled = false;
                 }
@@ -540,10 +540,59 @@ async function initApp() {
             };
             await Store.updateBranding(configData);
             applyBranding();
-            alert("Identidade visual personalizada com sucesso!");
+            showNotify("Sucesso", "Identidade visual personalizada com sucesso!", "success");
         });
     }
 }
+
+/**
+ * Exibe uma notificação elegante (Toast) na tela
+ * @param {string} title Título da mensagem
+ * @param {string} message Conteúdo da mensagem
+ * @param {string} type Tipo: 'success', 'error', 'info', 'warning'
+ */
+window.showNotify = function (title, message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    let icon = 'fa-circle-info';
+    if (type === 'success') icon = 'fa-circle-check';
+    if (type === 'error') icon = 'fa-circle-exclamation';
+    if (type === 'warning') icon = 'fa-triangle-exclamation';
+
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="fa-solid ${icon}"></i>
+        </div>
+        <div class="toast-content">
+            <span class="toast-title">${title}</span>
+            <span class="toast-message">${message}</span>
+        </div>
+        <button class="toast-close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `;
+
+    container.appendChild(toast);
+
+    // Evento para fechar manual
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 500);
+    });
+
+    // Auto close após 5 segundos
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 500);
+        }
+    }, 5000);
+}
+
 
 function handleLogin(e) {
     e.preventDefault();
@@ -2478,36 +2527,36 @@ async function handleSaveRotina(e) {
 
     // Validação de campos obrigatórios
     if (!nome.trim()) {
-        alert("O campo 'Nome da Rotina' é obrigatório.");
+        showNotify("Campo Obrigatório", "O campo 'Nome da Rotina' é obrigatório.", "warning");
         document.getElementById('rotina-nome').focus();
         return;
     }
     if (!setor.trim()) {
-        alert("O campo 'Setor' é obrigatório.");
+        showNotify("Campo Obrigatório", "O campo 'Setor' é obrigatório.", "warning");
         document.getElementById('rotina-setor').focus();
         return;
     }
     if (!prazo.trim()) {
-        alert("O campo 'Prazo' é obrigatório.");
+        showNotify("Campo Obrigatório", "O campo 'Prazo' é obrigatório.", "warning");
         document.getElementById('rotina-prazo').focus();
         return;
     }
     if (!responsavel) {
-        alert("Selecione ao menos um responsável pela rotina.");
+        showNotify("Atenção", "Selecione ao menos um responsável pela rotina.", "warning");
         return;
     }
 
     // Validações conforme o tipo de frequência
     if (frequencia === 'Mensal' && (isNaN(prazo) || prazo < 1 || prazo > 31)) {
-        alert("Para rotinas mensais, preencha um dia válido de 1 a 31.");
+        showNotify("Valor Inválido", "Para rotinas mensais, preencha um dia válido de 1 a 31.", "warning");
         return;
     }
     if (frequencia === 'Anual' && !prazo.includes('/')) {
-        alert("Para rotinas anuais, preencha a data no formato DD/MM.");
+        showNotify("Valor Inválido", "Para rotinas anuais, preencha a data no formato DD/MM.", "warning");
         return;
     }
     if (frequencia === 'Eventual' && (isNaN(prazo) || parseInt(prazo) < 1)) {
-        alert("Para rotinas eventuais, preencha um número de dias válido (mínimo: 1).");
+        showNotify("Valor Inválido", "Para rotinas eventuais, preencha um número de dias válido (mínimo: 1).", "warning");
         return;
     }
 
@@ -2527,7 +2576,7 @@ async function handleSaveRotina(e) {
         closeRotinaModal();
     } catch (error) {
         console.error("Erro ao salvar rotina:", error);
-        alert("Ocorreu um erro ao salvar a rotina. Tente novamente.");
+        showNotify("Erro", "Ocorreu um erro ao salvar a rotina. Tente novamente.", "error");
     } finally {
         hideLoading();
     }
@@ -2556,7 +2605,7 @@ async function handleDeleteRotina(id, btnElement = null) {
             // alert(`Rotina '${rotina.nome}' excluída com sucesso!`); // Alert opcional, UI já some
         } catch (error) {
             console.error(error);
-            alert("Ocorreu um erro ao excluir a rotina. Verifique o console.");
+            showNotify("Erro", "Ocorreu um erro ao excluir a rotina. Verifique o console.", "error");
         } finally {
             hideLoading();
         }
@@ -2728,9 +2777,9 @@ async function saveMenuOrder() {
     if (success) {
         // Re-apply immediately
         applyUserPermissions(LOGGED_USER);
-        alert('Ordem do menu salva com sucesso!');
+        showNotify("Sucesso", "Ordem do menu salva com sucesso!", "success");
     } else {
-        alert('Erro ao salvar ordem do menu.');
+        showNotify("Erro", "Erro ao salvar ordem do menu.", "error");
     }
 }
 
@@ -3016,7 +3065,7 @@ function initInboxTabs() {
         // === Botões de Suporte ===
         document.addEventListener('click', (e) => {
             if (e.target.closest('#btn-inbox-config')) {
-                alert('Configurações de Mensagens em breve...');
+                showNotify("Informação", "Configurações de Mensagens em breve...", "info");
             }
             if (e.target.closest('#btn-inbox-help')) {
                 alert('Ajuda:\n• Clique nas pastas para navegar\n• Use ☆ para favoritar\n• Marque checkboxes para ações em massa\n• Lixeira mostra mensagens excluídas');
@@ -3313,8 +3362,8 @@ async function handleSendMensagem(e) {
     const assunto = document.getElementById('msg-assunto').value.trim() || 'Sem Assunto';
     const texto = document.getElementById('msg-texto').value.trim();
 
-    if (!dest) { alert('Selecione um destinatario.'); return; }
-    if (!texto) { alert('Escreva uma mensagem antes de enviar.'); return; }
+    if (!dest) { showNotify("Atenção", "Selecione um destinatário.", "warning"); return; }
+    if (!texto) { showNotify("Atenção", "Escreva uma mensagem antes de enviar.", "warning"); return; }
 
     await Store.sendMensagem(LOGGED_USER.nome, dest, texto, assunto);
 
@@ -3666,7 +3715,7 @@ function openDemandaEventualModal() {
     // Verificar rotinas eventuais antes de abrir
     const rotinas = Store.getData().rotinasBase.filter(r => (r.frequencia || '').toLowerCase() === 'eventual');
     if (rotinas.length === 0) {
-        alert('Nao ha rotinas eventuais cadastradas. Cadastre uma rotina com frequencia "Eventual" primeiro.');
+        showNotify("Atenção", "Não há rotinas eventuais cadastradas. Cadastre uma rotina com frequência 'Eventual' primeiro.", "info");
         return;
     }
 
@@ -3787,11 +3836,11 @@ async function handleSaveDemandaEventual() {
     const clienteId = document.getElementById('evt-cliente-select').value;
 
     if (!rotinaId) {
-        alert('Selecione uma rotina eventual.');
+        showNotify("Atenção", "Selecione uma rotina eventual.", "warning");
         return;
     }
     if (!clienteId) {
-        alert('Selecione um cliente.');
+        showNotify("Atenção", "Selecione um cliente.", "warning");
         return;
     }
 
@@ -3949,7 +3998,7 @@ function downloadAuditoriaCSV() {
 
     if (logs.length === 0) {
 
-        alert("Não há dados para exportar.");
+        showNotify("Atenção", "Não há dados para exportar.", "info");
 
         return;
 
@@ -4352,7 +4401,7 @@ function restoreBackupFile() {
 
     if (!file) {
 
-        alert("Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.");
+        showNotify("Atenção", "Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.", "warning");
 
         return;
 
@@ -4390,7 +4439,7 @@ function restoreBackupFile() {
 
             Store.setInitialData(parsedData);
 
-            alert("✅ SISTEMA RESTAURADO COM SUCESSO!\n\nSeus dados foram alterados. O sistema será recarregado agora para aplicar todas as configurações visuais.");
+            showNotify("Sistema Restaurado", "Seus dados foram restaurados com sucesso! Recarregando sistema...", "success");
 
             window.location.reload();
 
@@ -4400,7 +4449,7 @@ function restoreBackupFile() {
 
             console.error(err);
 
-            alert("Erro fatal ao tentar ler o arquivo: " + err.message);
+            showNotify("Erro de Restauração", "Erro fatal ao tentar ler o arquivo: " + err.message, "error");
 
             Store.registerLog("Aviso/Alerta", `Tentativa falha de restauração de backup.`);
 
@@ -4521,7 +4570,7 @@ function runAuditoriaCompetencia() {
     const userName = document.getElementById('audit-comp-user').value;
 
     if (!mesId && !userName) {
-        alert("Selecione pelo menos um Mês ou um Funcionário para filtrar.");
+        showNotify("Atenção", "Selecione pelo menos um Mês ou um Funcionário para filtrar.", "info");
         return;
     }
 

@@ -186,7 +186,7 @@ window.Store = {
         } catch (error) {
             console.error("Erro ao puxar dados do banco:", error);
             // Fallback for visual offline testing if needed, or notify user
-            alert("Erro de conexão com o banco de dados. Tente atualizar a página.");
+            showNotify("Erro de Conexão", "Erro de conexão com o banco de dados. Tente atualizar a página.", "error");
             return false;
         }
     },
@@ -660,7 +660,7 @@ window.Store = {
             } else if (typeof showFeedbackToast === 'function') {
                 showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, 'success');
             } else {
-                alert(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`);
+                showNotify("Parabéns!", `Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, "success");
             }
 
             // Forçar re-render dos paineis para a nova competência aparecer e as tarefas somarem aos KPIs
@@ -680,7 +680,7 @@ window.Store = {
 
         // Verifica se já existe
         if (db.meses.find(m => m.id === anoMesId)) {
-            alert(`A competência ${anoMesId} já existe no sistema.`);
+            showNotify("Aviso", `A competência ${anoMesId} já existe no sistema.`, "info");
             return false;
         }
 
@@ -848,7 +848,7 @@ window.Store = {
         } else {
             const errorMsg = await res.text();
             console.error('Erro API addClient:', res.status, errorMsg);
-            alert(`Erro ao cadastrar cliente (${res.status}): ${errorMsg}\n\nVerifique se a tabela no Supabase tem todas as colunas necessárias.`);
+            showNotify("Erro ao Cadastrar", `Erro ao cadastrar cliente (${res.status}). Verifique a estrutura do banco.`, "error");
             return null;
         }
 
@@ -929,7 +929,7 @@ window.Store = {
             } else {
                 const errorData = await res.json().catch(() => ({}));
                 console.error('API POST erro:', res.status, errorData);
-                alert(`Erro ao salvar rotina no banco de dados (${res.status}). Verifique se as colunas necessárias existem.`);
+                showNotify("Erro ao Salvar", `Erro ao salvar rotina (${res.status}). Verifique a estrutura do banco.`, "error");
 
                 const localId = Date.now();
                 const newRot = {
@@ -1073,7 +1073,7 @@ window.Store = {
                 if (!res.ok) {
                     const errorMsg = await res.text();
                     console.warn('API PUT cliente falhou.', res.status, errorMsg);
-                    alert(`Erro ao salvar alterações do cliente (${res.status}): ${errorMsg}\n\nIsso geralmente ocorre se faltarem colunas no banco de dados Supabase.`);
+                    showNotify("Erro ao Salvar", `Erro ao salvar alterações (${res.status}). Verifique a estrutura do banco.`, "error");
                 }
 
 
@@ -1186,7 +1186,7 @@ window.Store = {
                 if (!res.ok) {
                     const errorData = await res.json().catch(() => ({}));
                     console.error('API PUT erro:', res.status, errorData);
-                    alert(`Erro ao atualizar rotina no banco de dados (${res.status}).`);
+                    showNotify("Erro ao Atualizar", `Erro ao atualizar rotina no banco de dados (${res.status}).`, "error");
                 }
             } catch (e) {
                 console.error("Erro ao editar rotina base via API:", e);

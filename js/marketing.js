@@ -82,7 +82,7 @@ const Marketing = {
         const funcao = document.getElementById('mk-equipe-funcao').value;
 
         if (!funcId) {
-            alert("Por favor, selecione um funcionário.");
+            showNotify("Atenção", "Por favor, selecione um funcionário.", "warning");
             return;
         }
 
@@ -103,11 +103,11 @@ const Marketing = {
                 this.closeEquipeModal();
                 this.renderEquipe();
             } else {
-                alert("Erro ao adicionar membro à equipe.");
+                showNotify("Erro", "Erro ao adicionar membro à equipe.", "error");
             }
         } catch (e) {
             console.error(e);
-            alert("Erro de conexão.");
+            showNotify("Erro de Conexão", "Erro de conexão.", "error");
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
@@ -448,7 +448,7 @@ const Marketing = {
         };
 
         if (!postData.titulo) {
-            alert("O título do post é obrigatório.");
+            showNotify("Campo Obrigatório", "O título do post é obrigatório.", "warning");
             return;
         }
 
@@ -465,11 +465,11 @@ const Marketing = {
                 this.closePostModal();
                 this.renderCurrentTab();
             } else {
-                alert("Erro ao salvar o conteúdo. Verifique o servidor.");
+                showNotify("Erro", "Erro ao salvar o conteúdo. Verifique o servidor.", "error");
             }
         } catch (e) {
             console.error("Erro no salvamento do post:", e);
-            alert("Erro crítico ao salvar.");
+            showNotify("Erro Crítico", "Erro crítico ao salvar.", "error");
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
@@ -499,7 +499,7 @@ const Marketing = {
         };
 
         if (!campData.nome) {
-            alert("O nome da campanha é obrigatório.");
+            showNotify("Campo Obrigatório", "O nome da campanha é obrigatório.", "warning");
             return;
         }
 
@@ -515,11 +515,11 @@ const Marketing = {
                 this.closeCampanhaModal();
                 this.renderCampanhas();
             } else {
-                alert("Erro ao salvar campanha.");
+                showNotify("Erro", "Erro ao salvar campanha.", "error");
             }
         } catch (e) {
             console.error(e);
-            alert("Erro de conexão.");
+            showNotify("Erro de Conexão", "Erro de conexão.", "error");
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
@@ -544,7 +544,7 @@ const Marketing = {
     showPostDetails(id) {
         const post = Store.getData().marketing_posts.find(p => p.id === id);
         if (post) {
-            alert(`Visualizando Detalhes estilo Notion:\n\nTítulo: ${post.titulo}\nStatus: ${post.status}\n\nCopy:\n${post.copy || 'Sem legenda.'}`);
+            showNotify("Visualização Rápida", `Título: ${post.titulo}\nStatus: ${post.status}`, "info");
         }
     }
 };
