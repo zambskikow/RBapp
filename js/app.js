@@ -3064,7 +3064,7 @@ function openDemandaEventualModal() {
 
     // Abrir modal
     const modal = document.getElementById('modal-demanda-eventual');
-    modal.style.cssText = 'display:flex !important; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;';
+    modal.classList.add('active');
 }
 
 function onEventualRotinaChange() {
@@ -3091,7 +3091,7 @@ function onEventualRotinaChange() {
 
 function closeDemandaEventualModal() {
     const modal = document.getElementById('modal-demanda-eventual');
-    modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;';
+    modal.classList.remove('active');
 }
 
 async function handleSaveDemandaEventual() {
