@@ -886,7 +886,7 @@ window.Store = {
     getAuthBySession(sessionId) {
         if (!sessionId) return null;
         if (sessionId === '999' || sessionId === 999) {
-            return { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'settings'] };
+            return { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings'] };
         }
 
         const tempAuth = db.funcionarios.find(f => f.id === parseInt(sessionId));
