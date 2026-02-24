@@ -788,26 +788,6 @@ window.Store = {
         }
     },
 
-    async updateMarketingPostStatus(id, newStatus) {
-        const post = db.marketing_posts.find(p => p.id === id);
-        if (post) {
-            post.status = newStatus;
-            // Registrar no histórico
-            const historyItem = {
-                data: new Date().toISOString(),
-                user: (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema",
-                action: `Alterou status para ${newStatus}`
-            };
-            if (!post.historico) post.historico = [];
-            post.historico.push(historyItem);
-
-            await fetch(`${API_BASE}/marketing_posts/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus, historico: post.historico })
-            });
-        }
-    },
 
     async saveMarketingPost(postData) {
         const isEdit = !!postData.id;
@@ -859,25 +839,6 @@ window.Store = {
         return null;
     },
 
-    async updateBranding(configData) {
-        // Encontrar o ID da configuração real no banco (geralmente ID 1)
-        // Se não houver global_configRes na carga inicial, precisamos de um jeito de pegar o ID.
-        // Vamos assumir que existe pelo menos uma config.
-        const res = await fetch(`${API_BASE}/global_config/1`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                brand_name: configData.brandName,
-                brand_logo_url: configData.brandLogoUrl,
-                accent_color: configData.accentColor,
-                slogan: configData.slogan,
-                theme: configData.theme
-            })
-        });
-        if (res.ok) {
-            db.config = { ...db.config, ...configData };
-        }
-    },
     async editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = [], responsavel = "") {
         const r = db.rotinasBase.find(x => x.id === parseInt(id));
         if (r) {
