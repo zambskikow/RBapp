@@ -1976,7 +1976,7 @@ function renderRotinas() {
         else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Using red to highlight
 
         const diaText = r.frequencia === 'Mensal' ? `Dia ${r.diaPrazoPadrao}` :
-            (r.frequencia === 'Anual' ? `${r.diaPrazoPadrao}` : `${r.diaPrazoPadrao} d.ú.`);
+            (r.frequencia === 'Anual' ? `${r.diaPrazoPadrao}` : `${r.diaPrazoPadrao} d.c.`);
 
         // Lista de clientes vinculados em uma só linha
         const clientesVinculados = clientes
