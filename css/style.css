@@ -3411,3 +3411,82 @@ body {
     margin-left: auto;
     opacity: 0.5;
 }
+
+/* Global Settings Hub - Horizontal Tabs */
+.settings-tabs-header {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 1rem;
+}
+
+.settings-menu {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+.settings-tab-btn {
+    text-align: center;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.settings-tab-btn i {
+    font-size: 1.1rem;
+    opacity: 0.7;
+}
+
+.settings-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+}
+
+.settings-tab-btn.active {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary-light);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.settings-tab-btn.active i {
+    opacity: 1;
+    color: var(--primary-light);
+}
+
+.nav-divider-v {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 0.5rem;
+    align-self: center;
+}
+
+@media (max-width: 768px) {
+    .settings-menu {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .settings-tab-btn {
+        width: 100%;
+        text-align: left;
+    }
+
+    .nav-divider-v {
+        width: 100%;
+        height: 1px;
+        margin: 0.25rem 0;
+    }
+}

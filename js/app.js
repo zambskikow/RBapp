@@ -4626,8 +4626,6 @@ function initSettingsTabs() {
             // Remove active classes
             tabs.forEach(t => {
                 t.classList.remove("active");
-                t.style.background = "transparent";
-                t.style.color = "var(--text-muted)";
             });
             document.querySelectorAll(".settings-pane").forEach(pane => {
                 pane.style.display = "none";
@@ -4636,8 +4634,6 @@ function initSettingsTabs() {
 
             // Set active class to clicked tab
             tab.classList.add("active");
-            tab.style.background = "rgba(99, 102, 241, 0.2)";
-            tab.style.color = "var(--text-main)";
 
             const targetId = tab.getAttribute("data-target");
             const targetPane = document.getElementById(targetId);

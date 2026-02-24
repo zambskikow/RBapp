@@ -1769,7 +1769,7 @@ window.Store = {
                     accent_color: newConfig.accentColor || db.config.accentColor,
                     slogan: newConfig.slogan || db.config.slogan,
                     theme: newConfig.theme || db.config.theme,
-                    menu_order: newConfig.menuOrder
+                    menu_order: newConfig.menu_order || newConfig.menuOrder
                 })
             });
             if (res.ok) {

@@ -1528,37 +1528,34 @@
                     </div>
                 </header>
 
-                <div class="settings-layout"
-                    style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem; align-items: start;">
-                    <!-- Settings Left Menu (Tabs) -->
-                    <div class="glass-panel settings-sidebar" style="padding: 1rem; position: sticky; top: 20px;">
-                        <nav class="settings-menu" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <button class="settings-tab-btn active" data-target="set-rbac"
-                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: rgba(99, 102, 241, 0.2); color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 500; transition: all 0.3s ease;">
-                                <i class="fa-solid fa-shield-halved" style="width: 20px;"></i> Segurança e Acessos
+                <div class="settings-layout" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <!-- Settings Top Menu (Tabs) -->
+                    <div class="glass-panel settings-tabs-header" style="padding: 0.75rem; width: 100%;">
+                        <nav class="settings-menu"
+                            style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-start;">
+                            <button class="settings-tab-btn active" data-target="set-rbac">
+                                <i class="fa-solid fa-shield-halved"></i> Segurança e Acessos
                             </button>
-                            <button class="settings-tab-btn" data-target="set-equipe"
-                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
-                                <i class="fa-solid fa-users" style="width: 20px;"></i> Contas e Equipe
+                            <button class="settings-tab-btn" data-target="set-equipe">
+                                <i class="fa-solid fa-users"></i> Contas e Equipe
                             </button>
-                            <button class="settings-tab-btn" data-target="set-backup"
-                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
-                                <i class="fa-solid fa-cloud-arrow-down" style="width: 20px;"></i> Backups de Sistema
+                            <button class="settings-tab-btn" data-target="set-backup">
+                                <i class="fa-solid fa-cloud-arrow-down"></i> Backups de Sistema
                             </button>
-                            <div class="nav-divider" style="margin: 0.5rem 0;"></div>
-                            <button class="settings-tab-btn" data-target="set-auditoria"
-                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
-                                <i class="fa-solid fa-clipboard-list" style="width: 20px;"></i> Logs de Atividade
+                            <div class="nav-divider-v"
+                                style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); align-self: center; margin: 0 0.5rem;">
+                            </div>
+                            <button class="settings-tab-btn" data-target="set-auditoria">
+                                <i class="fa-solid fa-clipboard-list"></i> Logs de Atividade
                             </button>
-                            <button class="settings-tab-btn" data-target="set-auditoria-comp"
-                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
-                                <i class="fa-solid fa-magnifying-glass-chart" style="width: 20px;"></i> Auditoria de
-                                Competência
+                            <button class="settings-tab-btn" data-target="set-auditoria-comp">
+                                <i class="fa-solid fa-magnifying-glass-chart"></i> Auditoria de Competência
                             </button>
-                            <div class="nav-divider" style="margin: 0.5rem 0;"></div>
-                            <button class="settings-tab-btn" data-target="set-branding"
-                                style="text-align: left; padding: 1rem; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;">
-                                <i class="fa-solid fa-pen-to-square" style="width: 20px;"></i> Personalização
+                            <div class="nav-divider-v"
+                                style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); align-self: center; margin: 0 0.5rem;">
+                            </div>
+                            <button class="settings-tab-btn" data-target="set-branding">
+                                <i class="fa-solid fa-pen-to-square"></i> Personalização
                             </button>
                         </nav>
                     </div>
