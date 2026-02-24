@@ -85,7 +85,8 @@ body {
     min-height: 100vh;
     background-image: var(--bg-gradient);
     background-attachment: fixed;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -161,7 +162,9 @@ body {
 .app-container {
     display: flex;
     height: 100vh;
-    width: 100vw;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 /* Sidebar Navigation */
@@ -397,6 +400,7 @@ body {
     overflow-x: hidden;
     scroll-behavior: smooth;
     position: relative;
+    width: 100%;
 }
 
 /* Custom Scrollbar for Main Content */
@@ -424,7 +428,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 3rem;
+    padding: 0 1.5rem;
+    /* Reduzido de 3rem */
     position: sticky;
     top: 0;
     z-index: 10;
@@ -554,7 +559,8 @@ body {
 
 /* Views General Styles */
 .view-section {
-    padding: 2rem 3rem 4rem;
+    padding: 1.5rem;
+    /* Ajustado para ser mais flexível */
     animation: fadeAndSlideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
@@ -3093,9 +3099,9 @@ body {
         align-items: center;
     }
 
-    /* Grids e Layout de Conteúdo */
+    /* Grids e Layout de Conteúdo - Forçar Resete */
     .view-section {
-        padding: 1rem 1rem 2rem;
+        padding: 1rem !important;
     }
 
     .section-header {
@@ -3111,19 +3117,38 @@ body {
         padding-bottom: 5px;
     }
 
-    /* KPI Adjustments */
     .kpi-dashboard-grid,
-    .kpi-desempenho-grid {
+    .kpi-desempenho-grid,
+    .charts-grid {
         grid-template-columns: 1fr !important;
-        gap: 0.75rem;
+        display: grid !important;
+        gap: 1rem !important;
+        width: 100% !important;
     }
 
     .kpi-chip {
         padding: 0.75rem;
+        width: 100% !important;
+        flex-shrink: 0;
     }
 
     .kpi-scroll-row {
         gap: 0.5rem;
+        display: flex !important;
+        overflow-x: auto !important;
+        padding-bottom: 8px;
+        width: 100% !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ocultar barra de rolagem em scroll-row para estética premium */
+    .kpi-scroll-row::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .kpi-scroll-row::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
     }
 
     /* Modais */
