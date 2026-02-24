@@ -14,7 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let currentOperacionalUser = 'All';
 
-let currentCompetencia = '2026-02';
+const nowApp = new Date();
+nowApp.setMonth(nowApp.getMonth() - 1);
+let currentCompetencia = `${nowApp.getFullYear()}-${(nowApp.getMonth() + 1).toString().padStart(2, '0')}`;
 // Set para rastrear grupos de rotinas que o usuário abriu manualmente
 // Preserva o estado aberto mesmo após re-renderização do painel operacional
 const operacionalGruposAbertos = new Set();
@@ -193,9 +195,7 @@ async function initApp() {
         meuCompFilter.value = currentCompetencia;
 
     } else {
-
-        currentCompetencia = '2026-02'; // Fallback
-
+        currentCompetencia = `${nowApp.getFullYear()}-${(nowApp.getMonth() + 1).toString().padStart(2, '0')}`; // Fallback
     }
 
 

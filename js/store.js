@@ -203,6 +203,8 @@ window.Store = {
         if (!db.meses) db.meses = [];
 
         const now = new Date();
+        // A competência trabalhada é sempre o mês anterior
+        now.setMonth(now.getMonth() - 1);
         const year = now.getFullYear();
         const monthNum = (now.getMonth() + 1).toString().padStart(2, '0');
         const currentCompId = `${year}-${monthNum}`;
@@ -1242,10 +1244,14 @@ window.Store = {
                 const anoAtual = new Date().getFullYear();
                 dateStr = `${anoAtual}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
             } else {
-                // Para rotinas mensais: dia fixo no mês da competência
+                // Para rotinas mensais: dia fixo no mês da execução (competência + 1 mês)
                 let [y, mStr] = currentComp.split('-');
+                let execDate = new Date(parseInt(y), parseInt(mStr) - 1, 1);
+                execDate.setMonth(execDate.getMonth() + 1);
+                let execY = execDate.getFullYear();
+                let execM = (execDate.getMonth() + 1).toString().padStart(2, '0');
                 let dia = rotina.diaPrazoPadrao.toString().padStart(2, '0');
-                dateStr = `${y}-${mStr}-${dia}`;
+                dateStr = `${execY}-${execM}-${dia}`;
             }
 
             // Checklists might be arrays of strings or objects. Normalize to objects for 'execucoes'.
