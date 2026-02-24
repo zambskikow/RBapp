@@ -179,7 +179,7 @@
                     <div class="glass-card kpi-card status-success">
                         <div class="kpi-icon"><i class="fa-solid fa-calendar-check"></i></div>
                         <div class="kpi-data">
-                            <h3>Mês Vigente (Ativo)</h3>
+                            <h3>Mês Vigente</h3>
                             <p class="kpi-value" id="kpi-active-comp-admin" style="font-size: 1.25rem;">Nenhum</p>
                         </div>
                     </div>
@@ -2374,6 +2374,30 @@
                     <i class="fa-solid fa-save"></i> Adicionar Membro
                 </button>
             </footer>
+        </div>
+    </div>
+
+    <!-- Modal: Deletar Competência -->
+    <div id="modal-delete-competencia" class="modal-overlay">
+        <div class="glass-card"
+            style="width: 100%; max-width: 450px; padding: 2rem; border-radius: 16px; text-align: center;">
+            <div
+                style="background: rgba(239, 68, 68, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; color: var(--danger);"></i>
+            </div>
+            <h2 style="margin-bottom: 1rem; color: var(--text-light);">Excluir Competência</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.5;" id="delete-comp-msg">
+                Você está prestes a apagar essa competência inteira, junto com todas as tarefas vinculadas a ela. Esta é
+                uma ação destrutiva irreversível.
+            </p>
+            <input type="hidden" id="delete-comp-id">
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button class="btn btn-secondary" onclick="closeDeleteCompetenciaModal()"
+                    style="flex: 1;">Cancelar</button>
+                <button class="btn btn-primary" id="btn-confirm-delete-comp"
+                    style="flex: 1; background: var(--danger); border-color: var(--danger);"> <i
+                        class="fa-solid fa-trash"></i> Excluir</button>
+            </div>
         </div>
     </div>
 

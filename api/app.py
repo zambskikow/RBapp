@@ -312,6 +312,11 @@ def update_mes(mes_id: str, updates: MesUpdate):
     response = supabase.table("meses").update(updates.model_dump(exclude_unset=True)).eq("id", mes_id).execute()
     return response.data
 
+@app.delete("/api/meses/{mes_id}")
+def delete_mes(mes_id: str):
+    response = supabase.table("meses").delete().eq("id", mes_id).execute()
+    return response.data
+
 # --- Setores ---
 @app.get("/api/setores")
 def get_setores():

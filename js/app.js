@@ -267,6 +267,31 @@ async function initApp() {
         });
     }
 
+    const btnConfirmDeleteComp = document.getElementById('btn-confirm-delete-comp');
+    if (btnConfirmDeleteComp) {
+        btnConfirmDeleteComp.addEventListener('click', async () => {
+            const hiddenId = document.getElementById('delete-comp-id');
+            if (hiddenId && hiddenId.value) {
+                const id = hiddenId.value;
+                btnConfirmDeleteComp.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Apagando...';
+                btnConfirmDeleteComp.disabled = true;
+
+                showLoading('Processando', `Apagando ${id}...`);
+                const success = await Store.deleteCompetencia(id);
+                hideLoading();
+
+                if (success) {
+                    closeDeleteCompetenciaModal();
+                    renderCompetenciasAdmin();
+                } else {
+                    alert('Houve um erro na exclusão. Tente novamente.');
+                    btnConfirmDeleteComp.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir';
+                    btnConfirmDeleteComp.disabled = false;
+                }
+            }
+        });
+    }
+
     // Operational Search & Sort Listeners
     const opSearch = document.getElementById('operacional-search');
     if (opSearch) {
@@ -596,7 +621,9 @@ function applyUserPermissions(auth) {
         const view = navItem.getAttribute('data-view');
         if (!view) return; // Skip non-view links like logout
 
-        if (permitidas.includes(view)) {
+        const isGerenteObj = ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(auth.permissao) || auth.nome === 'Manager';
+
+        if (permitidas.includes(view) || (isGerenteObj && view === 'competencias')) {
             navItem.style.display = 'flex'; // our UI uses flex for all nav-items
         } else {
             navItem.style.display = 'none';
@@ -2539,15 +2566,15 @@ function renderCompetenciasAdmin() {
         const tr = document.createElement('tr');
 
         let statusBadge = m.ativo
-            ? `<span class="badge" style="background:var(--success); color:#fff; border:none;"><i class="fa-solid fa-check-circle"></i> Mês Ativo (Atual)</span>`
-            : `<span class="badge"><i class="fa-solid fa-lock"></i> Histórico / Futuro</span>`;
+            ? `<span class="badge" style="background:var(--success); color:#fff; border:none; white-space:nowrap;"><i class="fa-solid fa-check-circle"></i> Mês Ativo</span>`
+            : `<span class="badge" style="white-space:nowrap;"><i class="fa-solid fa-lock"></i> Histórico / Futuro</span>`;
 
         tr.innerHTML = `
             <td><strong style="color:var(--text-light);">${m.id}</strong></td>
             <td>${m.mes}</td>
             <td>${statusBadge}</td>
             <td>
-                <div style="font-size: 0.8rem; color:var(--text-muted);">
+                <div style="font-size: 0.8rem; color:var(--text-muted); white-space:nowrap;">
                     Tarefas: ${m.total_execucoes || 0} <br>
                     Concluído: ${m.percent_concluido || 0}%
                 </div>
@@ -2563,24 +2590,37 @@ function renderCompetenciasAdmin() {
 
     // Attach Delete Events
     document.querySelectorAll('.btn-delete-comp').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
             const id = e.currentTarget.getAttribute('data-id');
-            const password = prompt(`ATENÇÃO: Você está prestes a apagar a competência ${id} INTEIRA, junto com todas as tarefas vinculadas a ela.\n\nEsta é uma ação destrutiva irreversível (Hard Delete).\n\nDigite "CONFIRMAR" para prosseguir:`);
+            const modal = document.getElementById('modal-delete-competencia');
+            const hiddenId = document.getElementById('delete-comp-id');
+            const msgEl = document.getElementById('delete-comp-msg');
 
-            if (password === 'CONFIRMAR') {
-                showLoading('Apagando Base de Dados', 'Isso pode demorar alguns instantes dependendo da quantidade de tarefas vinculadas a este mês...');
-                const success = await Store.deleteCompetencia(id);
-                hideLoading();
-                if (success) {
-                    renderCompetenciasAdmin();
-                } else {
-                    alert('Houve um erro na exclusão. Tente novamente.');
-                }
-            } else if (password !== null) {
-                alert('Exclusão cancelada: palavra de confirmação incorreta.');
+            if (modal && hiddenId && msgEl) {
+                hiddenId.value = id;
+                msgEl.innerHTML = `Você está prestes a apagar a competência <strong>${id}</strong> inteira, junto com todas as tarefas vinculadas a ela. Esta é uma ação destrutiva irreversível.`;
+                modal.style.display = 'flex';
+                // Trigger CSS transitions
+                setTimeout(() => modal.classList.add('active'), 10);
             }
         });
     });
+}
+
+function closeDeleteCompetenciaModal() {
+    const modal = document.getElementById('modal-delete-competencia');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+        document.getElementById('delete-comp-id').value = '';
+
+        // Reset button state
+        const submitBtn = document.getElementById('btn-confirm-delete-comp');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir';
+        }
+    }
 }
 
 // ==========================================
