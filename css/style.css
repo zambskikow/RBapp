@@ -1533,11 +1533,12 @@ body {
    ========================================== */
 .inbox-container-premium.inmail-refined {
     display: grid;
-    grid-template-columns: 280px 420px 1fr;
+    grid-template-columns: 260px 380px 1fr;
     height: 100%;
     background: rgba(15, 23, 42, 0.4);
     backdrop-filter: blur(20px);
     overflow: hidden;
+    width: 100%;
 }
 
 /* Coluna 1: Sidebar Avançada */
@@ -1924,7 +1925,7 @@ body {
 .reader-body-scroll-refined {
     flex: 1;
     overflow-y: auto;
-    padding: 2rem 3rem;
+    padding: 1.5rem;
 }
 
 .reader-msg-header {
@@ -2102,20 +2103,26 @@ body {
     opacity: 0.6;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1366px) {
     .inbox-container-premium.inmail-refined {
-        grid-template-columns: 240px 340px 1fr;
+        grid-template-columns: 220px 320px 1fr;
     }
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
     .inbox-container-premium.inmail-refined {
-        grid-template-columns: 1fr;
+        grid-template-columns: 80px 300px 1fr;
     }
 
-    .inbox-nav-panel,
-    .inbox-list-panel {
+    .folder-label span,
+    .nav-group-title,
+    .nav-panel-top .btn-compose-refined span {
         display: none;
+    }
+
+    .folder-label i {
+        font-size: 1.2rem;
+        margin: 0;
     }
 }
 
