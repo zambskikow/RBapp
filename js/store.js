@@ -487,11 +487,10 @@ window.Store = {
     },
 
     async checkEmployeeCompetenciaCompletion(competenciaId) {
-        // Obter usuário logado (assumimos que o logado é o executor)
         const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
 
-        // Se for admin vendo "Tudo", a verificação seria muito ampla. Vamos verificar as rotinas direcionadas a ele
-        let execsUser = db.execucoes.filter(e => e.competencia === competenciaId && e.responsavel && e.responsavel.includes(username));
+        // Espelhar exatamente o que o usuário vê na interface (ignora órfãos)
+        let execsUser = this.getExecucoesWithDetails(username).filter(e => e.competencia === competenciaId);
 
         if (execsUser.length === 0) return; // Nenhuma rotina atribuída
 
@@ -529,16 +528,16 @@ window.Store = {
                     if (res.ok) {
                         const data = await res.json();
                         db.meses.push(data[0]);
-                        // Disparar evento para atualizar dropdowns na UI
-                        if (typeof window.updateCompetenciaSelects === 'function') {
-                            window.updateCompetenciaSelects(nextCompId);
-                        }
+                        existsM = data[0];
                     }
                 } catch (e) { console.error("Erro ao criar mês de liberação antecipada", e); }
             }
 
-            // Gerar execuções para o username na próxima competência
-            let tarefasGeradas = 0;
+            // Exige atualização visual dos Selects caso o mes não estivesse lá ainda
+            if (typeof window.updateCompetenciaSelects === 'function') {
+                window.updateCompetenciaSelects(nextCompId);
+            }
+
             for (let cliente of db.clientes) {
                 const routinesToProcess = cliente.rotinasSelecionadas || [];
                 for (const rotId of routinesToProcess) {
@@ -611,18 +610,15 @@ window.Store = {
                                     ehPai: true,
                                     subitems: subitems
                                 });
-                                tarefasGeradas++;
                             }
                         } catch (e) { console.error("Erro rede ao criar task release", e); }
                     }
                 }
             }
 
-            if (tarefasGeradas > 0) {
-                // Dispara confeti / notificação se tiver UI handling no window
-                if (typeof window.showEarlyReleaseToast === 'function') {
-                    window.showEarlyReleaseToast(nextExt);
-                }
+            // Sempre alertar sobre a liberação
+            if (typeof window.showEarlyReleaseToast === 'function') {
+                window.showEarlyReleaseToast(nextExt);
             }
         }
     },
