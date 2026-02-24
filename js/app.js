@@ -253,18 +253,48 @@ async function initApp() {
     // Event Listener Gestão de Competências
     const btnAddComp = document.getElementById('btn-add-competencia');
     if (btnAddComp) {
-        btnAddComp.addEventListener('click', async () => {
+        btnAddComp.addEventListener('click', () => {
             const compAtualAno = new Date().getFullYear();
-            const inputVal = prompt("Digite o ID da nova competência no formato YYYY-MM (Ex: 2024-03):", `${compAtualAno}-`);
-            if (inputVal && /^\d{4}-\d{2}$/.test(inputVal)) {
-                if (confirm(`Tem certeza que deseja adicionar a competência ${inputVal} e gerar as obrigações manualmente?`)) {
-                    await Store.addCompetenciaManual(inputVal);
-                    renderCompetenciasAdmin();
-                }
-            } else if (inputVal) {
-                showNotify("Atenção", "Formato inválido. Use YYYY-MM.", "warning");
+            const modal = document.getElementById('modal-add-competencia');
+            const input = document.getElementById('add-comp-input');
+            if (modal && input) {
+                input.value = `${compAtualAno}-`;
+                modal.classList.add('active');
+                input.focus();
             }
         });
+    }
+
+    const btnConfirmAddComp = document.getElementById('btn-confirm-add-comp');
+    if (btnConfirmAddComp) {
+        btnConfirmAddComp.addEventListener('click', async () => {
+            const inputVal = document.getElementById('add-comp-input').value;
+            if (inputVal && /^\d{4}-\d{2}$/.test(inputVal)) {
+                btnConfirmAddComp.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando...';
+                btnConfirmAddComp.disabled = true;
+
+                showLoading('Processando', `Criando competência ${inputVal}...`);
+                const success = await Store.addCompetenciaManual(inputVal);
+                hideLoading();
+
+                closeAddCompetenciaModal();
+                if (success) {
+                    renderCompetenciasAdmin();
+                    showNotify("Sucesso", "Competência gerada e obrigações criadas com sucesso!", "success");
+                }
+                // O erro de duplicação já lança showNotify lá no Store
+
+                btnConfirmAddComp.innerHTML = '<i class="fa-solid fa-check"></i> Gerar Competência';
+                btnConfirmAddComp.disabled = false;
+            } else if (inputVal) {
+                showNotify("Atenção", "Formato inválido. Use YYYY-MM (Ex: 2024-03).", "warning");
+            }
+        });
+    }
+
+    window.closeAddCompetenciaModal = function () {
+        const modal = document.getElementById('modal-add-competencia');
+        if (modal) modal.classList.remove('active');
     }
 
     const btnConfirmDeleteComp = document.getElementById('btn-confirm-delete-comp');
