@@ -956,7 +956,93 @@ window.Store = {
         }
     },
 
+    async criarExecucaoEventual(rotinaId, clienteId) {
+        const rotina = db.rotinasBase.find(r => r.id === parseInt(rotinaId));
+        const cliente = db.clientes.find(c => c.id === parseInt(clienteId));
+
+        if (!rotina || !cliente) {
+            console.error('[criarExecucaoEventual] Rotina ou cliente não encontrado.');
+            return { ok: false, msg: 'Rotina ou cliente não encontrado.' };
+        }
+
+        const month = db.meses.find(m => m.ativo);
+        const currentComp = month ? month.id : new Date().toISOString().slice(0, 7);
+
+        // Verifica duplicidade: mesma rotina + cliente + competência já pendente
+        const jaExiste = db.execucoes.find(e =>
+            e.clienteId === cliente.id &&
+            e.rotina === rotina.nome &&
+            e.competencia === currentComp &&
+            !e.feito
+        );
+        if (jaExiste) {
+            return { ok: false, msg: `Já existe uma demanda "${rotina.nome}" pendente para ${cliente.razaoSocial} neste mês.` };
+        }
+
+        // Prazo: hoje + diaPrazoPadrao dias corridos
+        const diasSLA = parseInt(rotina.diaPrazoPadrao) || 0;
+        const prazoEvt = new Date();
+        prazoEvt.setDate(prazoEvt.getDate() + diasSLA);
+        const dateStr = prazoEvt.toISOString().split('T')[0];
+
+        // Normalizar checklist
+        const subitems = (rotina.checklistPadrao || []).map((item, idx) => ({
+            id: idx + 1,
+            texto: typeof item === 'string' ? item : item.texto,
+            done: false
+        }));
+
+        try {
+            const res = await fetch(`${API_BASE}/execucoes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cliente_id: cliente.id,
+                    rotina: rotina.nome,
+                    competencia: currentComp,
+                    dia_prazo: dateStr,
+                    drive_link: cliente.driveLink || '',
+                    responsavel: rotina.responsavel || 'Automático',
+                    subitems: subitems,
+                    eh_pai: true,
+                    feito: false,
+                    iniciado_em: new Date().toISOString().split('T')[0],
+                    checklist_gerado: true
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const newId = data[0] ? data[0].id : Date.now();
+                db.execucoes.push({
+                    id: newId,
+                    clienteId: cliente.id,
+                    rotina: rotina.nome,
+                    competencia: currentComp,
+                    diaPrazo: dateStr,
+                    driveLink: cliente.driveLink || '',
+                    feito: false,
+                    feitoEm: null,
+                    responsavel: rotina.responsavel || 'Automático',
+                    iniciadoEm: new Date().toISOString().split('T')[0],
+                    checklistGerado: true,
+                    ehPai: true,
+                    subitems: subitems
+                });
+                this.registerLog('Demanda Eventual', `Criada demanda "${rotina.nome}" para ${cliente.razaoSocial} (prazo: ${dateStr})`);
+                return { ok: true };
+            } else {
+                console.error('[criarExecucaoEventual] Erro API:', res.status);
+                return { ok: false, msg: `Erro ao criar demanda (${res.status}).` };
+            }
+        } catch (e) {
+            console.error('[criarExecucaoEventual] Erro de rede:', e);
+            return { ok: false, msg: 'Erro de conexão ao criar demanda.' };
+        }
+    },
+
     async engineRotinas(cliente) {
+
         // Build routines for the active month
         const month = db.meses.find(m => m.ativo);
         if (!month) {

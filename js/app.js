@@ -3029,6 +3029,100 @@ function closeModal() {
 
 }
 
+// ==========================================
+// MODAL: Nova Demanda Eventual
+// ==========================================
+function openDemandaEventualModal() {
+    const modal = document.getElementById('modal-demanda-eventual');
+
+    // Listar apenas rotinas com frequência Eventual
+    const rotinas = Store.getData().rotinasBase.filter(r => r.frequencia === 'Eventual');
+    const clientes = Store.getData().clientes.filter(c => c.ativo !== false);
+
+    const rotinasSel = document.getElementById('evt-rotina-select');
+    const clientesSel = document.getElementById('evt-cliente-select');
+
+    rotinasSel.innerHTML = '<option value="">— Selecione a Rotina —</option>';
+    rotinas.forEach(r => {
+        rotinasSel.innerHTML += `<option value="${r.id}">${r.nome} (${r.diaPrazoPadrao} d.c.)</option>`;
+    });
+
+    clientesSel.innerHTML = '<option value="">— Selecione o Cliente —</option>';
+    clientes.sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '', 'pt-BR'))
+        .forEach(c => {
+            clientesSel.innerHTML += `<option value="${c.id}">${c.razaoSocial}</option>`;
+        });
+
+    // Resetar preview de prazo
+    document.getElementById('evt-prazo-preview').style.display = 'none';
+
+    if (rotinas.length === 0) {
+        alert('Não há rotinas eventuais cadastradas. Cadastre uma rotina com frequência "Eventual" primeiro.');
+        return;
+    }
+
+    modal.style.display = 'flex';
+}
+
+function onEventualRotinaChange() {
+    const rotinaId = document.getElementById('evt-rotina-select').value;
+    const preview = document.getElementById('evt-prazo-preview');
+    const prazoText = document.getElementById('evt-prazo-text');
+
+    if (!rotinaId) {
+        preview.style.display = 'none';
+        return;
+    }
+
+    const rotina = Store.getData().rotinasBase.find(r => r.id === parseInt(rotinaId));
+    if (!rotina) return;
+
+    const dias = parseInt(rotina.diaPrazoPadrao) || 0;
+    const prazo = new Date();
+    prazo.setDate(prazo.getDate() + dias);
+    const prazoStr = prazo.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    prazoText.textContent = `Prazo estimado: ${prazoStr} (${dias} dias corridos a partir de hoje)`;
+    preview.style.display = 'block';
+}
+
+function closeDemandaEventualModal() {
+    document.getElementById('modal-demanda-eventual').style.display = 'none';
+}
+
+async function handleSaveDemandaEventual() {
+    const rotinaId = document.getElementById('evt-rotina-select').value;
+    const clienteId = document.getElementById('evt-cliente-select').value;
+
+    if (!rotinaId) {
+        alert('Selecione uma rotina eventual.');
+        return;
+    }
+    if (!clienteId) {
+        alert('Selecione um cliente.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-confirmar-eventual');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
+
+    const result = await Store.criarExecucaoEventual(rotinaId, clienteId);
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Demanda';
+
+    if (result.ok) {
+        closeDemandaEventualModal();
+        renderOperacional();
+        renderDashboard();
+        showFeedbackToast('Demanda eventual criada com sucesso!', 'success');
+    } else {
+        alert(result.msg || 'Erro ao criar demanda eventual.');
+    }
+}
+
+
 
 
 // Helpers
