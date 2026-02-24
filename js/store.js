@@ -316,9 +316,35 @@ window.Store = {
     // UI Engine gets filtered from the local Cache (which was populated via loadFromStorage mapping)
     getExecucoesWithDetails(userFilter = 'All') {
         const tToday = new Date().setHours(0, 0, 0, 0);
-        // Filtrar execuções órfãs: ignorar tarefas cuja rotina foi excluída do sistema
+        // Filtra execuções órfãs ou de clientes que perderam o vínculo com a rotina
+        const activeMonth = db.meses.find(m => m.ativo);
+        const currentComp = activeMonth ? activeMonth.id : null;
+
         const rotinasAtivas = new Set(db.rotinasBase.map(r => r.nome));
-        let execs = db.execucoes.filter(ex => rotinasAtivas.has(ex.rotina)).map(ex => {
+
+        let execs = db.execucoes.filter(ex => {
+            if (!rotinasAtivas.has(ex.rotina)) return false; // Rotina foi apagada do sistema sumariamente
+
+            // Regra Anti-Órfãos V2 (Evita clientes não vinculados exibidos no painel Operacional)
+            const client = db.clientes.find(c => c.id === ex.clienteId);
+            if (!client) return false;
+
+            const rotinaObj = db.rotinasBase.find(r => r.nome === ex.rotina);
+            if (!rotinaObj) return false;
+
+            // Só esconde "órfãos" se for a competência atual ou futural. 
+            // O passado (Ex: Janeiro) fica salvo para Histórico e Auditoria mesmo que o cliente tenha sido removido em Março.
+            const isHistorico = currentComp && ex.competencia < currentComp;
+
+            if (!isHistorico) {
+                const rotinasDoCliente = client.rotinasSelecionadas || [];
+                if (!rotinasDoCliente.includes(rotinaObj.id)) {
+                    return false; // A rotina não pertence mais ao cliente. Omitir.
+                }
+            }
+
+            return true;
+        }).map(ex => {
             const client = db.clientes.find(c => c.id === ex.clienteId);
             const dPrazo = ex.diaPrazo ? new Date(ex.diaPrazo + "T00:00:00").setHours(0, 0, 0, 0) : tToday;
 
