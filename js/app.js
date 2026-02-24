@@ -14,7 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let currentOperacionalUser = 'All';
 
-let currentCompetencia = '2026-02';
+const nowApp = new Date();
+nowApp.setMonth(nowApp.getMonth() - 1);
+let currentCompetencia = `${nowApp.getFullYear()}-${(nowApp.getMonth() + 1).toString().padStart(2, '0')}`;
 // Set para rastrear grupos de rotinas que o usuário abriu manualmente
 // Preserva o estado aberto mesmo após re-renderização do painel operacional
 const operacionalGruposAbertos = new Set();
@@ -52,9 +54,9 @@ async function initApp() {
 
 
 
-    // Check local storage for session
+    // Check session storage for session
 
-    const storedSession = localStorage.getItem('fiscalapp_session');
+    const storedSession = sessionStorage.getItem('fiscalapp_session');
 
     if (storedSession) {
 
@@ -86,13 +88,16 @@ async function initApp() {
 
 
 
-            const savedView = localStorage.getItem('fiscalapp_current_view') || 'dashboard';
+            const savedView = sessionStorage.getItem('fiscalapp_current_view') || 'dashboard';
 
 
 
             // Apply permissions to Navbar BEFORE clicking!
 
             applyUserPermissions(auth);
+
+            // Aplicar Identidade Visual (Branding)
+            applyBranding();
 
 
 
@@ -107,7 +112,7 @@ async function initApp() {
             renderRotinas();
 
             renderMensagens();
-
+            initInboxTabs();
             renderAuditoria();
 
             updateMensagensBadges();
@@ -176,47 +181,41 @@ async function initApp() {
 
 
     // Set default values based on the store's active month
-
     const activeMonth = Store.getData().meses.find(m => m.ativo) || Store.getData().meses[0];
+    const savedCompetencia = localStorage.getItem('lastCompetencia');
 
-    if (activeMonth) {
-
+    if (savedCompetencia && Store.getData().meses.find(m => m.id === savedCompetencia)) {
+        currentCompetencia = savedCompetencia;
+    } else if (activeMonth) {
         currentCompetencia = activeMonth.id;
-
-        compFilter.value = currentCompetencia;
-
-        dashCompFilter.value = currentCompetencia;
-
-        meuCompFilter.value = currentCompetencia;
-
     } else {
-
-        currentCompetencia = '2026-02'; // Fallback
-
+        currentCompetencia = `${nowApp.getFullYear()}-${(nowApp.getMonth() + 1).toString().padStart(2, '0')}`; // Fallback
     }
 
+    compFilter.value = currentCompetencia;
+    dashCompFilter.value = currentCompetencia;
+    meuCompFilter.value = currentCompetencia;
 
 
-    // 2.5 Toggle Sidebar
 
     const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
-
+    const btnCloseSidebar = document.getElementById('btn-close-sidebar');
     const sidebar = document.querySelector('.sidebar');
 
     if (btnToggleSidebar && sidebar) {
-
         btnToggleSidebar.addEventListener('click', () => {
-
-            sidebar.classList.toggle('collapsed');
-
-            if (window.innerWidth <= 992) {
-
-                sidebar.classList.toggle('mobile-open');
-
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('mobile-open');
+            } else {
+                sidebar.classList.toggle('collapsed');
             }
-
         });
+    }
 
+    if (btnCloseSidebar && sidebar) {
+        btnCloseSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+        });
     }
 
 
@@ -241,6 +240,7 @@ async function initApp() {
 
     compFilter.addEventListener('change', (e) => {
         currentCompetencia = e.target.value;
+        localStorage.setItem('lastCompetencia', currentCompetencia);
         dashCompFilter.value = currentCompetencia;
         meuCompFilter.value = currentCompetencia;
         renderOperacional();
@@ -249,6 +249,48 @@ async function initApp() {
         const meuDesempenhoView = document.getElementById('view-meu-desempenho');
         if (meuDesempenhoView && meuDesempenhoView.style.display === 'block') renderMeuDesempenho();
     });
+
+    // Event Listener Gestão de Competências
+    const btnAddComp = document.getElementById('btn-add-competencia');
+    if (btnAddComp) {
+        btnAddComp.addEventListener('click', async () => {
+            const compAtualAno = new Date().getFullYear();
+            const inputVal = prompt("Digite o ID da nova competência no formato YYYY-MM (Ex: 2024-03):", `${compAtualAno}-`);
+            if (inputVal && /^\d{4}-\d{2}$/.test(inputVal)) {
+                if (confirm(`Tem certeza que deseja adicionar a competência ${inputVal} e gerar as obrigações manualmente?`)) {
+                    await Store.addCompetenciaManual(inputVal);
+                    renderCompetenciasAdmin();
+                }
+            } else if (inputVal) {
+                showNotify("Atenção", "Formato inválido. Use YYYY-MM.", "warning");
+            }
+        });
+    }
+
+    const btnConfirmDeleteComp = document.getElementById('btn-confirm-delete-comp');
+    if (btnConfirmDeleteComp) {
+        btnConfirmDeleteComp.addEventListener('click', async () => {
+            const hiddenId = document.getElementById('delete-comp-id');
+            if (hiddenId && hiddenId.value) {
+                const id = hiddenId.value;
+                btnConfirmDeleteComp.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Apagando...';
+                btnConfirmDeleteComp.disabled = true;
+
+                showLoading('Processando', `Apagando ${id}...`);
+                const success = await Store.deleteCompetencia(id);
+                hideLoading();
+
+                if (success) {
+                    closeDeleteCompetenciaModal();
+                    renderCompetenciasAdmin();
+                } else {
+                    showNotify("Erro", "Houve um erro na exclusão. Tente novamente.", "error");
+                    btnConfirmDeleteComp.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir';
+                    btnConfirmDeleteComp.disabled = false;
+                }
+            }
+        });
+    }
 
     // Operational Search & Sort Listeners
     const opSearch = document.getElementById('operacional-search');
@@ -310,37 +352,25 @@ async function initApp() {
 
 
     dashCompFilter.addEventListener('change', (e) => {
-
         currentCompetencia = e.target.value;
-
+        localStorage.setItem('lastCompetencia', currentCompetencia);
         compFilter.value = currentCompetencia;
-
         meuCompFilter.value = currentCompetencia;
-
         renderDashboard();
-
         renderOperacional();
-
         renderMeuDesempenho();
-
     });
 
 
 
     meuCompFilter.addEventListener('change', (e) => {
-
         currentCompetencia = e.target.value;
-
+        localStorage.setItem('lastCompetencia', currentCompetencia);
         compFilter.value = currentCompetencia;
-
         dashCompFilter.value = currentCompetencia;
-
         renderMeuDesempenho();
-
         renderOperacional();
-
         renderDashboard();
-
     });
 
 
@@ -431,6 +461,14 @@ async function initApp() {
         });
     }
 
+    const sortClientesRotina = document.getElementById('sort-clientes-rotina');
+    if (sortClientesRotina) {
+        sortClientesRotina.addEventListener('change', (e) => {
+            const rotinaId = document.getElementById('rotina-id').value;
+            renderRoutineClientsGrid(e.target.value, rotinaId ? parseInt(rotinaId) : null);
+        });
+    }
+
     const notificationBtn = document.getElementById('btn-notification');
     if (notificationBtn) {
         notificationBtn.addEventListener('click', () => {
@@ -487,7 +525,74 @@ async function initApp() {
     if (closeCargo2) closeCargo2.addEventListener('click', closeCargoModal);
     const cargoForm = document.getElementById('admin-cargo-form');
     if (cargoForm) cargoForm.addEventListener('submit', handleSaveCargo);
+
+    // 14. Branding Event
+    const brandingForm = document.getElementById('form-branding');
+    if (brandingForm) {
+        brandingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const configData = {
+                brandName: document.getElementById('brand-name').value,
+                brandLogoUrl: document.getElementById('brand-logo-url').value,
+                accentColor: document.getElementById('brand-accent-color').value,
+                slogan: document.getElementById('brand-slogan').value,
+                theme: document.getElementById('brand-theme').value
+            };
+            await Store.updateBranding(configData);
+            applyBranding();
+            showNotify("Sucesso", "Identidade visual personalizada com sucesso!", "success");
+        });
+    }
 }
+
+/**
+ * Exibe uma notificação elegante (Toast) na tela
+ * @param {string} title Título da mensagem
+ * @param {string} message Conteúdo da mensagem
+ * @param {string} type Tipo: 'success', 'error', 'info', 'warning'
+ */
+window.showNotify = function (title, message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    let icon = 'fa-circle-info';
+    if (type === 'success') icon = 'fa-circle-check';
+    if (type === 'error') icon = 'fa-circle-exclamation';
+    if (type === 'warning') icon = 'fa-triangle-exclamation';
+
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="fa-solid ${icon}"></i>
+        </div>
+        <div class="toast-content">
+            <span class="toast-title">${title}</span>
+            <span class="toast-message">${message}</span>
+        </div>
+        <button class="toast-close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `;
+
+    container.appendChild(toast);
+
+    // Evento para fechar manual
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 500);
+    });
+
+    // Auto close após 5 segundos
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 500);
+        }
+    }, 5000);
+}
+
 
 function handleLogin(e) {
     e.preventDefault();
@@ -521,6 +626,9 @@ function handleLogin(e) {
             // Execute Dynamic Authorization on Navbar (RBAC)
             applyUserPermissions(auth);
 
+            // Aplicar Branding após Login
+            applyBranding();
+
             // Re-route user to their first available view if they don't have access to Dashboard
             if (!auth.telas_permitidas.includes('dashboard') && auth.telas_permitidas.length > 0) {
                 const firstView = auth.telas_permitidas[0];
@@ -528,7 +636,7 @@ function handleLogin(e) {
                 if (firstNav) firstNav.click();
             }
 
-            localStorage.setItem('fiscalapp_session', auth.id);
+            sessionStorage.setItem('fiscalapp_session', auth.id);
 
             // Execute Auto-Backup if enabled
             checkAndRunAutoBackup();
@@ -540,44 +648,80 @@ function handleLogin(e) {
 
 function handleLogout() {
     Store.registerLog("Acesso", `${LOGGED_USER ? LOGGED_USER.nome : 'Usuário'} saiu do sistema.`);
-    LOGGED_USER = null;
-    localStorage.removeItem('fiscalapp_session');
 
-    // Smooth transition
-    document.getElementById('main-app-container').classList.add('fade-out');
+    // Disparar animação de shutdown
+    const overlay = document.getElementById('shutdown-overlay');
+    if (overlay) {
+        overlay.classList.add('active');
+    }
+
     setTimeout(() => {
+        LOGGED_USER = null;
+        sessionStorage.removeItem('fiscalapp_session');
         window.location.reload();
-    }, 300);
+    }, 850); // Um pouco mais que a animação CSS (800ms)
 }
 
+// Master state for menu order
+let currentMenuOrder = [];
+
 function applyUserPermissions(auth) {
+    const config = Store.getData().config || {};
+    const savedOrder = config.menuOrder || [];
     const permitidas = auth.telas_permitidas || [];
+
+    // Master Admin bypass: Manager account or "Gerente" permission gets everything
+    const isMasterAdmin = auth.nome === 'Manager' || auth.permissao === 'Gerente';
+
+    const sidebarNav = document.querySelector('.sidebar .nav-menu');
+    if (sidebarNav) {
+        const navItems = Array.from(sidebarNav.querySelectorAll('.nav-item'));
+
+        // Reorder items in DOM if savedOrder exists
+        if (savedOrder.length > 0) {
+            savedOrder.forEach(viewKey => {
+                const item = navItems.find(i => i.getAttribute('data-view') === viewKey);
+                if (item) sidebarNav.appendChild(item);
+            });
+            // Append any items not in savedOrder to the end (future proofing)
+            navItems.forEach(item => {
+                if (!savedOrder.includes(item.getAttribute('data-view'))) {
+                    sidebarNav.appendChild(item);
+                }
+            });
+        }
+    }
 
     // Loop through all navigation links and show/hide based on array
     document.querySelectorAll('.nav-item').forEach(navItem => {
         const view = navItem.getAttribute('data-view');
         if (!view) return; // Skip non-view links like logout
 
-        if (permitidas.includes(view)) {
+        if (isMasterAdmin || permitidas.includes(view)) {
             navItem.style.display = 'flex'; // our UI uses flex for all nav-items
         } else {
             navItem.style.display = 'none';
         }
     });
 
+    // Final cleanup: ensure nav-divider and specific buttons follow the order
+    const adminNavDivider = document.getElementById('admin-nav-divider');
+    const navSettings = document.getElementById('nav-settings');
+    if (adminNavDivider && sidebarNav) sidebarNav.appendChild(adminNavDivider);
+    if (navSettings && sidebarNav) sidebarNav.appendChild(navSettings);
+
     // Hide/Show specific inner buttons based on permissions
     const btnSetores = document.getElementById('btn-manage-setores');
     if (btnSetores) {
-        if (auth.permissao === 'Gerente' || permitidas.includes('settings')) {
+        if (isMasterAdmin || permitidas.includes('settings')) {
             btnSetores.style.display = 'inline-block';
         } else {
             btnSetores.style.display = 'none';
         }
     }
 
-    const adminNavDivider = document.getElementById('admin-nav-divider');
     if (adminNavDivider) {
-        if (auth.permissao === 'Gerente' || permitidas.includes('settings')) {
+        if (isMasterAdmin || permitidas.includes('settings')) {
             adminNavDivider.style.display = 'block';
         } else {
             adminNavDivider.style.display = 'none';
@@ -607,6 +751,62 @@ function applyUserPermissions(auth) {
     }
 }
 
+function applyBranding() {
+    const config = Store.getData().config || {};
+    const brandName = config.brandName || "RB|App";
+    const brandLogoUrl = config.brandLogoUrl || "";
+    const accentColor = config.accentColor || "#6366f1";
+    const slogan = config.slogan || "";
+    const theme = config.theme || "glass";
+
+    // 1. Aplicar Cores (CSS Variables)
+    const root = document.documentElement;
+    root.style.setProperty('--primary', accentColor);
+    root.style.setProperty('--primary-light', accentColor + 'ee');
+    root.style.setProperty('--accent', accentColor);
+    root.style.setProperty('--accent-glow', accentColor + '40'); // 25% opacity
+
+    // 2. Aplicar Classe de Tema ao BODY
+    // Remove todas as classes de tema anteriores
+    document.body.classList.remove('theme-glass', 'theme-dark', 'theme-light');
+    document.body.classList.add(`theme-${theme}`);
+
+    // 3. Atualizar Sidebar Logo e Slogan
+    const sidebarLogo = document.querySelector('.sidebar .logo span');
+    if (sidebarLogo) sidebarLogo.textContent = brandName;
+
+    const sidebarSlogan = document.querySelector('.sidebar .logo p');
+    if (sidebarSlogan) {
+        sidebarSlogan.textContent = slogan;
+        sidebarSlogan.style.display = slogan ? 'block' : 'none';
+    }
+
+    // 4. Atualizar Login Logo
+    const loginLogo = document.querySelector('.login-logo');
+    if (loginLogo) {
+        if (brandLogoUrl) {
+            loginLogo.innerHTML = `<img src="${brandLogoUrl}" alt="${brandName}" style="max-height: 60px; border-radius: 8px; margin-bottom: 10px;">
+                                   <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-main);">${brandName}</div>`;
+        } else {
+            loginLogo.innerHTML = `<i class="fa-solid fa-chart-line" style="font-size: 3rem; color: var(--primary);"></i> 
+                                   <div style="font-size: 1.5rem; font-weight: 800; margin-top: 5px;">${brandName}</div>`;
+        }
+    }
+
+    // 5. Sincronizar campos do formulário de personalização
+    const inputName = document.getElementById('brand-name');
+    const inputColor = document.getElementById('brand-accent-color');
+    const inputSlogan = document.getElementById('brand-slogan');
+    const inputLogo = document.getElementById('brand-logo-url');
+    const selectTheme = document.getElementById('brand-theme');
+
+    if (inputName) inputName.value = brandName;
+    if (inputColor) inputColor.value = accentColor;
+    if (inputSlogan) inputSlogan.value = slogan;
+    if (inputLogo) inputLogo.value = brandLogoUrl;
+    if (selectTheme) selectTheme.value = theme;
+}
+
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(link => {
@@ -628,7 +828,7 @@ function setupNavigation() {
 
             // Switch views globally
             const targetView = link.getAttribute('data-view');
-            localStorage.setItem('fiscalapp_current_view', targetView);
+            sessionStorage.setItem('fiscalapp_current_view', targetView);
             document.querySelectorAll('.view-section').forEach(view => {
                 view.style.display = 'none';
                 view.classList.remove('active');
@@ -640,6 +840,16 @@ function setupNavigation() {
                 // Small delay to trigger CSS animation
                 setTimeout(() => viewEl.classList.add('active'), 10);
 
+                // Fechar sidebar no mobile após navegar
+                if (window.innerWidth <= 768) {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar) sidebar.classList.remove('mobile-open');
+                }
+
+                if (targetView === 'marketing') {
+                    Marketing.init();
+                }
+
                 // Refresh data based on view
                 if (targetView === 'dashboard') renderDashboard();
                 if (targetView === 'meu-desempenho') renderMeuDesempenho();
@@ -647,6 +857,7 @@ function setupNavigation() {
                 if (targetView === 'clientes') renderClientes();
                 if (targetView === 'rotinas') renderRotinas();
                 if (targetView === 'mensagens') renderMensagens();
+                if (targetView === 'competencias') renderCompetenciasAdmin();
                 if (targetView === 'settings') {
                     // Trigger the first tab by default or re-render active
                     initSettingsTabs();
@@ -1525,6 +1736,54 @@ function renderClientes() {
 }
 
 
+// Controle de Loading Global
+function showLoading(title = 'Processando...', message = 'Por favor, aguarde um momento.') {
+    const overlay = document.getElementById('global-loading-overlay');
+    const titleEl = document.getElementById('loading-title');
+    const msgEl = document.getElementById('loading-message');
+
+    if (overlay && titleEl && msgEl) {
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        overlay.classList.add('active');
+    }
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('global-loading-overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+}
+
+// Controle do Overlay de Celebração (Early Release)
+function showSuccessOverlay(title = 'Parabéns!', message = 'Você concluiu a competência antecipadamente.') {
+    const overlay = document.getElementById('success-overlay');
+    const titleEl = document.getElementById('success-overlay-title');
+    const msgEl = document.getElementById('success-overlay-message');
+
+    if (overlay && titleEl && msgEl) {
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        // The display logic is flex by default, but hidden with opacity
+        overlay.style.pointerEvents = 'all';
+        overlay.style.opacity = '1';
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            hideSuccessOverlay();
+        }, 5000);
+    }
+}
+
+function hideSuccessOverlay() {
+    const overlay = document.getElementById('success-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+    }
+}
+
 // Funções Utilitárias Globais
 function toggleListVisibility(gridId, iconId) {
     const grid = document.getElementById(gridId);
@@ -1976,7 +2235,7 @@ function renderRotinas() {
         else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Using red to highlight
 
         const diaText = r.frequencia === 'Mensal' ? `Dia ${r.diaPrazoPadrao}` :
-            (r.frequencia === 'Anual' ? `${r.diaPrazoPadrao}` : `${r.diaPrazoPadrao} d.ú.`);
+            (r.frequencia === 'Anual' ? `${r.diaPrazoPadrao}` : `${r.diaPrazoPadrao} d.c.`);
 
         // Lista de clientes vinculados em uma só linha
         const clientesVinculados = clientes
@@ -2070,19 +2329,10 @@ function openRotinaModal(id = null) {
 
     selectFreq.onchange = (e) => updateUIForFreq(e.target.value);
 
-    // Dynamic loading of Clientes checkboxes
-    const clientesGrid = document.getElementById('clientes-checkbox-grid');
-    if (clientesGrid) {
-        clientesGrid.innerHTML = '';
-        Store.getData().clientes.forEach(c => {
-            clientesGrid.innerHTML += `
-                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
-                    <input type="checkbox" name="cliente-sel" id="cliente-cb-${c.id}" value="${c.id}" class="custom-checkbox" ${isOperacional ? 'disabled' : ''}>
-                    ${c.razaoSocial}
-                </label>
-            `;
-        });
-    }
+    // Dynamic loading of Clientes checkboxes with sorting
+    const sortMode = document.getElementById('sort-clientes-rotina')?.value || 'az';
+    renderRoutineClientsGrid(sortMode, id);
+
     const saveBtn = document.getElementById('btn-save-rotina-detail');
     if (saveBtn) saveBtn.style.display = isOperacional ? 'none' : 'inline-block';
     const resetChecklistBtn = document.getElementById('btn-add-checklist-item');
@@ -2105,14 +2355,6 @@ function openRotinaModal(id = null) {
             });
 
             currentChecklistBuilder = [...(rotina.checklistPadrao || [])];
-
-            // Check the clients that have this routine
-            Store.getData().clientes.forEach(c => {
-                if (c.rotinasSelecionadas && c.rotinasSelecionadas.includes(id)) {
-                    const cb = document.getElementById(`cliente-cb-${c.id}`);
-                    if (cb) cb.checked = true;
-                }
-            });
         }
     } else {
         title.innerHTML = '<i class="fa-solid fa-layer-group highlight-text"></i> Nova Rotina';
@@ -2128,6 +2370,57 @@ function openRotinaModal(id = null) {
     renderChecklistBuilderPreview();
     document.getElementById('rotinas-list-panel').style.display = 'none';
     document.getElementById('rotinas-detail-panel').style.display = 'block';
+
+    // Garantir que a lista de clientes esteja aberta e o chevron correto
+    const grid = document.getElementById('clientes-checkbox-grid');
+    const icon = document.getElementById('icon-cli');
+    if (grid && icon) {
+        grid.style.display = 'grid';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+
+/**
+ * Renderiza a grid de clientes no modal de rotinas com suporte a ordenação
+ */
+function renderRoutineClientsGrid(sortMode = 'az', rotinaId = null) {
+    const clientesGrid = document.getElementById('clientes-checkbox-grid');
+    if (!clientesGrid) return;
+
+    let clientes = [...Store.getData().clientes];
+    const isOperacional = LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'operacional';
+
+    // Aplicar Ordenação
+    clientes.sort((a, b) => {
+        if (sortMode === 'az') return a.razaoSocial.localeCompare(b.razaoSocial, 'pt-BR');
+        if (sortMode === 'za') return b.razaoSocial.localeCompare(a.razaoSocial, 'pt-BR');
+        if (sortMode === 'regime') return (a.regime || '').localeCompare(b.regime || '', 'pt-BR');
+        return 0;
+    });
+
+    // Guardar estados atuais dos checkboxes para não perder ao re-renderizar por ordenação
+    const selectedIds = Array.from(document.querySelectorAll('input[name="cliente-sel"]:checked')).map(cb => parseInt(cb.value));
+
+    // Se for abertura inicial de uma rotina existente, marcar os já vinculados se selectedIds estiver vazio
+    const finalSelectedIds = (selectedIds.length === 0 && rotinaId)
+        ? clientes.filter(c => c.rotinasSelecionadas && c.rotinasSelecionadas.includes(rotinaId)).map(c => c.id)
+        : selectedIds;
+
+    clientesGrid.innerHTML = '';
+    clientes.forEach(c => {
+        const isChecked = finalSelectedIds.includes(c.id);
+        clientesGrid.innerHTML += `
+            <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
+                <input type="checkbox" name="cliente-sel" id="cliente-cb-${c.id}" value="${c.id}" class="custom-checkbox" 
+                    ${isOperacional ? 'disabled' : ''} ${isChecked ? 'checked' : ''}>
+                <div>
+                    <strong>${c.razaoSocial}</strong><br>
+                    <small style="opacity:0.6; font-size:0.7rem;">${c.regime || 'Não Informado'}</small>
+                </div>
+            </label>
+        `;
+    });
 }
 
 function closeRotinaModal() {
@@ -2232,27 +2525,61 @@ async function handleSaveRotina(e) {
 
     const selectedClientIds = Array.from(document.querySelectorAll('input[name="cliente-sel"]:checked')).map(cb => parseInt(cb.value));
 
-    // Optional validation logic
+    // Validação de campos obrigatórios
+    if (!nome.trim()) {
+        showNotify("Campo Obrigatório", "O campo 'Nome da Rotina' é obrigatório.", "warning");
+        document.getElementById('rotina-nome').focus();
+        return;
+    }
+    if (!setor.trim()) {
+        showNotify("Campo Obrigatório", "O campo 'Setor' é obrigatório.", "warning");
+        document.getElementById('rotina-setor').focus();
+        return;
+    }
+    if (!prazo.trim()) {
+        showNotify("Campo Obrigatório", "O campo 'Prazo' é obrigatório.", "warning");
+        document.getElementById('rotina-prazo').focus();
+        return;
+    }
+    if (!responsavel) {
+        showNotify("Atenção", "Selecione ao menos um responsável pela rotina.", "warning");
+        return;
+    }
+
+    // Validações conforme o tipo de frequência
     if (frequencia === 'Mensal' && (isNaN(prazo) || prazo < 1 || prazo > 31)) {
-        alert("Para rotinas mensais, preencha um dia válido de 1 a 31.");
+        showNotify("Valor Inválido", "Para rotinas mensais, preencha um dia válido de 1 a 31.", "warning");
         return;
     }
     if (frequencia === 'Anual' && !prazo.includes('/')) {
-        alert("Para rotinas anuais, preencha a data no formato DD/MM.");
+        showNotify("Valor Inválido", "Para rotinas anuais, preencha a data no formato DD/MM.", "warning");
+        return;
+    }
+    if (frequencia === 'Eventual' && (isNaN(prazo) || parseInt(prazo) < 1)) {
+        showNotify("Valor Inválido", "Para rotinas eventuais, preencha um número de dias válido (mínimo: 1).", "warning");
         return;
     }
 
-    if (id) {
-        await Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
-    } else {
-        await Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
+    showLoading('Salvando Rotina', 'Processando vinculação de clientes e gerando tarefas...');
+
+    try {
+        if (id) {
+            await Store.editRotinaBase(id, nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
+        } else {
+            await Store.addRotinaBase(nome, setor, frequencia, prazo, currentChecklistBuilder, selectedClientIds, responsavel);
+        }
+
+        renderRotinas();
+        renderOperacional();
+        renderDashboard();
+
+        closeRotinaModal();
+    } catch (error) {
+        console.error("Erro ao salvar rotina:", error);
+        showNotify("Erro", "Ocorreu um erro ao salvar a rotina. Tente novamente.", "error");
+    } finally {
+        hideLoading();
     }
-
-    renderRotinas();
-    renderOperacional();
-    renderDashboard();
-
-    closeRotinaModal();
 }
 
 
@@ -2268,6 +2595,8 @@ async function handleDeleteRotina(id, btnElement = null) {
             if (icon) icon.classList.add('delete-pop');
         }
 
+        showLoading('Excluindo Rotina', `Removendo '${rotina.nome}' e todas as tarefas vinculadas...`);
+
         try {
             // Pequeno delay para a animação aparecer antes da remoção
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -2276,17 +2605,186 @@ async function handleDeleteRotina(id, btnElement = null) {
             // alert(`Rotina '${rotina.nome}' excluída com sucesso!`); // Alert opcional, UI já some
         } catch (error) {
             console.error(error);
-            alert("Ocorreu um erro ao excluir a rotina. Verifique o console.");
+            showNotify("Erro", "Ocorreu um erro ao excluir a rotina. Verifique o console.", "error");
+        } finally {
+            hideLoading();
         }
     }
 }
 
 
-
+// ==========================================
+// VIEW: Gestão de Competências (Admin) 
 // ==========================================
 
-// VIEW: Gestão de Setores (Dynamic Loader)
+function renderCompetenciasAdmin() {
+    const tbody = document.querySelector('#competencias-admin-table tbody');
+    const totalKpi = document.getElementById('kpi-total-comp-admin');
+    const activeKpi = document.getElementById('kpi-active-comp-admin');
 
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    const meses = Store.getData().meses || [];
+
+    if (totalKpi) totalKpi.textContent = meses.length;
+
+    const ativo = meses.find(m => m.ativo);
+    if (activeKpi) activeKpi.textContent = ativo ? ativo.mes : 'Nenhum';
+
+    if (meses.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem;">Nenhuma competência registrada no sistema.</td></tr>`;
+        return;
+    }
+
+    // Sort descending by ID (YYYY-MM)
+    const sortedMeses = [...meses].sort((a, b) => b.id.localeCompare(a.id));
+
+    sortedMeses.forEach(m => {
+        const tr = document.createElement('tr');
+
+        let statusBadge = m.ativo
+            ? `<span class="badge" style="background:var(--success); color:#fff; border:none; white-space:nowrap;"><i class="fa-solid fa-check-circle"></i> Mês Ativo</span>`
+            : `<span class="badge" style="white-space:nowrap;"><i class="fa-solid fa-lock"></i> Histórico / Futuro</span>`;
+
+        tr.innerHTML = `
+            <td><strong style="color:var(--text-light);">${m.id}</strong></td>
+            <td>${m.mes}</td>
+            <td>${statusBadge}</td>
+            <td>
+                <div style="font-size: 0.8rem; color:var(--text-muted); white-space:nowrap;">
+                    Tarefas: ${m.total_execucoes || 0} <br>
+                    Concluído: ${m.percent_concluido || 0}%
+                </div>
+            </td>
+            <td style="text-align: right;">
+                <button class="btn btn-outline btn-delete-comp" data-id="${m.id}" style="border-color:var(--danger); color:var(--danger); padding:0.4rem 0.8rem;" ${m.ativo ? 'disabled title="Não é possível apagar o mês atual"' : ''}>
+                    <i class="fa-solid fa-trash"></i> Apagar
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Attach Delete Events
+    document.querySelectorAll('.btn-delete-comp').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            const modal = document.getElementById('modal-delete-competencia');
+            const hiddenId = document.getElementById('delete-comp-id');
+            const msgEl = document.getElementById('delete-comp-msg');
+
+            if (modal && hiddenId && msgEl) {
+                hiddenId.value = id;
+                msgEl.innerHTML = `Você está prestes a apagar a competência <strong>${id}</strong> inteira, junto com todas as tarefas vinculadas a ela. Esta é uma ação destrutiva irreversível.`;
+                modal.style.display = 'flex';
+                // Trigger CSS transitions
+                setTimeout(() => modal.classList.add('active'), 10);
+            }
+        });
+    });
+}
+
+function closeDeleteCompetenciaModal() {
+    const modal = document.getElementById('modal-delete-competencia');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+        document.getElementById('delete-comp-id').value = '';
+
+        // Reset button state
+        const submitBtn = document.getElementById('btn-confirm-delete-comp');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir';
+        }
+    }
+}
+
+// ==========================================
+// CONFIG: Menu Reordering Logic
+// ==========================================
+
+function renderMenuReorderList() {
+    const listContainer = document.getElementById('menu-reorder-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+
+    // Pegar todos os itens do menu (conforme estão no DOM agora)
+    const navItems = Array.from(document.querySelectorAll('.sidebar .nav-item'));
+
+    navItems.forEach(item => {
+        const view = item.getAttribute('data-view');
+        if (!view || view === 'settings') return; // Settings sempre fica embaixo
+
+        const label = item.querySelector('span').textContent;
+        const iconClass = item.querySelector('i').className;
+
+        const div = document.createElement('div');
+        div.className = 'reorder-item';
+        div.draggable = true;
+        div.setAttribute('data-view', view);
+        div.innerHTML = `
+            <i class="${iconClass}"></i>
+            <span>${label}</span>
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+        `;
+
+        // Drag events
+        div.addEventListener('dragstart', () => div.classList.add('dragging'));
+        div.addEventListener('dragend', () => div.classList.remove('dragging'));
+
+        listContainer.appendChild(div);
+    });
+
+    listContainer.addEventListener('dragover', e => {
+        e.preventDefault();
+        const draggingItem = document.querySelector('.dragging');
+        const siblings = [...listContainer.querySelectorAll('.reorder-item:not(.dragging)')];
+
+        const nextSibling = siblings.find(sibling => {
+            return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+        });
+
+        listContainer.insertBefore(draggingItem, nextSibling);
+    });
+}
+
+async function saveMenuOrder() {
+    const listContainer = document.getElementById('menu-reorder-list');
+    if (!listContainer) return;
+
+    const items = listContainer.querySelectorAll('.reorder-item');
+    const newOrder = Array.from(items).map(i => i.getAttribute('data-view'));
+
+    // Always keep settings at the end
+    newOrder.push('settings');
+
+    showLoading('Salvando Ordem', 'Atualizando layout do menu lateral...');
+
+    const config = Store.getData().config || {};
+    config.menuOrder = newOrder;
+
+    // Sincronizar com formato do banco (snake_case)
+    const success = await Store.updateGlobalConfig({
+        ...config,
+        menu_order: newOrder
+    });
+    hideLoading();
+
+    if (success) {
+        // Re-apply immediately
+        applyUserPermissions(LOGGED_USER);
+        showNotify("Sucesso", "Ordem do menu salva com sucesso!", "success");
+    } else {
+        showNotify("Erro", "Erro ao salvar ordem do menu.", "error");
+    }
+}
+
+// ==========================================
+// VIEW: Gestão de Setores (Dynamic Loader)
 // ==========================================
 
 
@@ -2481,7 +2979,7 @@ function updateMensagensBadges() {
     const inboxBadge = document.getElementById('inbox-unread-badge');
     if (inboxBadge) {
         if (unreadInbox > 0) {
-            inboxBadge.style.display = 'inline-block';
+            inboxBadge.style.display = 'block';
             inboxBadge.textContent = unreadInbox;
         } else {
             inboxBadge.style.display = 'none';
@@ -2492,7 +2990,7 @@ function updateMensagensBadges() {
     const systemBadge = document.getElementById('system-unread-badge');
     if (systemBadge) {
         if (unreadSystem > 0) {
-            systemBadge.style.display = 'inline-block';
+            systemBadge.style.display = 'block';
             systemBadge.textContent = unreadSystem;
         } else {
             systemBadge.style.display = 'none';
@@ -2500,66 +2998,184 @@ function updateMensagensBadges() {
     }
 }
 
-function initInboxTabs() {
-    const tabs = document.querySelectorAll('.inbox-menu-item');
-    tabs.forEach(tab => {
-        // Remove existing listeners to avoid doubles
-        const newTab = tab.cloneNode(true);
-        tab.parentNode.replaceChild(newTab, tab);
+let currentMsgSearch = '';
 
-        newTab.addEventListener('click', (e) => {
-            const folder = e.currentTarget.getAttribute('data-folder');
-            document.querySelectorAll('.inbox-menu-item').forEach(t => t.classList.remove('active'));
-            e.currentTarget.classList.add('active');
+window.handleMessageSearch = function (query) {
+    currentMsgSearch = query.toLowerCase();
+    renderMensagens();
+};
+
+// Inicialização do inbox usando event delegation para máxima robustez
+let _inboxDelegationInit = false;
+
+function initInboxTabs() {
+    // Event delegation: registrar apenas uma vez no document
+    if (!_inboxDelegationInit) {
+        _inboxDelegationInit = true;
+
+        // === Delegação para pastas ===
+        document.addEventListener('click', (e) => {
+            // Busca o botão folder-item mais próximo a partir do clique
+            const tab = e.target.closest('.folder-item[data-folder]');
+            if (!tab) return;
+
+            // Verifica se está dentro da view de mensagens
+            if (!tab.closest('#view-mensagens')) return;
+
+            const folder = tab.getAttribute('data-folder');
+            document.querySelectorAll('#view-mensagens .folder-item').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
 
             const titles = {
-                'inbox': 'Caixa de Entrada',
+                'inbox': 'Entrada',
+                'important': 'Favoritas',
                 'sent': 'Itens Enviados',
-                'system': 'Alertas do Sistema'
+                'sent-items': 'Itens Enviados',
+                'system': 'Alertas do Sistema',
+                'trash': 'Lixeira',
+                'office': 'Escritório',
+                'clients': 'Clientes'
             };
-            document.getElementById('inbox-current-folder-title').textContent = titles[folder];
+
+            const nameEl = document.getElementById('inbox-folder-name');
+            if (nameEl) nameEl.textContent = titles[folder] || folder;
+
             currentInboxFolder = folder;
             renderMensagens();
             hideInboxReader();
         });
-    });
 
-    const refreshBtn = document.getElementById('btn-refresh-inbox');
-    if (refreshBtn) {
-        const newRefresh = refreshBtn.cloneNode(true);
-        refreshBtn.parentNode.replaceChild(newRefresh, refreshBtn);
-        newRefresh.addEventListener('click', () => {
-            newRefresh.querySelector('i').classList.add('fa-spin');
+        // === Botão Atualizar ===
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('#btn-refresh-inbox-new');
+            if (!btn) return;
+            const icon = btn.querySelector('i');
+            if (icon) icon.classList.add('fa-spin');
             setTimeout(() => {
-                newRefresh.querySelector('i').classList.remove('fa-spin');
+                if (icon) icon.classList.remove('fa-spin');
                 renderMensagens();
-            }, 500);
+            }, 600);
+        });
+
+        // === Botão Voltar para lista ===
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#btn-back-to-list')) hideInboxReader();
+        });
+
+        // === Botões de Suporte ===
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#btn-inbox-config')) {
+                showNotify("Informação", "Configurações de Mensagens em breve...", "info");
+            }
+            if (e.target.closest('#btn-inbox-help')) {
+                alert('Ajuda:\n• Clique nas pastas para navegar\n• Use ☆ para favoritar\n• Marque checkboxes para ações em massa\n• Lixeira mostra mensagens excluídas');
+            }
+        });
+
+        // === Select All ===
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'select-all-msgs') {
+                document.querySelectorAll('.msg-check').forEach(c => c.checked = e.target.checked);
+                updateBulkActionsVisibility();
+            }
+        });
+
+        // === Exclusão em Massa ===
+        document.addEventListener('click', async (e) => {
+            if (!e.target.closest('#btn-bulk-delete-msgs')) return;
+            const selected = document.querySelectorAll('.msg-check:checked');
+            if (selected.length === 0) return;
+            if (confirm(`Excluir ${selected.length} mensagens selecionadas?`)) {
+                for (let check of selected) {
+                    const item = check.closest('.msg-item-refined');
+                    if (item) {
+                        const id = item.getAttribute('data-msg-id');
+                        await Store.deleteMensagem(id, LOGGED_USER.nome);
+                    }
+                }
+                renderMensagens();
+            }
+        });
+
+        // === Marcar como Lidas em Massa ===
+        document.addEventListener('click', async (e) => {
+            if (!e.target.closest('#btn-bulk-read-msgs')) return;
+            const selected = document.querySelectorAll('.msg-check:checked');
+            if (selected.length === 0) return;
+            for (let check of selected) {
+                const item = check.closest('.msg-item-refined');
+                if (!item) continue;
+                const id = item.getAttribute('data-msg-id');
+                const msg = Store.getData().mensagens.find(m => m.id == id);
+                if (msg && !msg.lida) {
+                    msg.lida = true;
+                    try {
+                        await fetch(`${API_BASE}/mensagens/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ lida: true })
+                        });
+                    } catch (e) { }
+                }
+            }
+            renderMensagens();
         });
     }
 }
 
+function updateBulkActionsVisibility() {
+    const selectedCount = document.querySelectorAll('.msg-check:checked').length;
+    const bulkDelete = document.getElementById('btn-bulk-delete-msgs');
+    const bulkRead = document.getElementById('btn-bulk-read-msgs');
+    if (bulkDelete) bulkDelete.style.display = selectedCount > 0 ? 'inline-flex' : 'none';
+    if (bulkRead) bulkRead.style.display = selectedCount > 0 ? 'inline-flex' : 'none';
+}
+
 function renderMensagens() {
-    initInboxTabs();
+    // Reset bulk actions visibility
+    updateBulkActionsVisibility();
+    const selectAllCheck = document.getElementById('select-all-msgs');
+    if (selectAllCheck) selectAllCheck.checked = false;
+
     const container = document.getElementById('mensagens-container');
     if (!LOGGED_USER) return;
 
     let msgs = [];
     if (currentInboxFolder === 'inbox') {
         msgs = Store.getMensagensPara(LOGGED_USER.nome).filter(m => m.remetente !== 'Sistema');
+    } else if (currentInboxFolder === 'important') {
+        // Filtra mensagens favoritas que não foram excluídas pelo usuário
+        msgs = Store.getData().mensagens.filter(m =>
+            m.favorito &&
+            (m.destinatario === LOGGED_USER.nome || m.remetente === LOGGED_USER.nome) &&
+            !(m.excluidoPor || []).includes(LOGGED_USER.nome)
+        ).sort((a, b) => new Date(b.data) - new Date(a.data));
     } else if (currentInboxFolder === 'sent') {
-        msgs = Store.getData().mensagens.filter(m => m.remetente === LOGGED_USER.nome);
-        msgs.sort((a, b) => new Date(b.data) - new Date(a.data));
+        msgs = Store.getMensagensEnviadas(LOGGED_USER.nome);
     } else if (currentInboxFolder === 'system') {
         msgs = Store.getMensagensPara(LOGGED_USER.nome).filter(m => m.remetente === 'Sistema');
+    } else if (currentInboxFolder === 'trash') {
+        msgs = Store.getData().mensagens.filter(m =>
+            (m.excluidoPor || []).includes(LOGGED_USER.nome) && (m.destinatario === LOGGED_USER.nome || m.remetente === LOGGED_USER.nome)
+        ).sort((a, b) => new Date(b.data) - new Date(a.data));
+    }
+
+    // Filtro de Busca (protege contra campos undefined)
+    if (currentMsgSearch) {
+        msgs = msgs.filter(m =>
+            (m.assunto || '').toLowerCase().includes(currentMsgSearch) ||
+            (m.texto || '').toLowerCase().includes(currentMsgSearch) ||
+            (m.remetente || '').toLowerCase().includes(currentMsgSearch)
+        );
     }
 
     container.innerHTML = '';
 
     if (msgs.length === 0) {
         container.innerHTML = `
-            <div style="padding: 2rem; text-align: center; color: var(--text-muted); display:flex; flex-direction:column; align-items:center; gap: 1rem;">
-                <i class="fa-regular fa-folder-open" style="font-size: 2.5rem;"></i>
-                <span>Nenhuma mensagem nesta pasta.</span>
+            <div style="padding: 3rem 2rem; text-align: center; color: var(--text-muted); opacity: 0.5;">
+                <i class="fa-solid fa-cloud" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
+                <p>Nenhuma mensagem encontrada.</p>
             </div>
         `;
         updateMensagensBadges();
@@ -2567,96 +3183,138 @@ function renderMensagens() {
     }
 
     msgs.forEach(m => {
-        const d = new Date(m.data);
-        const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-
-        // Shorten preview text
-        const snippet = m.texto.length > 50 ? m.texto.substring(0, 50) + '...' : m.texto;
-        const subject = m.assunto || 'Sem Assunto';
-        const displayUser = currentInboxFolder === 'sent' ? `Para: ${m.destinatario}` : m.remetente;
-
         const div = document.createElement('div');
-        div.className = `msg-item fade-in ${m.id === currentLoadedMessageId ? 'active' : ''}`;
-        if (!m.lida && currentInboxFolder !== 'sent') {
+        div.className = `msg-item-refined fade-in ${m.id === currentLoadedMessageId ? 'active' : ''}`;
+        div.setAttribute('data-msg-id', m.id);
+        if (!m.lida && m.destinatario === LOGGED_USER.nome) {
             div.classList.add('unread');
         }
 
+        const date = new Date(m.data);
+        const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        const snippet = m.texto.substring(0, 50) + (m.texto.length > 50 ? '...' : '');
+        const sender = currentInboxFolder === 'sent' ? m.destinatario : m.remetente;
+        const initials = sender.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
         div.innerHTML = `
-            <div class="msg-header">
-                <span style="font-weight: ${!m.lida && currentInboxFolder !== 'sent' ? '700' : '500'}; color: var(--text-main);">${displayUser}</span>
-                <span>${dateStr}</span>
+            <div class="msg-refined-left">
+                <input type="checkbox" class="msg-check" onclick="event.stopPropagation(); updateBulkActionsVisibility()">
+                <i class="fa-solid fa-star msg-star ${m.favorito ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorito(${m.id})"></i>
             </div>
-            <p class="msg-subject">${subject}</p>
-            <p class="msg-preview">${snippet}</p>
+            <div class="msg-refined-avatar">${initials}</div>
+            <div class="msg-refined-content">
+                <div class="msg-content-top">
+                    <span class="msg-sender-name">${sender}</span>
+                    <span class="msg-time">${timeStr}</span>
+                </div>
+                <div class="msg-content-mid">
+                    <h4 class="msg-subject-line">${m.assunto || 'Sem Assunto'}</h4>
+                </div>
+                <div class="msg-content-bot">
+                    <p class="msg-preview-line">${snippet}</p>
+                    <div class="msg-item-indicators">
+                        ${m.anexos ? '<i class="fa-solid fa-paperclip"></i>' : ''}
+                    </div>
+                </div>
+            </div>
         `;
 
-        div.addEventListener('click', () => loadMessageIntoReader(m.id));
+        div.onclick = () => loadMessageIntoReader(m.id);
         container.appendChild(div);
     });
+
+    // Update pagination info if needed
+    const countInfo = document.getElementById('msgs-count-info');
+    if (countInfo) countInfo.textContent = msgs.length > 0 ? `1 - ${msgs.length} de ${msgs.length}` : '0 - 0 de 0';
 
     updateMensagensBadges();
 }
 
+window.toggleFavorito = async function (id) {
+    const msg = Store.getData().mensagens.find(m => m.id == id);
+    if (msg) {
+        msg.favorito = !msg.favorito;
+        await Store.toggleFavorito(id, msg.favorito);
+        renderMensagens();
+    }
+};
+
 function loadMessageIntoReader(id) {
-    const msg = Store.getData().mensagens.find(m => m.id == id); // Changed to loose comparison as per instruction
+    const msg = Store.getData().mensagens.find(m => m.id == id);
     if (!msg) return;
 
     currentLoadedMessageId = id;
 
-    // If it's in the inbox, mark as read
-    if (currentInboxFolder === 'inbox' && !msg.lida) {
+    // Se estiver lendo algo não lido do inbox ou system, marca como lida
+    if ((currentInboxFolder === 'inbox' || currentInboxFolder === 'system') && !msg.lida) {
         Store.markMensagemLida(id);
         updateMensagensBadges();
     }
 
-    // Update active state on list visually without full render to avoid jump
-    document.querySelectorAll('.msg-item').forEach(el => el.classList.remove('active', 'unread'));
-    renderMensagens();
+    // UI Feedback na lista - selecionar item ativo por ID
+    document.querySelectorAll('.msg-item-refined').forEach(el => {
+        el.classList.remove('active');
+        if (el.getAttribute('data-msg-id') == id) {
+            el.classList.add('active');
+            el.classList.remove('unread');
+        }
+    });
 
     document.querySelector('.empty-reader-state').style.display = 'none';
-    const reader = document.querySelector('.reader-content');
+    const reader = document.querySelector('.reader-content-refined');
     reader.style.display = 'flex';
 
-    // Re-trigger animation
+    // Refresh animation
     reader.classList.remove('fade-in');
     void reader.offsetWidth;
     reader.classList.add('fade-in');
 
-    const subjectObj = msg.assunto || 'Nova Mensagem Automática';
-    document.getElementById('reader-subject').textContent = subjectObj;
+    const subjectStr = msg.assunto || 'Sem Assunto';
+    document.getElementById('reader-subject').textContent = subjectStr;
 
-    const displayUser = currentInboxFolder === 'sent' ? `Enviado para: ${msg.destinatario}` : msg.remetente;
+    // Avatar text (iniciais)
+    const senderName = msg.remetente || 'S';
+    document.getElementById('reader-avatar-text').textContent = senderName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    document.getElementById('reader-email-text').textContent = `${senderName.toLowerCase().replace(/ /g, '.')}@fiscal.app`;
+
+    const displayUser = currentInboxFolder === 'sent' ? `Para: ${msg.destinatario}` : msg.remetente;
     document.getElementById('reader-from').textContent = displayUser;
 
     const d = new Date(msg.data);
-    document.getElementById('reader-date').textContent = `${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
+    document.getElementById('reader-date').textContent = `${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
 
-    // Format text
-    const paragraphs = msg.texto.split('\n').filter(p => p.trim() !== '').map(p => `<p style="margin-bottom:1rem;">${p}</p>`).join('');
+    // Formatar o texto em parágrafos
+    const paragraphs = msg.texto.split('\n').filter(p => p.trim() !== '').map(p => `<p style="margin-bottom:1.2rem;">${p}</p>`).join('');
     document.getElementById('reader-body-content').innerHTML = paragraphs;
 
-    // Actions
+    // Botões de ação
     const btnReply = document.getElementById('btn-reply-msg');
     const btnDelete = document.getElementById('btn-delete-msg');
 
-    if (currentInboxFolder === 'inbox' || currentInboxFolder === 'system') {
-        btnReply.style.display = currentInboxFolder === 'system' ? 'none' : 'inline-block';
-        btnReply.onclick = () => {
-            openNovaMensagemModal(msg.remetente, `Re: ${subjectObj}`);
-        };
-    } else {
-        btnReply.style.display = 'none';
+    // Só permite responder no Inbox (se não for Sistema)
+    const canReply = currentInboxFolder === 'inbox' && msg.remetente !== 'Sistema';
+    btnReply.style.display = canReply ? 'flex' : 'none';
+    if (canReply) {
+        btnReply.onclick = () => openNovaMensagemModal(msg.remetente, `Re: ${subjectStr}`);
     }
 
+    btnDelete.style.display = currentInboxFolder === 'trash' ? 'none' : 'flex';
     btnDelete.onclick = async () => {
-        if (confirm("Deseja mesmo excluir esta mensagem da sua visualização?")) {
-            const success = await Store.deleteMensagem(id);
+        if (confirm("Deseja mesmo arquivar esta mensagem? (Ela ficará disponível na Lixeira para auditoria)")) {
+            btnDelete.disabled = true;
+            btnDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            const success = await Store.deleteMensagem(id, LOGGED_USER.nome);
+            btnDelete.disabled = false;
+            btnDelete.innerHTML = '<i class="fa-solid fa-trash"></i>';
+
             if (success) {
-                showFeedbackToast("Mensagem excluída com sucesso.", "success");
+                currentLoadedMessageId = null;
                 hideInboxReader();
                 renderMensagens();
+                showFeedbackToast("Mensagem arquivada com sucesso.", "success");
             } else {
-                showFeedbackToast("Erro ao excluir mensagem.", "error");
+                showFeedbackToast("Erro ao arquivar mensagem.", "error");
             }
         }
     };
@@ -2664,8 +3322,10 @@ function loadMessageIntoReader(id) {
 
 function hideInboxReader() {
     currentLoadedMessageId = null;
-    document.querySelector('.empty-reader-state').style.display = 'flex';
-    document.querySelector('.reader-content').style.display = 'none';
+    const emptyState = document.querySelector('.empty-reader-state');
+    const readerContent = document.querySelector('.reader-content-refined');
+    if (emptyState) emptyState.style.display = 'flex';
+    if (readerContent) readerContent.style.display = 'none';
 }
 
 function openNovaMensagemModal(prefillDest = null, prefillSubj = "") {
@@ -2678,11 +3338,9 @@ function openNovaMensagemModal(prefillDest = null, prefillSubj = "") {
 
     document.getElementById('nova-mensagem-form').reset();
 
-    // Inject custom invisible Subject field logic temporarily or if HTML adds it
+    // Preencher destino e assunto se for resposta
     if (prefillDest) select.value = prefillDest;
 
-    // Notice: there's no subject input in original HTML, so we just pre-fill texto if doing a reply
-    let textArea = document.getElementById('msg-texto');
     let subjectInput = document.getElementById('msg-assunto');
 
     if (prefillSubj) {
@@ -2698,23 +3356,66 @@ function closeNovaMensagemModal() {
 
 async function handleSendMensagem(e) {
     e.preventDefault();
+
+    // Capturar valores ANTES de qualquer reset do form
     const dest = document.getElementById('msg-destinatario').value;
-    const assunto = document.getElementById('msg-assunto').value || 'Sem Assunto';
-    const texto = document.getElementById('msg-texto').value;
+    const assunto = document.getElementById('msg-assunto').value.trim() || 'Sem Assunto';
+    const texto = document.getElementById('msg-texto').value.trim();
+
+    if (!dest) { showNotify("Atenção", "Selecione um destinatário.", "warning"); return; }
+    if (!texto) { showNotify("Atenção", "Escreva uma mensagem antes de enviar.", "warning"); return; }
 
     await Store.sendMensagem(LOGGED_USER.nome, dest, texto, assunto);
 
     closeNovaMensagemModal();
     triggerPaperPlaneAnimation();
+    mostrarAnimacaoMensagemEnviada();
 
     setTimeout(() => {
-        showFeedbackToast(`Mensagem enviada para ${dest}!`, 'success');
-        // If we're looking at sent items, refresh
-        if (currentInboxFolder === 'sent') {
-            renderMensagens();
-        }
-    }, 1500);
+        if (currentInboxFolder === 'sent') renderMensagens();
+    }, 1600);
 }
+
+function mostrarAnimacaoMensagemEnviada() {
+    // Remover overlay anterior se existir
+    const existente = document.getElementById('msg-send-overlay');
+    if (existente) existente.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'msg-send-overlay';
+    overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 99998;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+        animation: fadeInOverlay 0.3s ease;
+        pointer-events: none;
+    `;
+
+    overlay.innerHTML = `
+        <style>
+            @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } }
+            @keyframes fadeOutOverlay { from { opacity:1; } to { opacity:0; } }
+            @keyframes popIn { from { transform: scale(0.5); opacity:0; } to { transform: scale(1); opacity:1; } }
+            @keyframes flyUp { 0% { transform: translateY(0) rotate(0deg); opacity:1; } 100% { transform: translateY(-60px) rotate(-15deg); opacity:0; } }
+        </style>
+        <div style="text-align:center; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);">
+            <div style="width:80px; height:80px; background:linear-gradient(135deg,#6366f1,#8b5cf6); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; box-shadow:0 0 40px rgba(99,102,241,0.5);">
+                <i class="fa-solid fa-paper-plane" style="color:#fff; font-size:2rem; animation: flyUp 1s ease 0.3s forwards;"></i>
+            </div>
+            <p style="color:#fff; font-size:1.1rem; font-weight:600; margin:0;">Mensagem enviada!</p>
+            <p style="color:rgba(255,255,255,0.6); font-size:0.85rem; margin:0.3rem 0 0;">Seu recado foi entregue com sucesso</p>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Remover após 1.8s com fade out
+    setTimeout(() => {
+        overlay.style.animation = 'fadeOutOverlay 0.4s ease forwards';
+        setTimeout(() => overlay.remove(), 400);
+    }, 1400);
+}
+
 
 function triggerPaperPlaneAnimation() {
     const container = document.getElementById('paper-plane-container');
@@ -2891,8 +3592,6 @@ function renderChecklist() {
 
     currentOpenTask = task;
 
-
-
     const container = document.getElementById('modal-checklist');
 
     container.innerHTML = '';
@@ -3004,6 +3703,166 @@ function closeModal() {
     document.getElementById('task-modal').classList.remove('active');
 
 }
+
+// ==========================================
+// MODAL: Nova Demanda Eventual
+// ==========================================
+
+// Armazena todos os clientes para o dropdown
+let _evtClientesCache = [];
+
+function openDemandaEventualModal() {
+    // Verificar rotinas eventuais antes de abrir
+    const rotinas = Store.getData().rotinasBase.filter(r => (r.frequencia || '').toLowerCase() === 'eventual');
+    if (rotinas.length === 0) {
+        showNotify("Atenção", "Não há rotinas eventuais cadastradas. Cadastre uma rotina com frequência 'Eventual' primeiro.", "info");
+        return;
+    }
+
+    // Popular select de rotinas eventuais
+    const rotinasSel = document.getElementById('evt-rotina-select');
+    rotinasSel.innerHTML = '<option value="">— Selecione a Rotina —</option>';
+    rotinas.forEach(r => {
+        rotinasSel.innerHTML += `<option value="${r.id}">${r.nome} (${r.diaPrazoPadrao} d.c.)</option>`;
+    });
+
+    // Cachear clientes e popular dropdown customizado
+    _evtClientesCache = [...Store.getData().clientes.filter(c => c.ativo !== false)]
+        .sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '', 'pt-BR'));
+    filtrarClientesEventual('');
+
+    // Resetar estado do dropdown de clientes
+    document.getElementById('evt-cliente-select').value = '';
+    document.getElementById('evt-cliente-label').textContent = '— Selecione o Cliente —';
+    document.getElementById('evt-cliente-label').style.color = 'var(--text-muted)';
+    document.getElementById('evt-cliente-busca').value = '';
+    document.getElementById('evt-cliente-dropdown').style.display = 'none';
+    document.getElementById('evt-chevron').style.transform = '';
+
+    // Resetar preview de prazo
+    document.getElementById('evt-prazo-preview').style.display = 'none';
+
+    // Abrir modal
+    document.getElementById('modal-demanda-eventual').classList.add('active');
+
+    // Fechar dropdown ao clicar fora
+    setTimeout(() => {
+        document.addEventListener('click', _fecharDropdownFora, { once: false });
+    }, 0);
+}
+
+function _fecharDropdownFora(e) {
+    const dropdown = document.getElementById('evt-cliente-dropdown');
+    const trigger = document.getElementById('evt-cliente-trigger');
+    if (dropdown && !dropdown.contains(e.target) && trigger && !trigger.contains(e.target)) {
+        dropdown.style.display = 'none';
+        const chevron = document.getElementById('evt-chevron');
+        if (chevron) chevron.style.transform = '';
+    }
+}
+
+function toggleClienteDropdown() {
+    const dropdown = document.getElementById('evt-cliente-dropdown');
+    const chevron = document.getElementById('evt-chevron');
+    const isOpen = dropdown.style.display === 'block';
+    dropdown.style.display = isOpen ? 'none' : 'block';
+    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+    if (!isOpen) {
+        // Focar na busca ao abrir
+        setTimeout(() => document.getElementById('evt-cliente-busca').focus(), 50);
+    }
+}
+
+function filtrarClientesEventual(termo) {
+    const termoLower = (termo || '').toLowerCase().trim();
+    const filtrados = termoLower
+        ? _evtClientesCache.filter(c => (c.razaoSocial || '').toLowerCase().includes(termoLower))
+        : _evtClientesCache;
+
+    const lista = document.getElementById('evt-cliente-list');
+    lista.innerHTML = '';
+
+    if (filtrados.length === 0) {
+        lista.innerHTML = '<li style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem;">Nenhum cliente encontrado</li>';
+        return;
+    }
+
+    filtrados.forEach(c => {
+        const li = document.createElement('li');
+        li.style.cssText = 'padding:0.65rem 1rem; cursor:pointer; font-size:0.9rem; transition:background 0.15s; border-radius:4px; margin:0 0.3rem;';
+        li.textContent = c.razaoSocial;
+        li.onmouseenter = () => li.style.background = 'rgba(99,102,241,0.15)';
+        li.onmouseleave = () => li.style.background = '';
+        li.onclick = () => selecionarClienteEventual(c.id, c.razaoSocial);
+        lista.appendChild(li);
+    });
+}
+
+function selecionarClienteEventual(id, nome) {
+    document.getElementById('evt-cliente-select').value = id;
+    document.getElementById('evt-cliente-label').textContent = nome;
+    document.getElementById('evt-cliente-label').style.color = 'var(--text-main)';
+    document.getElementById('evt-cliente-dropdown').style.display = 'none';
+    document.getElementById('evt-chevron').style.transform = '';
+}
+
+function onEventualRotinaChange() {
+    const rotinaId = document.getElementById('evt-rotina-select').value;
+    const preview = document.getElementById('evt-prazo-preview');
+    const prazoText = document.getElementById('evt-prazo-text');
+
+    if (!rotinaId) { preview.style.display = 'none'; return; }
+
+    const rotina = Store.getData().rotinasBase.find(r => r.id === parseInt(rotinaId));
+    if (!rotina) return;
+
+    const dias = parseInt(rotina.diaPrazoPadrao) || 0;
+    const prazo = new Date();
+    prazo.setDate(prazo.getDate() + dias);
+    const prazoStr = prazo.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    prazoText.textContent = `Prazo estimado: ${prazoStr} (${dias} dias corridos a partir de hoje)`;
+    preview.style.display = 'block';
+}
+
+function closeDemandaEventualModal() {
+    document.getElementById('modal-demanda-eventual').classList.remove('active');
+    document.getElementById('evt-cliente-dropdown').style.display = 'none';
+    document.removeEventListener('click', _fecharDropdownFora);
+}
+
+
+async function handleSaveDemandaEventual() {
+    const rotinaId = document.getElementById('evt-rotina-select').value;
+    const clienteId = document.getElementById('evt-cliente-select').value;
+
+    if (!rotinaId) {
+        showNotify("Atenção", "Selecione uma rotina eventual.", "warning");
+        return;
+    }
+    if (!clienteId) {
+        showNotify("Atenção", "Selecione um cliente.", "warning");
+        return;
+    }
+
+    const btn = document.getElementById('btn-confirmar-eventual');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
+
+    const result = await Store.criarExecucaoEventual(rotinaId, clienteId);
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Demanda';
+
+    if (result.ok) {
+        closeDemandaEventualModal();
+        renderOperacional();
+        renderDashboard();
+        showFeedbackToast('Demanda eventual criada com sucesso!', 'success');
+    } else {
+        alert(result.msg || 'Erro ao criar demanda eventual.');
+    }
+}
+
 
 
 
@@ -3139,7 +3998,7 @@ function downloadAuditoriaCSV() {
 
     if (logs.length === 0) {
 
-        alert("Não há dados para exportar.");
+        showNotify("Atenção", "Não há dados para exportar.", "info");
 
         return;
 
@@ -3542,7 +4401,7 @@ function restoreBackupFile() {
 
     if (!file) {
 
-        alert("Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.");
+        showNotify("Atenção", "Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.", "warning");
 
         return;
 
@@ -3580,7 +4439,7 @@ function restoreBackupFile() {
 
             Store.setInitialData(parsedData);
 
-            alert("✅ SISTEMA RESTAURADO COM SUCESSO!\n\nSeus dados foram alterados. O sistema será recarregado agora para aplicar todas as configurações visuais.");
+            showNotify("Sistema Restaurado", "Seus dados foram restaurados com sucesso! Recarregando sistema...", "success");
 
             window.location.reload();
 
@@ -3590,7 +4449,7 @@ function restoreBackupFile() {
 
             console.error(err);
 
-            alert("Erro fatal ao tentar ler o arquivo: " + err.message);
+            showNotify("Erro de Restauração", "Erro fatal ao tentar ler o arquivo: " + err.message, "error");
 
             Store.registerLog("Aviso/Alerta", `Tentativa falha de restauração de backup.`);
 
@@ -3711,7 +4570,7 @@ function runAuditoriaCompetencia() {
     const userName = document.getElementById('audit-comp-user').value;
 
     if (!mesId && !userName) {
-        alert("Selecione pelo menos um Mês ou um Funcionário para filtrar.");
+        showNotify("Atenção", "Selecione pelo menos um Mês ou um Funcionário para filtrar.", "info");
         return;
     }
 
@@ -3816,8 +4675,6 @@ function initSettingsTabs() {
             // Remove active classes
             tabs.forEach(t => {
                 t.classList.remove("active");
-                t.style.background = "transparent";
-                t.style.color = "var(--text-muted)";
             });
             document.querySelectorAll(".settings-pane").forEach(pane => {
                 pane.style.display = "none";
@@ -3826,8 +4683,6 @@ function initSettingsTabs() {
 
             // Set active class to clicked tab
             tab.classList.add("active");
-            tab.style.background = "rgba(99, 102, 241, 0.2)";
-            tab.style.color = "var(--text-main)";
 
             const targetId = tab.getAttribute("data-target");
             const targetPane = document.getElementById(targetId);
@@ -3849,6 +4704,8 @@ function initSettingsTabs() {
                 renderAuditoriaCompetencia();
             } else if (targetId === "set-equipe") {
                 renderEquipe();
+            } else if (targetId === "set-branding") {
+                renderMenuReorderList();
             }
         });
     });
@@ -3875,5 +4732,30 @@ function setupPasswordToggles() {
     });
 }
 
+// Handler para liberação antecipada de competência
+window.updateCompetenciaSelects = function (newCompId) {
+    const filters = [
+        document.getElementById('competencia-filter'),
+        document.getElementById('dash-competencia-filter'),
+        document.getElementById('meu-competencia-filter')
+    ];
 
+    const monthObj = Store.getData().meses.find(m => m.id === newCompId);
+    if (!monthObj) return;
 
+    filters.forEach(select => {
+        if (!select) return;
+        // Verifica se já existe
+        let exists = Array.from(select.options).some(opt => opt.value === newCompId);
+        if (!exists) {
+            const option = document.createElement('option');
+            option.value = newCompId;
+            option.textContent = monthObj.mes;
+            select.appendChild(option);
+        }
+    });
+};
+
+window.showEarlyReleaseToast = function (compName) {
+    showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${compName} foi liberada!`, 'success');
+};

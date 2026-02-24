@@ -21,8 +21,20 @@ let db = {
     execucoes: [],
     mensagens: [],
     logs: [],
-    config: { autoBackup: false, lastBackupData: null },
-    cargos: [] // New generic permissions table
+    config: {
+        autoBackup: false,
+        lastBackupData: null,
+        brandName: "RB|App",
+        brandLogoUrl: "",
+        accentColor: "#6366f1",
+        slogan: "Sua contabilidade inteligente",
+        theme: "glass"
+    },
+    cargos: [],
+    marketing_posts: [],
+    marketing_campanhas: [],
+    marketing_equipe: [],
+    marketing_metricas: []
 };
 
 window.Store = {
@@ -34,7 +46,9 @@ window.Store = {
             console.log("Baixando dados do banco de dados (Supabase/Python)...");
             const [
                 setoresRes, funcionariosRes, rotinasBaseRes,
-                clientesRes, mesesRes, execucoesRes, mensagensRes, logsRes, cargosRes
+                clientesRes, mesesRes, execucoesRes, mensagensRes, logsRes, cargosRes,
+                marketing_postsRes, marketing_campanhasRes, marketing_equipeRes,
+                marketing_metricasRes, global_configRes
             ] = await Promise.all([
                 fetch(`${API_BASE}/setores`),
                 fetch(`${API_BASE}/funcionarios`),
@@ -44,7 +58,12 @@ window.Store = {
                 fetch(`${API_BASE}/execucoes`),
                 fetch(`${API_BASE}/mensagens`),
                 fetch(`${API_BASE}/logs`),
-                fetch(`${API_BASE}/cargos`)
+                fetch(`${API_BASE}/cargos`),
+                fetch(`${API_BASE}/marketing_posts`),
+                fetch(`${API_BASE}/marketing_campanhas`),
+                fetch(`${API_BASE}/marketing_equipe`),
+                fetch(`${API_BASE}/marketing_metricas`),
+                fetch(`${API_BASE}/global_config`)
             ]);
 
             db.setores = (await setoresRes.json()).map(s => s.nome) || [];
@@ -53,16 +72,57 @@ window.Store = {
             db.clientes = await clientesRes.json() || [];
             db.meses = await mesesRes.json() || [];
             db.execucoes = await execucoesRes.json() || [];
-            db.mensagens = await mensagensRes.json() || [];
+            db.mensagens = (await mensagensRes.json()).map(m => ({
+                id: m.id,
+                remetente: m.remetente,
+                destinatario: m.destinatario,
+                texto: m.texto,
+                assunto: m.assunto || 'Sem Assunto',
+                lida: m.lida,
+                data: m.data,
+                excluido_por: Array.isArray(m.excluido_por) ? m.excluido_por : (typeof m.excluido_por === 'string' ? JSON.parse(m.excluido_por) : []),
+                favorito: m.favorito || false
+            })) || [];
             db.logs = await logsRes.json() || [];
 
             // Try to set cargos (can fail if table doesn't exist yet, fallback to empty array)
             try {
                 const cargosData = await cargosRes.json();
                 db.cargos = Array.isArray(cargosData) ? cargosData : [];
-            } catch (e) {
-                db.cargos = [];
-            }
+            } catch (e) { db.cargos = []; }
+
+            try {
+                const marketingData = await marketing_postsRes.json();
+                db.marketing_posts = Array.isArray(marketingData) ? marketingData : [];
+            } catch (e) { db.marketing_posts = []; }
+
+            try {
+                const campanhasData = await marketing_campanhasRes.json();
+                db.marketing_campanhas = Array.isArray(campanhasData) ? campanhasData : [];
+            } catch (e) { db.marketing_campanhas = []; }
+
+            try {
+                const equipeData = await marketing_equipeRes.json();
+                db.marketing_equipe = Array.isArray(equipeData) ? equipeData : [];
+            } catch (e) { db.marketing_equipe = []; }
+
+            try {
+                const metricsData = await marketing_metricasRes.json();
+                db.marketing_metricas = Array.isArray(metricsData) ? metricsData : [];
+            } catch (e) { db.marketing_metricas = []; }
+
+            try {
+                const configData = await global_configRes.json();
+                if (configData && configData.length > 0) {
+                    const c = configData[0];
+                    db.config.brandName = c.brand_name || db.config.brandName;
+                    db.config.brandLogoUrl = c.brand_logo_url || db.config.brandLogoUrl;
+                    db.config.accentColor = c.accent_color || db.config.accentColor;
+                    db.config.slogan = c.slogan || db.config.slogan;
+                    db.config.theme = c.theme || db.config.theme;
+                    db.config.menuOrder = c.menu_order || db.config.menuOrder;
+                }
+            } catch (e) { }
 
             // Map python rotinasBase to expected camelCase names for legacy frontend compatibility
             db.rotinasBase = db.rotinasBase.map(r => ({
@@ -126,7 +186,7 @@ window.Store = {
         } catch (error) {
             console.error("Erro ao puxar dados do banco:", error);
             // Fallback for visual offline testing if needed, or notify user
-            alert("Erro de conexão com o banco de dados. Tente atualizar a página.");
+            showNotify("Erro de Conexão", "Erro de conexão com o banco de dados. Tente atualizar a página.", "error");
             return false;
         }
     },
@@ -144,6 +204,8 @@ window.Store = {
         if (!db.meses) db.meses = [];
 
         const now = new Date();
+        // A competência trabalhada é sempre o mês anterior
+        now.setMonth(now.getMonth() - 1);
         const year = now.getFullYear();
         const monthNum = (now.getMonth() + 1).toString().padStart(2, '0');
         const currentCompId = `${year}-${monthNum}`;
@@ -255,7 +317,35 @@ window.Store = {
     // UI Engine gets filtered from the local Cache (which was populated via loadFromStorage mapping)
     getExecucoesWithDetails(userFilter = 'All') {
         const tToday = new Date().setHours(0, 0, 0, 0);
-        let execs = db.execucoes.map(ex => {
+        // Filtra execuções órfãs ou de clientes que perderam o vínculo com a rotina
+        const activeMonth = db.meses.find(m => m.ativo);
+        const currentComp = activeMonth ? activeMonth.id : null;
+
+        const rotinasAtivas = new Set(db.rotinasBase.map(r => r.nome));
+
+        let execs = db.execucoes.filter(ex => {
+            if (!rotinasAtivas.has(ex.rotina)) return false; // Rotina foi apagada do sistema sumariamente
+
+            // Regra Anti-Órfãos V2 (Evita clientes não vinculados exibidos no painel Operacional)
+            const client = db.clientes.find(c => c.id === ex.clienteId);
+            if (!client) return false;
+
+            const rotinaObj = db.rotinasBase.find(r => r.nome === ex.rotina);
+            if (!rotinaObj) return false;
+
+            // Só esconde "órfãos" se for a competência atual ou futural. 
+            // O passado (Ex: Janeiro) fica salvo para Histórico e Auditoria mesmo que o cliente tenha sido removido em Março.
+            const isHistorico = currentComp && ex.competencia < currentComp;
+
+            if (!isHistorico) {
+                const rotinasDoCliente = client.rotinasSelecionadas || [];
+                if (!rotinasDoCliente.includes(rotinaObj.id)) {
+                    return false; // A rotina não pertence mais ao cliente. Omitir.
+                }
+            }
+
+            return true;
+        }).map(ex => {
             const client = db.clientes.find(c => c.id === ex.clienteId);
             const dPrazo = ex.diaPrazo ? new Date(ex.diaPrazo + "T00:00:00").setHours(0, 0, 0, 0) : tToday;
 
@@ -361,18 +451,26 @@ window.Store = {
         if (isFeito) ex.subitems.forEach(s => s.done = true);
         else ex.subitems.forEach(s => s.done = false);
 
-        await fetch(`${API_BASE}/execucoes/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                feito: ex.feito,
-                feito_em: ex.feitoEm,
-                baixado_por: ex.baixadoPor, // Persistindo quem baixou
-                subitems: ex.subitems
-            })
-        });
+        try {
+            await fetch(`${API_BASE}/execucoes/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    feito: ex.feito,
+                    feito_em: ex.feitoEm,
+                    baixado_por: ex.baixadoPor, // Persistindo quem baixou
+                    subitems: ex.subitems
+                })
+            });
+        } catch (e) {
+            console.error("Erro fetch toggleExecucaoFeito:", e);
+        }
 
         this.registerLog("Ação de Rotina", `Marcou rotina '${ex.rotina}' como ${isFeito ? 'Concluída' : 'Pendente'}`);
+
+        if (isFeito) {
+            await Store.checkEmployeeCompetenciaCompletion(ex.competencia);
+        }
     },
 
     async deleteExecucao(id) {
@@ -401,18 +499,294 @@ window.Store = {
             ex.baixadoPor = null;
         }
 
-        await fetch(`${API_BASE}/execucoes/${execId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                feito: ex.feito,
-                feito_em: ex.feitoEm,
-                baixado_por: ex.baixado_por,
-                subitems: ex.subitems
-            })
-        });
+        try {
+            await fetch(`${API_BASE}/execucoes/${execId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    feito: ex.feito,
+                    feito_em: ex.feitoEm,
+                    baixado_por: ex.baixado_por,
+                    subitems: ex.subitems
+                })
+            });
+        } catch (e) {
+            console.error("Erro fetch updateChecklist:", e);
+        }
 
         this.registerLog("Atualizou Checklist", `Checklist item id ${subId} (rotina ${ex.rotina}) - ${isDone ? 'Feito' : 'Desfeito'}`);
+
+        if (allDone && ex.feito) {
+            await Store.checkEmployeeCompetenciaCompletion(ex.competencia);
+        }
+    },
+
+    async checkEmployeeCompetenciaCompletion(competenciaId) {
+        const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
+
+        // Espelhar exatamente o que o usuário vê na interface (ignora órfãos)
+        // Usar Store. ao invés de this. para evitar problemas de contexto (this undefined) em disparos assíncronos
+        let execsUser = Store.getExecucoesWithDetails(username).filter(e => e.competencia === competenciaId);
+
+        if (execsUser.length === 0) {
+            return; // Nenhuma rotina atribuída
+        }
+
+        const incompletas = execsUser.filter(e => !e.feito);
+
+        if (incompletas.length === 0) {
+            console.log(`[Early Release] ${username} concluiu todas as tarefas da competência ${competenciaId}! Liberando próxima...`);
+
+            // Calcular próxima competência
+            let [y, m] = competenciaId.split('-');
+            let dateObj = new Date(parseInt(y), parseInt(m) - 1, 1);
+            dateObj.setMonth(dateObj.getMonth() + 1); // Próximo mês
+            const nextY = dateObj.getFullYear();
+            const nextMNum = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+            const nextCompId = `${nextY}-${nextMNum}`;
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const nextExt = `${monthNames[dateObj.getMonth()]} ${nextY}`;
+
+            // Verifica se a próxima competência já existe nos meses do sistema
+            let existsM = db.meses.find(mObj => mObj.id === nextCompId);
+            if (!existsM) {
+                const newMonth = {
+                    id: nextCompId,
+                    mes: nextExt,
+                    ativo: false, // Falso para não virar a competência global de todo mundo
+                    percent_concluido: 0, atrasados: 0, concluidos: 0, total_execucoes: 0, vencendo: 0
+                };
+
+                try {
+                    const res = await fetch(`${API_BASE}/meses`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newMonth)
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        db.meses.push(data[0]);
+                        existsM = data[0];
+                    }
+                } catch (e) { console.error("Erro ao criar mês de liberação antecipada", e); }
+            }
+
+            // Exige atualização visual dos Selects caso o mes não estivesse lá ainda
+            if (typeof window.updateCompetenciaSelects === 'function') {
+                window.updateCompetenciaSelects(nextCompId);
+            }
+
+            for (let cliente of db.clientes) {
+                const routinesToProcess = cliente.rotinasSelecionadas || [];
+                for (const rotId of routinesToProcess) {
+                    const rotina = db.rotinasBase.find(r => r.id === rotId);
+                    if (!rotina) continue;
+
+                    // Só gera daquele responsável 
+                    if (!rotina.responsavel || !rotina.responsavel.includes(username)) continue;
+                    if ((rotina.frequencia || '').toLowerCase() === 'eventual') continue;
+
+                    // Verifica se já existe
+                    const existsE = db.execucoes.find(e =>
+                        e.clienteId === cliente.id &&
+                        e.rotina === rotina.nome &&
+                        e.competencia === nextCompId
+                    );
+
+                    if (!existsE) {
+                        // Calcular a execução (Competencia + 1)
+                        let execDate = new Date(parseInt(nextY), parseInt(nextMNum) - 1, 1);
+                        execDate.setMonth(execDate.getMonth() + 1);
+                        let execYStr = execDate.getFullYear();
+                        let execMStr = (execDate.getMonth() + 1).toString().padStart(2, '0');
+                        let diaStr = rotina.diaPrazoPadrao.toString().padStart(2, '0');
+                        let dateStr = `${execYStr}-${execMStr}-${diaStr}`;
+
+                        if (rotina.frequencia === 'Anual' && rotina.diaPrazoPadrao.toString().includes('/')) {
+                            const [diaAnual, mesAnual] = rotina.diaPrazoPadrao.toString().split('/');
+                            const anoAtual = new Date().getFullYear();
+                            dateStr = `${anoAtual}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
+                        }
+
+                        const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
+                            const text = typeof item === 'string' ? item : item.texto;
+                            return { id: idx + 1, texto: text, done: false };
+                        });
+
+                        try {
+                            const resE = await fetch(`${API_BASE}/execucoes`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    cliente_id: cliente.id,
+                                    rotina: rotina.nome,
+                                    competencia: nextCompId,
+                                    dia_prazo: dateStr,
+                                    drive_link: cliente.driveLink,
+                                    responsavel: rotina.responsavel,
+                                    subitems: subitems,
+                                    eh_pai: true,
+                                    feito: false,
+                                    iniciado_em: new Date().toISOString().split('T')[0],
+                                    checklist_gerado: true
+                                })
+                            });
+                            if (resE.ok) {
+                                const dataE = await resE.json();
+                                db.execucoes.push({
+                                    id: dataE[0] ? dataE[0].id : Date.now(),
+                                    clienteId: cliente.id,
+                                    rotina: rotina.nome,
+                                    competencia: nextCompId,
+                                    diaPrazo: dateStr,
+                                    driveLink: cliente.driveLink,
+                                    feito: false,
+                                    feitoEm: null,
+                                    responsavel: rotina.responsavel,
+                                    iniciadoEm: new Date().toISOString().split('T')[0],
+                                    checklistGerado: true,
+                                    ehPai: true,
+                                    subitems: subitems
+                                });
+                            }
+                        } catch (e) { console.error("Erro rede ao criar task release", e); }
+                    }
+                }
+            }
+
+            // Sempre alertar sobre a liberação usando o novo Overlay Full Screen
+            if (typeof showSuccessOverlay === 'function') {
+                showSuccessOverlay('Mês Liberado!', `A competência ${nextExt} foi gerada nas suas tarefas.`);
+            } else if (typeof showFeedbackToast === 'function') {
+                showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, 'success');
+            } else {
+                showNotify("Parabéns!", `Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, "success");
+            }
+
+            // Forçar re-render dos paineis para a nova competência aparecer e as tarefas somarem aos KPIs
+            if (typeof renderOperacional === 'function') renderOperacional();
+            if (typeof renderMeuDesempenho === 'function') renderMeuDesempenho();
+            if (typeof renderDashboard === 'function') renderDashboard();
+        }
+    },
+
+    // --- GERENCIAMENTO DE COMPETÊNCIAS (Admin) ---
+    async addCompetenciaManual(anoMesId) {
+        // anoMesId format: YYYY-MM
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const [y, mStr] = anoMesId.split('-');
+        const monthIndex = parseInt(mStr) - 1;
+        const nomeExtenso = `${monthNames[monthIndex]} ${y}`;
+
+        // Verifica se já existe
+        if (db.meses.find(m => m.id === anoMesId)) {
+            showNotify("Aviso", `A competência ${anoMesId} já existe no sistema.`, "info");
+            return false;
+        }
+
+        const newMonth = {
+            id: anoMesId,
+            mes: nomeExtenso,
+            ativo: false,
+            percent_concluido: 0, atrasados: 0, concluidos: 0, total_execucoes: 0, vencendo: 0
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/meses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newMonth)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                db.meses.push(data[0]);
+                this.registerLog("Gestão de Competências", `Injetou manualmente a nova competência: ${anoMesId}`);
+
+                // Gera ativamente as obrigações para todos os clientes nessa competência
+                showLoading("Processando Mês", `Gerando estrutura mensal de ${nomeExtenso}...`);
+                for (let cliente of db.clientes) {
+                    const routinesToProcess = cliente.rotinasSelecionadas || [];
+                    for (const rotId of routinesToProcess) {
+                        const rotina = db.rotinasBase.find(r => r.id === rotId);
+                        if (!rotina) continue;
+                        if ((rotina.frequencia || '').toLowerCase() === 'eventual') continue;
+
+                        // Ignora já existentes (não deveria ter, mas bom garantir)
+                        const existsE = db.execucoes.find(e =>
+                            e.clienteId === cliente.id &&
+                            e.rotina === rotina.nome &&
+                            e.competencia === anoMesId
+                        );
+                        if (existsE) continue;
+
+                        let execDate = new Date(parseInt(y), monthIndex, 1);
+                        execDate.setMonth(execDate.getMonth() + 1);
+                        let execYStr = execDate.getFullYear();
+                        let execMStr = (execDate.getMonth() + 1).toString().padStart(2, '0');
+                        let diaStr = rotina.diaPrazoPadrao.toString().padStart(2, '0');
+                        let dateStr = `${execYStr}-${execMStr}-${diaStr}`;
+
+                        if (rotina.frequencia === 'Anual' && rotina.diaPrazoPadrao.toString().includes('/')) {
+                            const [diaAnual, mesAnual] = rotina.diaPrazoPadrao.toString().split('/');
+                            const anoAtual = new Date().getFullYear();
+                            dateStr = `${anoAtual}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
+                        }
+
+                        const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
+                            const text = typeof item === 'string' ? item : item.texto;
+                            return { id: idx + 1, texto: text, done: false };
+                        });
+
+                        await fetch(`${API_BASE}/execucoes`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                cliente_id: cliente.id, rotina: rotina.nome, competencia: anoMesId,
+                                dia_prazo: dateStr, drive_link: cliente.driveLink, responsavel: rotina.responsavel,
+                                subitems: subitems, eh_pai: true, feito: false,
+                                iniciado_em: new Date().toISOString().split('T')[0], checklist_gerado: true
+                            })
+                        }).then(r => r.json()).then(dataE => {
+                            db.execucoes.push({
+                                id: dataE[0] ? dataE[0].id : Date.now(),
+                                clienteId: cliente.id, rotina: rotina.nome, competencia: anoMesId, diaPrazo: dateStr, driveLink: cliente.driveLink,
+                                feito: false, feitoEm: null, responsavel: rotina.responsavel, iniciadoEm: new Date().toISOString().split('T')[0],
+                                checklistGerado: true, ehPai: true, subitems: subitems
+                            });
+                        }).catch(e => console.error(e));
+                    }
+                }
+                hideLoading();
+                return true;
+            }
+        } catch (e) {
+            console.error(e);
+            hideLoading();
+        }
+        return false;
+    },
+
+    async deleteCompetencia(compId) {
+        // Remover Mês
+        const idx = db.meses.findIndex(m => m.id === compId);
+        if (idx !== -1) {
+            const isAtivo = db.meses[idx].ativo;
+            db.meses.splice(idx, 1);
+            try {
+                await fetch(`${API_BASE}/meses/${compId}`, { method: 'DELETE' });
+                this.registerLog("Gestão de Competências", `Excluiu inteiramente a competência: ${compId} (e suas execuções vinculadas)`);
+            } catch (e) { console.error("Erro deletar mes", e); }
+        }
+
+        // Remover todas as execucoes sob essa competência
+        const toDeleteIds = db.execucoes.filter(e => e.competencia === compId).map(e => e.id);
+        db.execucoes = db.execucoes.filter(e => e.competencia !== compId);
+
+        for (const tid of toDeleteIds) {
+            try { await fetch(`${API_BASE}/execucoes/${tid}`, { method: 'DELETE' }); }
+            catch (err) { console.log(err); }
+        }
+        return true;
     },
 
     async addClient(clientData) {
@@ -474,7 +848,7 @@ window.Store = {
         } else {
             const errorMsg = await res.text();
             console.error('Erro API addClient:', res.status, errorMsg);
-            alert(`Erro ao cadastrar cliente (${res.status}): ${errorMsg}\n\nVerifique se a tabela no Supabase tem todas as colunas necessárias.`);
+            showNotify("Erro ao Cadastrar", `Erro ao cadastrar cliente (${res.status}). Verifique a estrutura do banco.`, "error");
             return null;
         }
 
@@ -555,7 +929,7 @@ window.Store = {
             } else {
                 const errorData = await res.json().catch(() => ({}));
                 console.error('API POST erro:', res.status, errorData);
-                alert(`Erro ao salvar rotina no banco de dados (${res.status}). Verifique se as colunas necessárias existem.`);
+                showNotify("Erro ao Salvar", `Erro ao salvar rotina (${res.status}). Verifique a estrutura do banco.`, "error");
 
                 const localId = Date.now();
                 const newRot = {
@@ -580,15 +954,22 @@ window.Store = {
     },
 
     async deleteRotinaBase(id) {
-        // if (typeof LOGGED_USER === 'undefined' || !LOGGED_USER || LOGGED_USER.permissao !== 'Gerente') {
-        //    console.warn("Ação de exclusão bloqueada devido a nível de permissão.");
-        //    return;
-        // }
-
         const rotinaIndex = db.rotinasBase.findIndex(r => r.id === id);
         if (rotinaIndex === -1) return;
 
         const rotinaNome = db.rotinasBase[rotinaIndex].nome;
+
+        // Excluir todas as execuções vinculadas a esta rotina
+        const execucoesVinculadas = db.execucoes.filter(e => e.rotina === rotinaNome);
+        for (const exec of execucoesVinculadas) {
+            try {
+                await fetch(`${API_BASE}/execucoes/${exec.id}`, { method: 'DELETE' });
+            } catch (e) {
+                console.error(`[deleteRotinaBase] Erro ao excluir execução ${exec.id} da rotina ${rotinaNome}:`, e);
+            }
+        }
+        // Remover do cache local
+        db.execucoes = db.execucoes.filter(e => e.rotina !== rotinaNome);
 
         try {
             const res = await fetch(`${API_BASE}/rotinas_base/${id}`, {
@@ -642,9 +1023,17 @@ window.Store = {
                     for (const rotId of removedRotinasIds) {
                         const rotina = db.rotinasBase.find(r => r.id === rotId);
                         if (rotina) {
-                            const taskToDelete = db.execucoes.find(e => e.clienteId === c.id && e.rotina === rotina.nome && e.competencia === currentComp);
-                            if (taskToDelete) {
-                                await this.deleteExecucao(taskToDelete.id);
+                            // Encontra todas as execuções (da competência atual ou futuras)
+                            // Isso garante que limpa tanto as obrigações deste mês quanto as 
+                            // que foram geradas antecipadamente (Early Release) para o mês que vem.
+                            const tasksToDelete = db.execucoes.filter(e =>
+                                e.clienteId === c.id &&
+                                e.rotina === rotina.nome &&
+                                e.competencia >= currentComp
+                            );
+
+                            for (const task of tasksToDelete) {
+                                await this.deleteExecucao(task.id);
                             }
                         }
                     }
@@ -684,7 +1073,7 @@ window.Store = {
                 if (!res.ok) {
                     const errorMsg = await res.text();
                     console.warn('API PUT cliente falhou.', res.status, errorMsg);
-                    alert(`Erro ao salvar alterações do cliente (${res.status}): ${errorMsg}\n\nIsso geralmente ocorre se faltarem colunas no banco de dados Supabase.`);
+                    showNotify("Erro ao Salvar", `Erro ao salvar alterações (${res.status}). Verifique a estrutura do banco.`, "error");
                 }
 
 
@@ -720,6 +1109,57 @@ window.Store = {
         }
     },
 
+
+    async saveMarketingPost(postData) {
+        const isEdit = !!postData.id;
+        const url = isEdit ? `${API_BASE}/marketing_posts/${postData.id}` : `${API_BASE}/marketing_posts`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(postData)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const savedPost = Array.isArray(data) ? data[0] : data;
+            if (isEdit) {
+                const idx = db.marketing_posts.findIndex(p => p.id === savedPost.id);
+                if (idx !== -1) db.marketing_posts[idx] = savedPost;
+            } else {
+                db.marketing_posts.push(savedPost);
+            }
+            return savedPost;
+        }
+        return null;
+    },
+
+    async saveMarketingCampanha(campData) {
+        const isEdit = !!campData.id;
+        const url = isEdit ? `${API_BASE}/marketing_campanhas/${campData.id}` : `${API_BASE}/marketing_campanhas`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(campData)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const savedCamp = Array.isArray(data) ? data[0] : data;
+            if (isEdit) {
+                const idx = db.marketing_campanhas.findIndex(c => c.id === savedCamp.id);
+                if (idx !== -1) db.marketing_campanhas[idx] = savedCamp;
+            } else {
+                db.marketing_campanhas.push(savedCamp);
+            }
+            return savedCamp;
+        }
+        return null;
+    },
+
     async editRotinaBase(id, nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = [], responsavel = "") {
         const r = db.rotinasBase.find(x => x.id === parseInt(id));
         if (r) {
@@ -746,7 +1186,7 @@ window.Store = {
                 if (!res.ok) {
                     const errorData = await res.json().catch(() => ({}));
                     console.error('API PUT erro:', res.status, errorData);
-                    alert(`Erro ao atualizar rotina no banco de dados (${res.status}).`);
+                    showNotify("Erro ao Atualizar", `Erro ao atualizar rotina no banco de dados (${res.status}).`, "error");
                 }
             } catch (e) {
                 console.error("Erro ao editar rotina base via API:", e);
@@ -840,7 +1280,7 @@ window.Store = {
     getAuthBySession(sessionId) {
         if (!sessionId) return null;
         if (sessionId === '999' || sessionId === 999) {
-            return { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'settings'] };
+            return { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings'] };
         }
 
         const tempAuth = db.funcionarios.find(f => f.id === parseInt(sessionId));
@@ -858,7 +1298,7 @@ window.Store = {
 
         if (auth.telas_permitidas.length === 0) {
             if (auth.permissao === 'Gerente') {
-                auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'settings'];
+                auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings'];
             } else {
                 auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
             }
@@ -885,52 +1325,102 @@ window.Store = {
         return null;
     },
 
-    // Additional methods mock
+    // Envio de mensagens com persistência no Supabase
     async sendMensagem(remetente, destinatario, texto, assunto = 'Sem Assunto') {
-        const m = { id: Date.now(), remetente, destinatario, texto, assunto, lida: false, data: new Date().toISOString() };
-        db.mensagens.push(m);
+        const now = new Date().toISOString();
+        const payload = {
+            remetente,
+            destinatario,
+            texto,
+            assunto: assunto || 'Sem Assunto',
+            lida: false,
+            data: now,
+            excluido_por: [],
+            favorito: false
+        };
         try {
-            await fetch(`${API_BASE}/mensagens`, {
+            const res = await fetch(`${API_BASE}/mensagens`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ remetente, destinatario, texto, assunto, lida: false })
+                body: JSON.stringify(payload)
             });
-        } catch (e) { console.error("Erro ao enviar msg API:", e); }
+            if (res.ok) {
+                const data = await res.json();
+                const savedId = (data && data[0]) ? data[0].id : Date.now();
+                db.mensagens.push({ ...payload, excluidoPor: [], id: savedId });
+            } else {
+                // Fallback local se API falhar
+                db.mensagens.push({ ...payload, excluidoPor: [], id: Date.now() });
+                console.warn("API falhou ao salvar mensagem, salvo localmente.");
+            }
+        } catch (e) {
+            console.error("Erro ao enviar msg API:", e);
+            db.mensagens.push({ ...payload, excluidoPor: [], id: Date.now() });
+        }
     },
 
-    async deleteMensagem(id) {
-        const idx = db.mensagens.findIndex(m => m.id == id);
-        if (idx !== -1) {
-            const m = db.mensagens[idx];
-            db.mensagens.splice(idx, 1);
-            try {
-                const res = await fetch(`${API_BASE}/mensagens/${id}`, { method: 'DELETE' });
-                if (!res.ok) throw new Error("API Delete Failed");
-            } catch (e) {
-                console.warn("Falha ao deletar msg API, revertendo local:", e);
-                db.mensagens.push(m); // Rollback shallow
-                return false;
+    async deleteMensagem(id, usuario) {
+        const m = db.mensagens.find(msg => msg.id == id);
+        if (m) {
+            if (!m.excluidoPor) m.excluidoPor = [];
+            if (!m.excluidoPor.includes(usuario)) {
+                m.excluidoPor.push(usuario);
             }
-            this.registerLog("Excluiu Mensagem", `ID: ${id}`);
+            try {
+                // Soft delete: envia lista de usuários que excluíram (msg permanece no banco)
+                const res = await fetch(`${API_BASE}/mensagens/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ excluido_por: m.excluidoPor })
+                });
+                if (!res.ok) {
+                    console.warn(`API PUT mensagem ${id} retornou status ${res.status}`);
+                }
+            } catch (e) {
+                console.warn("Falha ao registrar exclusão na API:", e);
+            }
+            this.registerLog("Excluiu Mensagem (Soft)", `Usuário: ${usuario}, MsgID: ${id}`);
             return true;
         }
         return false;
     },
 
     getMensagensPara(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario).sort((a, b) => new Date(b.data) - new Date(a.data));
+        return db.mensagens
+            .filter(m => m.destinatario === usuario && !(m.excluidoPor || []).includes(usuario))
+            .sort((a, b) => new Date(b.data) - new Date(a.data));
+    },
+
+    getMensagensEnviadas(usuario) {
+        return db.mensagens
+            .filter(m => m.remetente === usuario && !(m.excluidoPor || []).includes(usuario))
+            .sort((a, b) => new Date(b.data) - new Date(a.data));
     },
 
     getUnreadCount(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario && !m.lida).length;
+        return db.mensagens.filter(m =>
+            m.destinatario === usuario &&
+            !m.lida &&
+            !(m.excluidoPor || []).includes(usuario)
+        ).length;
     },
 
     getUnreadInboxCount(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario && !m.lida && m.remetente !== 'Sistema').length;
+        return db.mensagens.filter(m =>
+            m.destinatario === usuario &&
+            !m.lida &&
+            m.remetente !== 'Sistema' &&
+            !(m.excluidoPor || []).includes(usuario)
+        ).length;
     },
 
     getUnreadSystemCount(usuario) {
-        return db.mensagens.filter(m => m.destinatario === usuario && !m.lida && m.remetente === 'Sistema').length;
+        return db.mensagens.filter(m =>
+            m.destinatario === usuario &&
+            !m.lida &&
+            m.remetente === 'Sistema' &&
+            !(m.excluidoPor || []).includes(usuario)
+        ).length;
     },
 
     async markMensagemLida(id) {
@@ -947,7 +1437,95 @@ window.Store = {
         }
     },
 
+    async criarExecucaoEventual(rotinaId, clienteId) {
+        const rotina = db.rotinasBase.find(r => r.id === parseInt(rotinaId));
+        const cliente = db.clientes.find(c => c.id === parseInt(clienteId));
+
+        if (!rotina || !cliente) {
+            console.error('[criarExecucaoEventual] Rotina ou cliente não encontrado.');
+            return { ok: false, msg: 'Rotina ou cliente não encontrado.' };
+        }
+
+        const month = db.meses.find(m => m.ativo);
+        const currentComp = month ? month.id : new Date().toISOString().slice(0, 7);
+
+        // Verifica duplicidade: mesma rotina + cliente + competência já pendente
+        const jaExiste = db.execucoes.find(e =>
+            e.clienteId === cliente.id &&
+            e.rotina === rotina.nome &&
+            e.competencia === currentComp &&
+            !e.feito
+        );
+        if (jaExiste) {
+            return { ok: false, msg: `Já existe uma demanda "${rotina.nome}" pendente para ${cliente.razaoSocial} neste mês.` };
+        }
+
+        // Prazo: hoje + diaPrazoPadrao dias corridos
+        const diasSLA = parseInt(rotina.diaPrazoPadrao) || 0;
+        const prazoEvt = new Date();
+        prazoEvt.setDate(prazoEvt.getDate() + diasSLA);
+        const dateStr = prazoEvt.toISOString().split('T')[0];
+
+        // Normalizar checklist
+        const subitems = (rotina.checklistPadrao || []).map((item, idx) => ({
+            id: idx + 1,
+            texto: typeof item === 'string' ? item : item.texto,
+            done: false
+        }));
+
+        try {
+            const res = await fetch(`${API_BASE}/execucoes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cliente_id: cliente.id,
+                    rotina: rotina.nome,
+                    competencia: currentComp,
+                    dia_prazo: dateStr,
+                    drive_link: cliente.driveLink || '',
+                    responsavel: rotina.responsavel || 'Automático',
+                    subitems: subitems,
+                    eh_pai: true,
+                    feito: false,
+                    iniciado_em: new Date().toISOString().split('T')[0],
+                    checklist_gerado: true
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const newId = data[0] ? data[0].id : Date.now();
+                db.execucoes.push({
+                    id: newId,
+                    clienteId: cliente.id,
+                    rotina: rotina.nome,
+                    competencia: currentComp,
+                    diaPrazo: dateStr,
+                    driveLink: cliente.driveLink || '',
+                    feito: false,
+                    feitoEm: null,
+                    responsavel: rotina.responsavel || 'Automático',
+                    iniciadoEm: new Date().toISOString().split('T')[0],
+                    checklistGerado: true,
+                    ehPai: true,
+                    subitems: subitems
+                });
+                // Rotinas eventuais nao vinculam o cliente permanentemente.
+                // A execucao fica salva apenas na competencia atual (historico/auditoria).
+                this.registerLog('Demanda Eventual', `Criada demanda "${rotina.nome}" para ${cliente.razaoSocial} (prazo: ${dateStr})`);
+                return { ok: true };
+            } else {
+                console.error('[criarExecucaoEventual] Erro API:', res.status);
+                return { ok: false, msg: `Erro ao criar demanda (${res.status}).` };
+            }
+        } catch (e) {
+            console.error('[criarExecucaoEventual] Erro de rede:', e);
+            return { ok: false, msg: 'Erro de conexão ao criar demanda.' };
+        }
+    },
+
     async engineRotinas(cliente) {
+
         // Build routines for the active month
         const month = db.meses.find(m => m.ativo);
         if (!month) {
@@ -965,10 +1543,35 @@ window.Store = {
             const rotina = db.rotinasBase.find(r => r.id === rotId);
             if (!rotina) continue;
 
-            // Format deadline date for PostgreSQL (YYYY-MM-DD)
-            let [y, mStr] = currentComp.split('-');
-            let dia = rotina.diaPrazoPadrao.toString().padStart(2, '0');
-            let dateStr = `${y}-${mStr}-${dia}`;
+            // Rotinas eventuais são criadas apenas manualmente pelo painel operacional — nunca auto-geradas
+            if ((rotina.frequencia || '').toLowerCase() === 'eventual') {
+                console.log(`[Engine] Pulando rotina eventual "${rotina.nome}" — criação manual apenas.`);
+                continue;
+            }
+
+            // Calcular data de prazo conforme a frequência da rotina
+            let dateStr;
+            if (rotina.frequencia === 'Eventual') {
+                // Para rotinas eventuais: prazo = hoje + diaPrazoPadrao dias corridos
+                const diasSLA = parseInt(rotina.diaPrazoPadrao) || 0;
+                const prazoEvt = new Date();
+                prazoEvt.setDate(prazoEvt.getDate() + diasSLA);
+                dateStr = prazoEvt.toISOString().split('T')[0];
+            } else if (rotina.frequencia === 'Anual' && rotina.diaPrazoPadrao.toString().includes('/')) {
+                // Para rotinas anuais no formato DD/MM: usa o ano atual
+                const [diaAnual, mesAnual] = rotina.diaPrazoPadrao.toString().split('/');
+                const anoAtual = new Date().getFullYear();
+                dateStr = `${anoAtual}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
+            } else {
+                // Para rotinas mensais: dia fixo no mês da execução (competência + 1 mês)
+                let [y, mStr] = currentComp.split('-');
+                let execDate = new Date(parseInt(y), parseInt(mStr) - 1, 1);
+                execDate.setMonth(execDate.getMonth() + 1);
+                let execY = execDate.getFullYear();
+                let execM = (execDate.getMonth() + 1).toString().padStart(2, '0');
+                let dia = rotina.diaPrazoPadrao.toString().padStart(2, '0');
+                dateStr = `${execY}-${execM}-${dia}`;
+            }
 
             // Checklists might be arrays of strings or objects. Normalize to objects for 'execucoes'.
             const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
@@ -1038,5 +1641,143 @@ window.Store = {
                 console.error(`[Engine] Erro de rede ao criar tarefa para ${rotina.nome}:`, e);
             }
         }
+    },
+
+    // -----------------------------------------------------------------
+    // MARKETING METHODS
+    // -----------------------------------------------------------------
+    async saveMarketingPost(postData) {
+        const isEdit = !!postData.id;
+        const url = isEdit ? `${API_BASE}/marketing_posts/${postData.id}` : `${API_BASE}/marketing_posts`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(postData)
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const savedPost = Array.isArray(data) ? data[0] : data;
+                if (isEdit) {
+                    const idx = db.marketing_posts.findIndex(p => p.id === savedPost.id);
+                    if (idx !== -1) db.marketing_posts[idx] = savedPost;
+                } else {
+                    db.marketing_posts.push(savedPost);
+                }
+                this.registerLog("Comunicação", `${isEdit ? 'Atualizou' : 'Criou'} conteúdo: ${postData.titulo}`);
+                return savedPost;
+            }
+        } catch (e) { console.error("Erro ao salvar post marketing:", e); }
+        return null;
+    },
+
+    async updateMarketingPostStatus(id, newStatus) {
+        const post = db.marketing_posts.find(p => p.id === id);
+        if (post) {
+            post.status = newStatus;
+            try {
+                await fetch(`${API_BASE}/marketing_posts/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                this.registerLog("Comunicação", `Moveu card #${id} para '${newStatus}'`);
+            } catch (e) { console.error(e); }
+        }
+    },
+
+    async saveMarketingCampanha(campData) {
+        const isEdit = !!campData.id;
+        const url = isEdit ? `${API_BASE}/marketing_campanhas/${campData.id}` : `${API_BASE}/marketing_campanhas`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(campData)
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const savedCamp = Array.isArray(data) ? data[0] : data;
+                if (isEdit) {
+                    const idx = db.marketing_campanhas.findIndex(c => c.id === savedCamp.id);
+                    if (idx !== -1) db.marketing_campanhas[idx] = savedCamp;
+                } else {
+                    db.marketing_campanhas.push(savedCamp);
+                }
+                this.registerLog("Campanha", `${isEdit ? 'Atualizou' : 'Lançou'} campanha: ${campData.nome}`);
+                return savedCamp;
+            }
+        } catch (e) { console.error("Erro ao salvar campanha:", e); }
+        return null;
+    },
+
+    async addMarketingEquipeMember(memberData) {
+        try {
+            const res = await fetch(`${API_BASE}/marketing_equipe`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(memberData)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                db.marketing_equipe.push(data[0]);
+                return data[0];
+            }
+        } catch (e) { console.error(e); }
+        return null;
+    },
+
+    async updateBranding(configData) {
+        // Objeto db.config já é atualizado localmente pela UI se necessário,
+        // mas aqui garantimos o PUT para o banco (global_config/1 assumido)
+        try {
+            const res = await fetch(`${API_BASE}/global_config/1`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    brand_name: configData.brandName,
+                    brand_logo_url: configData.brandLogoUrl,
+                    accent_color: configData.accentColor,
+                    slogan: configData.slogan,
+                    theme: configData.theme,
+                    menu_order: configData.menuOrder || db.config.menuOrder
+                })
+            });
+            if (res.ok) {
+                db.config = { ...db.config, ...configData };
+                this.registerLog("Sistema", `Identidade visual atualizada.`);
+                return true;
+            }
+        } catch (e) { console.error(e); }
+        return false;
+    },
+
+    async updateGlobalConfig(newConfig) {
+        try {
+            const res = await fetch(`${API_BASE}/global_config/1`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    brand_name: newConfig.brandName || db.config.brandName,
+                    brand_logo_url: newConfig.brandLogoUrl || db.config.brandLogoUrl,
+                    accent_color: newConfig.accentColor || db.config.accentColor,
+                    slogan: newConfig.slogan || db.config.slogan,
+                    theme: newConfig.theme || db.config.theme,
+                    menu_order: newConfig.menu_order || newConfig.menuOrder
+                })
+            });
+            if (res.ok) {
+                db.config = { ...db.config, ...newConfig };
+                this.registerLog("Sistema", `Configurações globais atualizadas.`);
+                return true;
+            }
+        } catch (e) { console.error("Erro ao atualizar config global:", e); }
+        return false;
     }
 };
