@@ -3059,8 +3059,9 @@ function openDemandaEventualModal() {
             clientesSel.innerHTML += `<option value="${c.id}">${c.razaoSocial}</option>`;
         });
 
-    // Resetar preview de prazo
+    // Resetar preview de prazo e campo de busca
     document.getElementById('evt-prazo-preview').style.display = 'none';
+    document.getElementById('evt-cliente-busca').value = '';
 
     // Abrir modal
     const modal = document.getElementById('modal-demanda-eventual');
@@ -3092,6 +3093,27 @@ function onEventualRotinaChange() {
 function closeDemandaEventualModal() {
     const modal = document.getElementById('modal-demanda-eventual');
     modal.classList.remove('active');
+}
+
+// Filtra as opcoes do select de clientes conforme o usuario digita
+function filtrarClientesEventual(termo) {
+    const sel = document.getElementById('evt-cliente-select');
+    const termoLower = (termo || '').toLowerCase().trim();
+    // Guardar todos os clientes ativos no dataset do select para reuso
+    const clientes = Store.getData().clientes.filter(c => c.ativo !== false);
+    const ordenados = [...clientes].sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '', 'pt-BR'));
+    const filtrados = termoLower ? ordenados.filter(c => (c.razaoSocial || '').toLowerCase().includes(termoLower)) : ordenados;
+
+    // Preservar selecao atual
+    const valorAtual = sel.value;
+    sel.innerHTML = '<option value="">— Selecione o Cliente —</option>';
+    filtrados.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.razaoSocial;
+        if (String(c.id) === String(valorAtual)) opt.selected = true;
+        sel.appendChild(opt);
+    });
 }
 
 async function handleSaveDemandaEventual() {

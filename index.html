@@ -1700,7 +1700,12 @@
             <div class="form-group" style="margin-bottom:1.2rem;">
                 <label
                     style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Cliente</label>
-                <select id="evt-cliente-select" class="glass-select" style="width:100%; margin-top:0.5rem;">
+                <div class="search-wrapper" style="margin-top:0.5rem; margin-bottom:0.4rem;">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="evt-cliente-busca" placeholder="Buscar cliente..."
+                        oninput="filtrarClientesEventual(this.value)" autocomplete="off">
+                </div>
+                <select id="evt-cliente-select" class="glass-select" style="width:100%;">
                     <option value="">— Selecione o Cliente —</option>
                 </select>
             </div>
