@@ -21,8 +21,14 @@ let db = {
     execucoes: [],
     mensagens: [],
     logs: [],
-    config: { autoBackup: false, lastBackupData: null },
-    cargos: [] // New generic permissions table
+    config: {
+        autoBackup: false,
+        lastBackupData: null,
+        brandName: "RB|App",
+        brandLogoUrl: ""
+    },
+    cargos: [],
+    marketing_posts: []
 };
 
 window.Store = {
@@ -44,7 +50,9 @@ window.Store = {
                 fetch(`${API_BASE}/execucoes`),
                 fetch(`${API_BASE}/mensagens`),
                 fetch(`${API_BASE}/logs`),
-                fetch(`${API_BASE}/cargos`)
+                fetch(`${API_BASE}/cargos`),
+                fetch(`${API_BASE}/marketing_posts`),
+                fetch(`${API_BASE}/global_config`)
             ]);
 
             db.setores = (await setoresRes.json()).map(s => s.nome) || [];
@@ -70,9 +78,21 @@ window.Store = {
             try {
                 const cargosData = await cargosRes.json();
                 db.cargos = Array.isArray(cargosData) ? cargosData : [];
-            } catch (e) {
-                db.cargos = [];
-            }
+            } catch (e) { db.cargos = []; }
+
+            try {
+                const marketingData = await marketing_postsRes.json();
+                db.marketing_posts = Array.isArray(marketingData) ? marketingData : [];
+            } catch (e) { db.marketing_posts = []; }
+
+            try {
+                const configData = await global_configRes.json();
+                if (configData && configData.length > 0) {
+                    const c = configData[0];
+                    db.config.brandName = c.brand_name || db.config.brandName;
+                    db.config.brandLogoUrl = c.brand_logo_url || db.config.brandLogoUrl;
+                }
+            } catch (e) { }
 
             // Map python rotinasBase to expected camelCase names for legacy frontend compatibility
             db.rotinasBase = db.rotinasBase.map(r => ({
@@ -1216,5 +1236,56 @@ window.Store = {
                 console.error(`[Engine] Erro de rede ao criar tarefa para ${rotina.nome}:`, e);
             }
         }
+    },
+
+    // -----------------------------------------------------------------
+    // MARKETING METHODS
+    // -----------------------------------------------------------------
+    async addMarketingPost(postData) {
+        try {
+            const res = await fetch(`${API_BASE}/marketing_posts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(postData)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                db.marketing_posts.push(data[0]);
+                this.registerLog("Comunicação", `Novo card criado: ${postData.titulo}`);
+                return data[0];
+            }
+        } catch (e) { console.error(e); }
+        // Fallback local
+        const localPost = { id: Date.now(), ...postData };
+        db.marketing_posts.push(localPost);
+        return localPost;
+    },
+
+    async updateMarketingPostStatus(id, newStatus) {
+        const post = db.marketing_posts.find(p => p.id === id);
+        if (post) {
+            post.status = newStatus;
+            try {
+                await fetch(`${API_BASE}/marketing_posts/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                this.registerLog("Comunicação", `Movel card #${id} para '${newStatus}'`);
+            } catch (e) { console.error(e); }
+        }
+    },
+
+    async updateBranding(name, logoUrl) {
+        db.config.brandName = name;
+        db.config.brandLogoUrl = logoUrl;
+        try {
+            await fetch(`${API_BASE}/global_config`, {
+                method: 'POST', // Usando POST para update/upsert simplificado
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brand_name: name, brand_logo_url: logoUrl })
+            });
+            this.registerLog("Sistema", `Identidade visual atualizada para: ${name}`);
+        } catch (e) { console.error(e); }
     }
 };

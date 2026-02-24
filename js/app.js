@@ -94,6 +94,9 @@ async function initApp() {
 
             applyUserPermissions(auth);
 
+            // Aplicar Identidade Visual (Branding)
+            applyBranding();
+
 
 
             // Render everything invisibly first
@@ -495,6 +498,19 @@ async function initApp() {
     if (closeCargo2) closeCargo2.addEventListener('click', closeCargoModal);
     const cargoForm = document.getElementById('admin-cargo-form');
     if (cargoForm) cargoForm.addEventListener('submit', handleSaveCargo);
+
+    // 14. Branding Event
+    const brandingForm = document.getElementById('form-branding');
+    if (brandingForm) {
+        brandingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('brand-name').value;
+            const logo = document.getElementById('brand-logo-url').value;
+            await Store.updateBranding(name, logo);
+            applyBranding();
+            alert("Identidade visual personalizada com sucesso!");
+        });
+    }
 }
 
 function handleLogin(e) {
@@ -528,6 +544,9 @@ function handleLogin(e) {
 
             // Execute Dynamic Authorization on Navbar (RBAC)
             applyUserPermissions(auth);
+
+            // Aplicar Branding após Login
+            applyBranding();
 
             // Re-route user to their first available view if they don't have access to Dashboard
             if (!auth.telas_permitidas.includes('dashboard') && auth.telas_permitidas.length > 0) {
@@ -615,6 +634,32 @@ function applyUserPermissions(auth) {
     }
 }
 
+function applyBranding() {
+    const config = Store.getData().config || {};
+    const brandName = config.brandName || "RB|App";
+    const brandLogoUrl = config.brandLogoUrl || "";
+
+    // Atualizar Sidebar Logo
+    const sidebarLogo = document.querySelector('.sidebar .logo span');
+    if (sidebarLogo) sidebarLogo.textContent = brandName;
+
+    // Atualizar Login Logo
+    const loginLogo = document.querySelector('.login-logo');
+    if (loginLogo) {
+        if (brandLogoUrl) {
+            loginLogo.innerHTML = `<img src="${brandLogoUrl}" alt="${brandName}" style="max-height: 50px; border-radius: 8px;">`;
+        } else {
+            loginLogo.innerHTML = `<i class="fa-solid fa-chart-line"></i> ${brandName}`;
+        }
+    }
+
+    // Preencher campos no painel de configurações se estiverem vazios
+    const inputName = document.getElementById('brand-name');
+    const inputLogo = document.getElementById('brand-logo-url');
+    if (inputName && !inputName.value) inputName.value = brandName;
+    if (inputLogo && !inputLogo.value) inputLogo.value = brandLogoUrl;
+}
+
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(link => {
@@ -647,6 +692,10 @@ function setupNavigation() {
                 viewEl.style.display = 'block';
                 // Small delay to trigger CSS animation
                 setTimeout(() => viewEl.classList.add('active'), 10);
+
+                if (targetView === 'marketing') {
+                    Marketing.init();
+                }
 
                 // Refresh data based on view
                 if (targetView === 'dashboard') renderDashboard();
