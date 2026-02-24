@@ -120,6 +120,7 @@ window.Store = {
                     db.config.accentColor = c.accent_color || db.config.accentColor;
                     db.config.slogan = c.slogan || db.config.slogan;
                     db.config.theme = c.theme || db.config.theme;
+                    db.config.menuOrder = c.menu_order || db.config.menuOrder;
                 }
             } catch (e) { }
 

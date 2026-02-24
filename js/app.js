@@ -2718,7 +2718,11 @@ async function saveMenuOrder() {
     const config = Store.getData().config || {};
     config.menuOrder = newOrder;
 
-    const success = await Store.updateGlobalConfig(config);
+    // Sincronizar com formato do banco (snake_case)
+    const success = await Store.updateGlobalConfig({
+        ...config,
+        menu_order: newOrder
+    });
     hideLoading();
 
     if (success) {

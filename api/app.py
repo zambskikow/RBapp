@@ -248,6 +248,7 @@ class GlobalConfigUpdate(BaseModel):
     accent_color: str | None = None
     slogan: str | None = None
     theme: str | None = None
+    menu_order: list | None = None
 
 # --- API Endpoints ---
 
