@@ -144,28 +144,27 @@
                 </header>
 
                 <!-- KPI Cards: Strategic View -->
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                <div class="kpi-dashboard-grid">
                     <!-- Coluna 1: Volume Geral -->
                     <div class="glass-card"
                         style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.8rem;">
                         <h4
                             style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
                             Volume de Entregas</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="kpi-card"
-                                style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
-                                <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
-                                <div class="kpi-data">
-                                    <h3 style="font-size: 0.6rem;">Total Geral</h3>
-                                    <p class="kpi-value" id="kpi-total">0</p>
+                        <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+                            <div class="kpi-chip" style="background: rgba(255,255,255,0.03); border: none; flex: 1;">
+                                <div class="kpi-chip-icon"><i class="fa-solid fa-list-check"></i></div>
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-label">Total Geral</span>
+                                    <span class="kpi-chip-value" id="kpi-total">0</span>
                                 </div>
                             </div>
-                            <div class="kpi-card status-info"
-                                style="background: rgba(99, 102, 241, 0.05); border: none; padding: 0.75rem;">
-                                <div class="kpi-icon"><i class="fa-solid fa-percent"></i></div>
-                                <div class="kpi-data">
-                                    <h3 style="font-size: 0.6rem;">Taxa Entrega</h3>
-                                    <p class="kpi-value" id="kpi-eficiencia">0%</p>
+                            <div class="kpi-chip" style="background: rgba(99, 102, 241, 0.05); border: none; flex: 1;">
+                                <div class="kpi-chip-icon" style="color: var(--primary-light);"><i
+                                        class="fa-solid fa-percent"></i></div>
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-label">Taxa Entrega</span>
+                                    <span class="kpi-chip-value" id="kpi-eficiencia">0%</span>
                                 </div>
                             </div>
                         </div>
@@ -177,26 +176,27 @@
                         <h4
                             style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
                             Monitoramento de Prazos</h4>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
-                            <div class="kpi-card status-success"
-                                style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.7rem;">
-                                <div class="kpi-data">
-                                    <p class="kpi-value" id="kpi-done" style="font-size: 1.1rem;">0</p>
-                                    <h3 style="font-size: 0.55rem;">Concluídos</h3>
+                        <div class="kpi-scroll-row">
+                            <div class="kpi-chip"
+                                style="background: rgba(16, 185, 129, 0.05); border: none; min-width: 110px;">
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-value" id="kpi-done" style="color: var(--success);">0</span>
+                                    <span class="kpi-chip-label">Concluídos</span>
                                 </div>
                             </div>
-                            <div class="kpi-card status-warning"
-                                style="background: rgba(245, 158, 11, 0.05); border: none; padding: 0.7rem;">
-                                <div class="kpi-data">
-                                    <p class="kpi-value" id="kpi-warning" style="font-size: 1.1rem;">0</p>
-                                    <h3 style="font-size: 0.55rem;">Hoje</h3>
+                            <div class="kpi-chip"
+                                style="background: rgba(245, 158, 11, 0.05); border: none; min-width: 110px;">
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-value" id="kpi-warning"
+                                        style="color: var(--warning);">0</span>
+                                    <span class="kpi-chip-label">Hoje</span>
                                 </div>
                             </div>
-                            <div class="kpi-card status-danger"
-                                style="background: rgba(239, 68, 68, 0.05); border: none; padding: 0.7rem;">
-                                <div class="kpi-data">
-                                    <p class="kpi-value" id="kpi-late" style="font-size: 1.1rem;">0</p>
-                                    <h3 style="font-size: 0.55rem;">Atrasados</h3>
+                            <div class="kpi-chip"
+                                style="background: rgba(239, 68, 68, 0.05); border: none; min-width: 110px;">
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-value" id="kpi-late" style="color: var(--danger);">0</span>
+                                    <span class="kpi-chip-label">Atrasados</span>
                                 </div>
                             </div>
                         </div>
@@ -313,44 +313,45 @@
                 </header>
 
                 <!-- Expanded KPI Cards -->
-                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem;">
-                    <div class="glass-card kpi-card" style="background: rgba(255,255,255,0.03); border: none;">
-                        <div class="kpi-icon"><i class="fa-solid fa-bullseye"></i></div>
-                        <div class="kpi-data">
-                            <h3 style="font-size: 0.6rem;">Total Tarefas</h3>
-                            <p class="kpi-value" id="kpi-meu-total">0</p>
+                <div class="kpi-desempenho-grid">
+                    <div class="glass-card kpi-chip" style="background: rgba(255,255,255,0.03); border: none;">
+                        <div class="kpi-chip-icon"><i class="fa-solid fa-bullseye"></i></div>
+                        <div class="kpi-chip-info">
+                            <span class="kpi-chip-label">Total Tarefas</span>
+                            <span class="kpi-chip-value" id="kpi-meu-total">0</span>
                         </div>
                     </div>
-                    <div class="glass-card kpi-card status-success"
-                        style="background: rgba(16, 185, 129, 0.05); border: none;">
-                        <div class="kpi-icon"><i class="fa-solid fa-trophy"></i></div>
-                        <div class="kpi-data">
-                            <h3 style="font-size: 0.6rem;">Concluídas</h3>
-                            <p class="kpi-value" id="kpi-meu-done">0</p>
+                    <div class="glass-card kpi-chip" style="background: rgba(16, 185, 129, 0.05); border: none;">
+                        <div class="kpi-chip-icon" style="color: var(--success);"><i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <div class="kpi-chip-info">
+                            <span class="kpi-chip-label">Concluídas</span>
+                            <span class="kpi-chip-value" id="kpi-meu-done">0</span>
                         </div>
                     </div>
-                    <div class="glass-card kpi-card status-info"
+                    <div class="glass-card kpi-chip"
                         style="background: rgba(99, 102, 241, 0.08); border: 1px solid var(--primary-light);">
-                        <div class="kpi-icon"><i class="fa-solid fa-bolt"></i></div>
-                        <div class="kpi-data">
-                            <h3 style="font-size: 0.6rem;">Eficiência</h3>
-                            <p class="kpi-value" id="kpi-meu-score">0%</p>
+                        <div class="kpi-chip-icon" style="color: var(--primary-light);"><i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="kpi-chip-info">
+                            <span class="kpi-chip-label">Eficiência</span>
+                            <span class="kpi-chip-value" id="kpi-meu-score">0%</span>
                         </div>
                     </div>
-                    <div class="glass-card kpi-card status-warning"
-                        style="background: rgba(245, 158, 11, 0.05); border: none;">
-                        <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
-                        <div class="kpi-data">
-                            <h3 style="font-size: 0.6rem;">Vencendo Hoje</h3>
-                            <p class="kpi-value" id="kpi-meu-warning">0</p>
+                    <div class="glass-card kpi-chip" style="background: rgba(245, 158, 11, 0.05); border: none;">
+                        <div class="kpi-chip-icon" style="color: var(--warning);"><i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div class="kpi-chip-info">
+                            <span class="kpi-chip-label">Vencendo Hoje</span>
+                            <span class="kpi-chip-value" id="kpi-meu-warning">0</span>
                         </div>
                     </div>
-                    <div class="glass-card kpi-card status-danger"
-                        style="background: rgba(239, 68, 68, 0.05); border: none;">
-                        <div class="kpi-icon"><i class="fa-solid fa-skull-crossbones"></i></div>
-                        <div class="kpi-data">
-                            <h3 style="font-size: 0.6rem;">Atrasadas</h3>
-                            <p class="kpi-value" id="kpi-meu-late">0</p>
+                    <div class="glass-card kpi-chip" style="background: rgba(239, 68, 68, 0.05); border: none;">
+                        <div class="kpi-chip-icon" style="color: var(--danger);"><i
+                                class="fa-solid fa-skull-crossbones"></i></div>
+                        <div class="kpi-chip-info">
+                            <span class="kpi-chip-label">Atrasadas</span>
+                            <span class="kpi-chip-value" id="kpi-meu-late">0</span>
                         </div>
                     </div>
                 </div>
@@ -428,37 +429,36 @@
 
                 <!-- Novos KPIs do Painel Operacional -->
                 <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem;">
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
-                        <div class="kpi-card"
-                            style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-operacional-total" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Total</h3>
+                    <div class="kpi-scroll-row">
+                        <div class="kpi-chip" style="background: rgba(255,255,255,0.03); border: none;">
+                            <div class="kpi-chip-icon"><i class="fa-solid fa-list-check"></i></div>
+                            <div class="kpi-chip-info">
+                                <span class="kpi-chip-value" id="kpi-operacional-total">0</span>
+                                <span class="kpi-chip-label">Total</span>
                             </div>
                         </div>
-                        <div class="kpi-card status-success"
-                            style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon"><i class="fa-solid fa-check-double"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-operacional-done" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Concluídos</h3>
+                        <div class="kpi-chip" style="background: rgba(16, 185, 129, 0.05); border: none;">
+                            <div class="kpi-chip-icon" style="color: var(--success);"><i
+                                    class="fa-solid fa-check-double"></i></div>
+                            <div class="kpi-chip-info">
+                                <span class="kpi-chip-value" id="kpi-operacional-done">0</span>
+                                <span class="kpi-chip-label">Concluídos</span>
                             </div>
                         </div>
-                        <div class="kpi-card status-info"
-                            style="background: rgba(59, 130, 246, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon"><i class="fa-solid fa-bars-progress"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-operacional-andamento" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Andamento</h3>
+                        <div class="kpi-chip" style="background: rgba(59, 130, 246, 0.05); border: none;">
+                            <div class="kpi-chip-icon" style="color: #3B82F6;"><i class="fa-solid fa-bars-progress"></i>
+                            </div>
+                            <div class="kpi-chip-info">
+                                <span class="kpi-chip-value" id="kpi-operacional-andamento">0</span>
+                                <span class="kpi-chip-label">Andamento</span>
                             </div>
                         </div>
-                        <div class="kpi-card status-danger"
-                            style="background: rgba(239, 68, 68, 0.05); border: none; padding: 0.75rem;">
-                            <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                            <div class="kpi-data">
-                                <p class="kpi-value" id="kpi-operacional-late" style="font-size: 1.3rem;">0</p>
-                                <h3 style="font-size: 0.65rem;">Atrasados</h3>
+                        <div class="kpi-chip" style="background: rgba(239, 68, 68, 0.05); border: none;">
+                            <div class="kpi-chip-icon" style="color: var(--danger);"><i
+                                    class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="kpi-chip-info">
+                                <span class="kpi-chip-value" id="kpi-operacional-late">0</span>
+                                <span class="kpi-chip-label">Atrasados</span>
                             </div>
                         </div>
                     </div>
@@ -511,64 +511,60 @@
                         <h4
                             style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 1px;">
                             Resumo da Base</h4>
-                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.8rem;">
-                            <div class="kpi-card"
-                                style="background: rgba(255,255,255,0.03); border: none; padding: 0.75rem;">
-                                <div class="kpi-icon"
+                        <div class="kpi-scroll-row">
+                            <div class="kpi-chip"
+                                style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2);">
+                                <div class="kpi-chip-icon"
                                     style="background: rgba(99, 102, 241, 0.15); color: var(--primary-light);"><i
                                         class="fa-solid fa-users"></i></div>
-                                <div class="kpi-data">
-                                    <p class="kpi-value" id="kpi-total-clientes">0</p>
-                                    <h3>Total</h3>
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-value" id="kpi-total-clientes">0</span>
+                                    <span class="kpi-chip-label">Total</span>
                                 </div>
                             </div>
-                            <div class="kpi-card"
-                                style="background: rgba(239, 68, 68, 0.05); border: none; padding: 0.75rem;">
-                                <div class="kpi-icon"
-                                    style="background: rgba(239, 68, 68, 0.15); color: var(--danger); opacity: 0.7;"><i
+                            <div class="kpi-chip" style="background: rgba(239, 68, 68, 0.05);">
+                                <div class="kpi-chip-icon"
+                                    style="background: rgba(239, 68, 68, 0.15); color: var(--danger);"><i
                                         class="fa-solid fa-user-slash"></i></div>
-                                <div class="kpi-data">
-                                    <p class="kpi-value" id="kpi-inativos">0</p>
-                                    <h3 style="opacity: 0.8;">Inativos</h3>
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-value" id="kpi-inativos">0</span>
+                                    <span class="kpi-chip-label">Inativos</span>
                                 </div>
                             </div>
-                            <div class="kpi-card"
-                                style="background: rgba(16, 185, 129, 0.05); border: none; padding: 0.75rem;">
-                                <div class="kpi-icon"
+                            <div class="kpi-chip" style="background: rgba(16, 185, 129, 0.05);">
+                                <div class="kpi-chip-icon"
                                     style="background: rgba(16, 185, 129, 0.15); color: var(--success);"><i
                                         class="fa-solid fa-leaf"></i></div>
-                                <div class="kpi-data">
-                                    <p class="kpi-value" id="kpi-simples">0</p>
-                                    <h3>Simples</h3>
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-value" id="kpi-simples">0</span>
+                                    <span class="kpi-chip-label">Simples</span>
                                 </div>
                             </div>
-                            <div class="kpi-card"
-                                style="background: rgba(245, 158, 11, 0.05); border: none; padding: 0.75rem;">
-                                <div class="kpi-icon"
+                            <div class="kpi-chip" style="background: rgba(245, 158, 11, 0.05);">
+                                <div class="kpi-chip-icon"
                                     style="background: rgba(245, 158, 11, 0.15); color: var(--warning);"><i
                                         class="fa-solid fa-building"></i></div>
-                                <div class="kpi-data">
-                                    <p class="kpi-value" id="kpi-presumido">0</p>
-                                    <h3>Presumido</h3>
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-value" id="kpi-presumido">0</span>
+                                    <span class="kpi-chip-label">Presumido</span>
                                 </div>
                             </div>
-                            <div class="kpi-card"
-                                style="background: rgba(59, 130, 246, 0.05); border: none; padding: 0.75rem;">
-                                <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6;"><i
+                            <div class="kpi-chip" style="background: rgba(59, 130, 246, 0.05);">
+                                <div class="kpi-chip-icon"
+                                    style="background: rgba(59, 130, 246, 0.15); color: #3B82F6;"><i
                                         class="fa-solid fa-scale-balanced"></i></div>
-                                <div class="kpi-data">
-                                    <p class="kpi-value" id="kpi-real">0</p>
-                                    <h3>Lucro Real</h3>
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-value" id="kpi-real">0</span>
+                                    <span class="kpi-chip-label">Lucro Real</span>
                                 </div>
                             </div>
-                            <div class="kpi-card"
-                                style="background: rgba(139, 92, 246, 0.05); border: none; padding: 0.75rem;">
-                                <div class="kpi-icon"
+                            <div class="kpi-chip" style="background: rgba(139, 92, 246, 0.05);">
+                                <div class="kpi-chip-icon"
                                     style="background: rgba(139, 92, 246, 0.15); color: var(--accent);"><i
                                         class="fa-solid fa-store"></i></div>
-                                <div class="kpi-data">
-                                    <p class="kpi-value" id="kpi-mei">0</p>
-                                    <h3>MEI</h3>
+                                <div class="kpi-chip-info">
+                                    <span class="kpi-chip-value" id="kpi-mei">0</span>
+                                    <span class="kpi-chip-label">MEI</span>
                                 </div>
                             </div>
                         </div>
