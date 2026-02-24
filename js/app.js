@@ -613,11 +613,35 @@ function handleLogout() {
     }, 850); // Um pouco mais que a animação CSS (800ms)
 }
 
+// Master state for menu order
+let currentMenuOrder = [];
+
 function applyUserPermissions(auth) {
+    const config = Store.getData().config || {};
+    const savedOrder = config.menuOrder || [];
     const permitidas = auth.telas_permitidas || [];
 
     // Master Admin bypass: Manager account or "Gerente" permission gets everything
     const isMasterAdmin = auth.nome === 'Manager' || auth.permissao === 'Gerente';
+
+    const sidebarNav = document.querySelector('.sidebar .nav-menu');
+    if (sidebarNav) {
+        const navItems = Array.from(sidebarNav.querySelectorAll('.nav-item'));
+
+        // Reorder items in DOM if savedOrder exists
+        if (savedOrder.length > 0) {
+            savedOrder.forEach(viewKey => {
+                const item = navItems.find(i => i.getAttribute('data-view') === viewKey);
+                if (item) sidebarNav.appendChild(item);
+            });
+            // Append any items not in savedOrder to the end (future proofing)
+            navItems.forEach(item => {
+                if (!savedOrder.includes(item.getAttribute('data-view'))) {
+                    sidebarNav.appendChild(item);
+                }
+            });
+        }
+    }
 
     // Loop through all navigation links and show/hide based on array
     document.querySelectorAll('.nav-item').forEach(navItem => {
@@ -631,6 +655,12 @@ function applyUserPermissions(auth) {
         }
     });
 
+    // Final cleanup: ensure nav-divider and specific buttons follow the order
+    const adminNavDivider = document.getElementById('admin-nav-divider');
+    const navSettings = document.getElementById('nav-settings');
+    if (adminNavDivider && sidebarNav) sidebarNav.appendChild(adminNavDivider);
+    if (navSettings && sidebarNav) sidebarNav.appendChild(navSettings);
+
     // Hide/Show specific inner buttons based on permissions
     const btnSetores = document.getElementById('btn-manage-setores');
     if (btnSetores) {
@@ -641,7 +671,6 @@ function applyUserPermissions(auth) {
         }
     }
 
-    const adminNavDivider = document.getElementById('admin-nav-divider');
     if (adminNavDivider) {
         if (isMasterAdmin || permitidas.includes('settings')) {
             adminNavDivider.style.display = 'block';
@@ -2625,9 +2654,84 @@ function closeDeleteCompetenciaModal() {
 }
 
 // ==========================================
+// CONFIG: Menu Reordering Logic
+// ==========================================
 
+function renderMenuReorderList() {
+    const listContainer = document.getElementById('menu-reorder-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+
+    // Pegar todos os itens do menu (conforme estão no DOM agora)
+    const navItems = Array.from(document.querySelectorAll('.sidebar .nav-item'));
+
+    navItems.forEach(item => {
+        const view = item.getAttribute('data-view');
+        if (!view || view === 'settings') return; // Settings sempre fica embaixo
+
+        const label = item.querySelector('span').textContent;
+        const iconClass = item.querySelector('i').className;
+
+        const div = document.createElement('div');
+        div.className = 'reorder-item';
+        div.draggable = true;
+        div.setAttribute('data-view', view);
+        div.innerHTML = `
+            <i class="${iconClass}"></i>
+            <span>${label}</span>
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+        `;
+
+        // Drag events
+        div.addEventListener('dragstart', () => div.classList.add('dragging'));
+        div.addEventListener('dragend', () => div.classList.remove('dragging'));
+
+        listContainer.appendChild(div);
+    });
+
+    listContainer.addEventListener('dragover', e => {
+        e.preventDefault();
+        const draggingItem = document.querySelector('.dragging');
+        const siblings = [...listContainer.querySelectorAll('.reorder-item:not(.dragging)')];
+
+        const nextSibling = siblings.find(sibling => {
+            return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+        });
+
+        listContainer.insertBefore(draggingItem, nextSibling);
+    });
+}
+
+async function saveMenuOrder() {
+    const listContainer = document.getElementById('menu-reorder-list');
+    if (!listContainer) return;
+
+    const items = listContainer.querySelectorAll('.reorder-item');
+    const newOrder = Array.from(items).map(i => i.getAttribute('data-view'));
+
+    // Always keep settings at the end
+    newOrder.push('settings');
+
+    showLoading('Salvando Ordem', 'Atualizando layout do menu lateral...');
+
+    const config = Store.getData().config || {};
+    config.menuOrder = newOrder;
+
+    const success = await Store.updateGlobalConfig(config);
+    hideLoading();
+
+    if (success) {
+        // Re-apply immediately
+        applyUserPermissions(LOGGED_USER);
+        alert('Ordem do menu salva com sucesso!');
+    } else {
+        alert('Erro ao salvar ordem do menu.');
+    }
+}
+
+// ==========================================
 // VIEW: Gestão de Setores (Dynamic Loader)
-
 // ==========================================
 
 
@@ -4551,6 +4655,8 @@ function initSettingsTabs() {
                 renderAuditoriaCompetencia();
             } else if (targetId === "set-equipe") {
                 renderEquipe();
+            } else if (targetId === "set-branding") {
+                renderMenuReorderList();
             }
         });
     });

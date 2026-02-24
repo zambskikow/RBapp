@@ -1744,7 +1744,8 @@ window.Store = {
                     brand_logo_url: configData.brandLogoUrl,
                     accent_color: configData.accentColor,
                     slogan: configData.slogan,
-                    theme: configData.theme
+                    theme: configData.theme,
+                    menu_order: configData.menuOrder || db.config.menuOrder
                 })
             });
             if (res.ok) {
@@ -1753,6 +1754,29 @@ window.Store = {
                 return true;
             }
         } catch (e) { console.error(e); }
+        return false;
+    },
+
+    async updateGlobalConfig(newConfig) {
+        try {
+            const res = await fetch(`${API_BASE}/global_config/1`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    brand_name: newConfig.brandName || db.config.brandName,
+                    brand_logo_url: newConfig.brandLogoUrl || db.config.brandLogoUrl,
+                    accent_color: newConfig.accentColor || db.config.accentColor,
+                    slogan: newConfig.slogan || db.config.slogan,
+                    theme: newConfig.theme || db.config.theme,
+                    menu_order: newConfig.menuOrder
+                })
+            });
+            if (res.ok) {
+                db.config = { ...db.config, ...newConfig };
+                this.registerLog("Sistema", `Configurações globais atualizadas.`);
+                return true;
+            }
+        } catch (e) { console.error("Erro ao atualizar config global:", e); }
         return false;
     }
 };
