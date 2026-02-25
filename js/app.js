@@ -1419,9 +1419,14 @@ function openEmployeePerformanceModal(employeeName) {
     updateEmployeePerformanceModal();
 
     const modal = document.getElementById('modal-employee-performance');
-    modal.style.display = 'flex';
-    setTimeout(() => modal.classList.add('active'), 10);
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    } else {
+        console.error("ERRO: Elemento 'modal-employee-performance' não encontrado no DOM.");
+    }
 }
+window.openEmployeePerformanceModal = openEmployeePerformanceModal;
 
 function updateEmployeePerformanceModal() {
     if (!currentEmployeeForPerformance) return;
@@ -1500,6 +1505,8 @@ function closeEmployeePerformanceModal() {
         currentEmployeeForPerformance = null;
     }, 300);
 }
+window.closeEmployeePerformanceModal = closeEmployeePerformanceModal;
+window.updateEmployeePerformanceModal = updateEmployeePerformanceModal;
 
 
 // ==========================================
