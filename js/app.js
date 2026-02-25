@@ -1949,7 +1949,7 @@ function renderClientes() {
                 <label class="custom-toggle" title="${isOperacional ? 'Permissão apenas para visualização' : 'Alterar status de ' + c.razaoSocial}" style="${isOperacional ? 'cursor: not-allowed; opacity: 0.6;' : ''}">
                     <input type="checkbox" onchange="toggleClientStatus(${c.id}, this.checked)" ${c.ativo !== false ? 'checked' : ''} ${isOperacional ? 'disabled' : ''}>
                     <span class="toggle-slider"></span>
-                    <span class="toggle-label" style="font-size: 0.7rem;">Ativo</span>
+                    <span class="toggle-label" style="font-size: 0.7rem;">Status</span>
                 </label>
             </div>
         `;
@@ -2208,7 +2208,6 @@ function openClientDetail(id = null) {
     if (statusToggle) {
         statusToggle.onchange = () => {
             statusLabel.textContent = statusToggle.checked ? 'Ativo' : 'Inativo';
-            statusLabel.style.color = statusToggle.checked ? '#10B981' : '#EF4444';
         };
     }
 
@@ -2415,7 +2414,7 @@ function renderEquipe() {
                         <input type="checkbox" ${isAtivo ? 'checked' : ''} onchange="toggleFuncionarioStatus('${f.id}')">
                         <span class="toggle-slider"></span>
                     </label>
-                    <span style="font-size: 0.8rem; font-weight: 500; color: ${isAtivo ? 'var(--success)' : 'var(--danger)'};">
+                    <span style="font-size: 0.8rem; font-weight: 500;">
                         ${isAtivo ? 'Ativo' : 'Inativo'}
                     </span>
                 </div>
