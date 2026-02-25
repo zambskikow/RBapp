@@ -1341,11 +1341,11 @@ window.Store = {
 
     getAuthBySession(sessionId) {
         if (!sessionId) return null;
-        if (sessionId === '999' || sessionId === 999) {
-            return { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings'] };
+        if (sessionId === '999' || sessionId == 999) {
+            return { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias'] };
         }
 
-        const tempAuth = db.funcionarios.find(f => f.id === parseInt(sessionId));
+        const tempAuth = db.funcionarios.find(f => f.id == sessionId);
         if (!tempAuth || tempAuth.ativo === false) return null;
 
         let auth = { ...tempAuth };
@@ -1360,7 +1360,7 @@ window.Store = {
 
         if (auth.telas_permitidas.length === 0) {
             if (auth.permissao && auth.permissao.toLowerCase() === 'gerente') {
-                auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings'];
+                auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias'];
             } else {
                 auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
             }
