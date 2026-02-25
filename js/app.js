@@ -2099,8 +2099,9 @@ function generateRandomClientCode() {
     const maxAttempts = 1000;
 
     while (attempts < maxAttempts) {
-        // Gera um código de 4 dígitos
-        code = Math.floor(1000 + Math.random() * 9000).toString();
+        // Gera um código com prefixo RB- e 4 dígitos
+        const num = Math.floor(1000 + Math.random() * 9000).toString();
+        code = `RB-${num}`;
         if (!codigosExistentes.has(code)) {
             break;
         }
