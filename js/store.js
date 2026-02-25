@@ -1359,7 +1359,7 @@ window.Store = {
         }
 
         if (auth.telas_permitidas.length === 0) {
-            if (auth.permissao === 'Gerente') {
+            if (auth.permissao && auth.permissao.toLowerCase() === 'gerente') {
                 auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings'];
             } else {
                 auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
@@ -1371,7 +1371,7 @@ window.Store = {
 
     login(username, password) {
         let auth = null;
-        if (username === 'Manager' && password === '123') {
+        if (username.toLowerCase() === 'manager' && password === '123') {
             auth = this.getAuthBySession('999');
         } else {
             const tempAuth = db.funcionarios.find(f => f.nome === username && f.senha === password);

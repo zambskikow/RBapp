@@ -723,7 +723,7 @@ function applyUserPermissions(auth) {
     const permitidas = auth.telas_permitidas || [];
 
     // Master Admin bypass: Manager account or "Gerente" permission gets everything
-    const isMasterAdmin = auth.nome === 'Manager' || auth.permissao === 'Gerente';
+    const isMasterAdmin = (auth.nome && auth.nome.toLowerCase() === 'manager') || (auth.permissao && auth.permissao.toLowerCase() === 'gerente');
 
     const sidebarNav = document.querySelector('.sidebar .nav-menu');
     if (sidebarNav) {
@@ -782,7 +782,7 @@ function applyUserPermissions(auth) {
 
     // Dashboard Access Control
     const dashUserFilter = document.getElementById('dash-user-filter');
-    const isAdmin = ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(auth.permissao);
+    const isAdmin = auth.permissao && ['gerente', 'adm', 'admin', 'supervisor'].includes(auth.permissao.toLowerCase());
 
     if (dashUserFilter) {
         dashUserFilter.style.display = isAdmin ? 'block' : 'none';
