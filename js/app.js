@@ -2594,7 +2594,7 @@ function showConfirm(title, message, type = 'warning') {
         }
 
         titleEl.textContent = title;
-        messageEl.textContent = message;
+        messageEl.innerHTML = message;
 
         // Ajustar ícone e cor conforme o tipo
         if (type === 'danger') {

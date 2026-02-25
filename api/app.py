@@ -315,6 +315,13 @@ def update_mes(mes_id: str, updates: MesUpdate):
 
 @app.delete("/api/meses/{mes_id}")
 def delete_mes(mes_id: str):
+    # Deletar execuções vinculadas primeiro para evitar erro de Constraint de Foreign Key
+    try:
+        supabase.table("execucoes").delete().eq("competencia", mes_id).execute()
+    except Exception as e:
+        print(f"Aviso ao deletar execucoes do mes {mes_id}: {e}")
+
+    # Deletar o mes em si
     response = supabase.table("meses").delete().eq("id", mes_id).execute()
     return response.data
 
