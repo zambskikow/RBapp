@@ -2550,14 +2550,77 @@ async function handleAddFuncionario(e) {
     populateDashboardSelects();
 }
 
+/**
+ * Modal de Confirmação (Retorna uma Promise true/false)
+ */
+function showConfirm(title, message, type = 'warning') {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('modal-confirm-premium');
+        const titleEl = document.getElementById('confirm-title');
+        const messageEl = document.getElementById('confirm-message');
+        const btnOk = document.getElementById('confirm-ok');
+        const btnCancel = document.getElementById('confirm-cancel');
+        const iconEl = document.getElementById('confirm-icon');
+
+        if (!modal || !titleEl || !messageEl || !btnOk || !btnCancel || !iconEl) {
+            console.error("Elementos do modal de confirmação não encontrados.");
+            resolve(window.confirm(message));
+            return;
+        }
+
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+
+        // Ajustar ícone e cor conforme o tipo
+        if (type === 'danger') {
+            iconEl.style.color = 'var(--danger)';
+            iconEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+            btnOk.style.background = 'var(--danger)';
+            btnOk.style.borderColor = 'var(--danger)';
+        } else {
+            iconEl.style.color = 'var(--warning)';
+            iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            btnOk.style.background = 'var(--primary)';
+            btnOk.style.borderColor = 'var(--primary)';
+        }
+
+        modal.classList.add('active');
+
+        const handleOk = () => {
+            modal.classList.remove('active');
+            cleanup();
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            modal.classList.remove('active');
+            cleanup();
+            resolve(false);
+        };
+
+        const cleanup = () => {
+            btnOk.removeEventListener('click', handleOk);
+            btnCancel.removeEventListener('click', handleCancel);
+        };
+
+        btnOk.addEventListener('click', handleOk, { once: true });
+        btnCancel.addEventListener('click', handleCancel, { once: true });
+    });
+}
+
 async function handleDeleteFuncionario() {
     const id = document.getElementById('equipe-id').value;
     const nome = document.getElementById('equipe-nome').value;
 
     if (!id) return;
 
-    // Confirmação Premium usando o estilo do sistema se disponível (Senão window.confirm)
-    const confirmacao = window.confirm(`Tem certeza que deseja excluir permanentemente a conta de "${nome}"? Esta ação não pode ser desfeita.`);
+    // Confirmação Premium
+    const confirmacao = await showConfirm(
+        "Excluir Funcionário?",
+        `Tem certeza que deseja remover permanentemente a conta de "${nome}"? Esta ação não pode ser desfeita.`,
+        'danger'
+    );
+
     if (!confirmacao) return;
 
     showLoading("Processando", "Excluindo funcionário...");
@@ -2565,16 +2628,12 @@ async function handleDeleteFuncionario() {
     hideLoading();
 
     if (success) {
-        if (typeof showFeedbackToast === 'function') {
-            showFeedbackToast("Conta excluída com sucesso!", "success");
-        }
+        showFeedbackToast("Conta excluída com sucesso!", "success");
         closeEquipeModal();
         renderEquipe();
         populateDashboardSelects();
     } else {
-        if (typeof showFeedbackToast === 'function') {
-            showFeedbackToast("Erro ao excluir conta. Verifique a conexão.", "error");
-        }
+        showFeedbackToast("Erro ao excluir conta. Verifique a conexão.", "error");
     }
 }
 

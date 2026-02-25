@@ -2612,6 +2612,26 @@
     <!-- Power Off / Shutdown Overlay -->
     <div id="shutdown-overlay" class="shutdown-overlay"></div>
 
+    <!-- Confirmation Modal Premium -->
+    <div class="modal-overlay" id="modal-confirm-premium">
+        <div class="glass-card modal-content" style="max-width: 400px; padding: 2.5rem; text-align: center;">
+            <div id="confirm-icon" style="font-size: 3.5rem; color: var(--warning); margin-bottom: 1.5rem;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <h2 id="confirm-title" style="margin-bottom: 1rem; font-size: 1.5rem;">Confirmação</h2>
+            <p id="confirm-message" style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6;">Deseja
+                realizar esta ação?</p>
+
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button class="btn btn-secondary" id="confirm-cancel" style="flex: 1; padding: 0.8rem;">Não,
+                    Voltar</button>
+                <button class="btn btn-primary" id="confirm-ok"
+                    style="flex: 1; padding: 0.8rem; background: var(--danger); border-color: var(--danger);">Sim,
+                    Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
