@@ -2522,6 +2522,29 @@
                     </div>
                 </div>
 
+                <!-- Gráficos do Funcionário -->
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="glass-card"
+                        style="padding: 1.5rem; display: flex; flex-direction: column; height: 320px;">
+                        <h4
+                            style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                            Status das Tarefas</h4>
+                        <div style="flex: 1; position: relative;">
+                            <canvas id="empStatusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card"
+                        style="padding: 1.5rem; display: flex; flex-direction: column; height: 320px;">
+                        <h4
+                            style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                            Produtividade por Competência</h4>
+                        <div style="flex: 1; position: relative;">
+                            <canvas id="empProductionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Lista de Rotinas (Detalhado) -->
                 <div class="glass-card full-table-container">
                     <div class="table-header-action"

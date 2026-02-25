@@ -1070,6 +1070,8 @@ function renderDashboard() {
 let healthChartInst = null;
 let teamChartInst = null;
 let sectorChartInst = null;
+let empStatusChartInst = null;
+let empProductionChartInst = null;
 
 function renderHealthChart(kpis) {
     const ctxValue = document.getElementById('semaforoChart');
@@ -1504,6 +1506,97 @@ function updateEmployeePerformanceModal() {
             <td style="color: var(--text-muted);">---</td>
         `;
         tbody.appendChild(tr);
+    });
+
+    // Renderizar Gráficos
+    renderEmployeeStatusChart(execs);
+    renderEmployeeProductionChart(currentEmployeeForPerformance);
+}
+
+function renderEmployeeStatusChart(execs) {
+    const ctx = document.getElementById('empStatusChart');
+    if (!ctx) return;
+    if (empStatusChartInst) empStatusChartInst.destroy();
+
+    const concluidos = execs.filter(e => e.feito).length;
+    const noPrazo = execs.filter(e => !e.feito && e.semaforo === 'blue').length;
+    const hoje = execs.filter(e => !e.feito && e.semaforo === 'yellow').length;
+    const atrasados = execs.filter(e => !e.feito && e.semaforo === 'red').length;
+
+    let data = [concluidos, noPrazo, hoje, atrasados];
+    const empty = data.every(d => d === 0);
+    if (empty) data = [0.1, 0, 0, 0];
+
+    empStatusChartInst = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Concluído', 'No Prazo', 'Vencendo Hoje', 'Atrasado'],
+            datasets: [{
+                data: data,
+                backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            cutout: '70%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 }, usePointStyle: true, padding: 15 } },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => (value >= 1 && !empty) ? value : ''
+                }
+            }
+        }
+    });
+}
+
+function renderEmployeeProductionChart(employeeName) {
+    const ctx = document.getElementById('empProductionChart');
+    if (!ctx) return;
+    if (empProductionChartInst) empProductionChartInst.destroy();
+
+    const allExecs = Store.getExecucoesWithDetails(employeeName);
+    const concluidas = allExecs.filter(e => e.feito);
+
+    // Agrupar por competência (últimos 6 meses)
+    const comps = [...new Set(allExecs.map(e => e.competencia).filter(Boolean))].sort().reverse().slice(0, 6).reverse();
+    const dataPoints = comps.map(c => concluidas.filter(e => e.competencia === c).length);
+    const labels = comps.map(c => formatCompetencia(c));
+
+    empProductionChartInst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Concluídas',
+                data: dataPoints,
+                backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                borderColor: '#8B5CF6',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10 } } },
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', font: { size: 10 }, stepSize: 1 } }
+            },
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#fff',
+                    font: { size: 10, weight: 'bold' }
+                }
+            }
+        }
     });
 }
 
