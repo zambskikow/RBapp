@@ -2666,10 +2666,9 @@ body {
 /* Tabs do Detail Panel */
 .modal-tabs {
     display: flex;
-    gap: 3rem;
-    /* Dobrado o espaçamento entre as abas */
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 3rem;
-    /* Mais espaço antes do conteúdo */
     border-bottom: 1px solid var(--border-glass);
     padding-bottom: 1rem;
 }

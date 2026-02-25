@@ -573,6 +573,11 @@ async function initApp() {
             showNotify("Sucesso", "Identidade visual personalizada com sucesso!", "success");
         });
     }
+
+    const btnGenCode = document.getElementById('btn-generate-code');
+    if (btnGenCode) {
+        btnGenCode.addEventListener('click', generateRandomClientCode);
+    }
 }
 
 /**
@@ -2084,6 +2089,30 @@ async function handleAddClient(e) {
     renderOperacional();
     renderDashboard();
     closeClientDetail();
+}
+
+function generateRandomClientCode() {
+    const clientes = Store.getData().clientes || [];
+    const codigosExistentes = new Set(clientes.map(c => c.codigo).filter(c => c));
+    let code = '';
+    let attempts = 0;
+    const maxAttempts = 1000;
+
+    while (attempts < maxAttempts) {
+        // Gera um código de 4 dígitos
+        code = Math.floor(1000 + Math.random() * 9000).toString();
+        if (!codigosExistentes.has(code)) {
+            break;
+        }
+        attempts++;
+    }
+
+    const input = document.getElementById('client-codigo');
+    if (input) {
+        input.value = code;
+        input.classList.add('fade-in');
+        setTimeout(() => input.classList.remove('fade-in'), 500);
+    }
 }
 
 /**

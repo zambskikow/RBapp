@@ -960,15 +960,25 @@
                     </header>
 
                     <nav class="modal-tabs">
-                        <button type="button" class="modal-tab-btn active" data-tab="tab-geral"><i
-                                class="fa-solid fa-circle-info"></i> Geral</button>
-                        <button type="button" class="modal-tab-btn" data-tab="tab-contato"><i
-                                class="fa-solid fa-address-book"></i> Contatos</button>
-                        <button type="button" class="modal-tab-btn" data-tab="tab-acessos"><i
-                                class="fa-solid fa-key"></i>
-                            Acessos/Logins</button>
-                        <button type="button" class="modal-tab-btn" data-tab="tab-rotinas"><i
-                                class="fa-solid fa-calendar-check"></i> Rotinas</button>
+                        <div style="display: flex; gap: 3rem;">
+                            <button type="button" class="modal-tab-btn active" data-tab="tab-geral"><i
+                                    class="fa-solid fa-circle-info"></i> Geral</button>
+                            <button type="button" class="modal-tab-btn" data-tab="tab-contato"><i
+                                    class="fa-solid fa-address-book"></i> Contatos</button>
+                            <button type="button" class="modal-tab-btn" data-tab="tab-acessos"><i
+                                    class="fa-solid fa-key"></i>
+                                Acessos/Logins</button>
+                            <button type="button" class="modal-tab-btn" data-tab="tab-rotinas"><i
+                                    class="fa-solid fa-calendar-check"></i> Rotinas</button>
+                        </div>
+                        <div id="client-status-container"
+                            style="display: none; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-glass);">
+                            <label class="custom-toggle" style="margin: 0;">
+                                <input type="checkbox" id="client-ativo" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label" id="client-status-label">Ativo</span>
+                            </label>
+                        </div>
                     </nav>
 
                     <div class="panel-body">
@@ -978,19 +988,15 @@
                             <!-- Tab: Geral -->
                             <div id="tab-geral" class="tab-content active">
                                 <div class="form-grid" style="grid-template-columns: 1fr 2fr;">
-                                    <div class="form-group" style="display: flex; align-items: flex-end; gap: 0.5rem;">
-                                        <div style="flex: 1;">
-                                            <label>Código</label>
+                                    <div class="form-group">
+                                        <label>Código</label>
+                                        <div style="display: flex; gap: 0.5rem;">
                                             <input type="text" id="client-codigo" class="glass-input"
                                                 placeholder="Ex: 001">
-                                        </div>
-                                        <div id="client-status-container"
-                                            style="display: none; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-glass); align-self: center; margin-top: 1.2rem;">
-                                            <label class="custom-toggle" style="margin: 0;">
-                                                <input type="checkbox" id="client-ativo" checked>
-                                                <span class="toggle-slider"></span>
-                                                <span class="toggle-label" id="client-status-label">Ativo</span>
-                                            </label>
+                                            <button type="button" id="btn-generate-code" class="btn btn-secondary"
+                                                title="Gerar Código Aleatório" style="padding: 0 1rem;">
+                                                <i class="fa-solid fa-dice"></i>
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="form-group">
