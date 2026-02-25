@@ -1475,6 +1475,33 @@ body {
     align-items: center;
 }
 
+/* Custom Scrollbars for Routine Detail Lists */
+#clientes-checkbox-grid::-webkit-scrollbar,
+#rotina-responsavel-grid::-webkit-scrollbar,
+#rotina-checklist-preview::-webkit-scrollbar {
+    width: 6px;
+}
+
+#clientes-checkbox-grid::-webkit-scrollbar-track,
+#rotina-responsavel-grid::-webkit-scrollbar-track,
+#rotina-checklist-preview::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#clientes-checkbox-grid::-webkit-scrollbar-thumb,
+#rotina-responsavel-grid::-webkit-scrollbar-thumb,
+#rotina-checklist-preview::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+#clientes-checkbox-grid::-webkit-scrollbar-thumb:hover,
+#rotina-responsavel-grid::-webkit-scrollbar-thumb:hover,
+#rotina-checklist-preview::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-light);
+}
+
 .routine-group-header h2 {
     font-size: 1.1rem;
     color: var(--primary-light);
