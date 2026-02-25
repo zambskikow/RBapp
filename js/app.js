@@ -253,18 +253,48 @@ async function initApp() {
     // Event Listener Gestão de Competências
     const btnAddComp = document.getElementById('btn-add-competencia');
     if (btnAddComp) {
-        btnAddComp.addEventListener('click', async () => {
+        btnAddComp.addEventListener('click', () => {
             const compAtualAno = new Date().getFullYear();
-            const inputVal = prompt("Digite o ID da nova competência no formato YYYY-MM (Ex: 2024-03):", `${compAtualAno}-`);
-            if (inputVal && /^\d{4}-\d{2}$/.test(inputVal)) {
-                if (confirm(`Tem certeza que deseja adicionar a competência ${inputVal} e gerar as obrigações manualmente?`)) {
-                    await Store.addCompetenciaManual(inputVal);
-                    renderCompetenciasAdmin();
-                }
-            } else if (inputVal) {
-                showNotify("Atenção", "Formato inválido. Use YYYY-MM.", "warning");
+            const modal = document.getElementById('modal-add-competencia');
+            const input = document.getElementById('add-comp-input');
+            if (modal && input) {
+                input.value = `${compAtualAno}-`;
+                modal.classList.add('active');
+                input.focus();
             }
         });
+    }
+
+    const btnConfirmAddComp = document.getElementById('btn-confirm-add-comp');
+    if (btnConfirmAddComp) {
+        btnConfirmAddComp.addEventListener('click', async () => {
+            const inputVal = document.getElementById('add-comp-input').value;
+            if (inputVal && /^\d{4}-\d{2}$/.test(inputVal)) {
+                btnConfirmAddComp.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando...';
+                btnConfirmAddComp.disabled = true;
+
+                showLoading('Processando', `Criando competência ${inputVal}...`);
+                const success = await Store.addCompetenciaManual(inputVal);
+                hideLoading();
+
+                closeAddCompetenciaModal();
+                if (success) {
+                    renderCompetenciasAdmin();
+                    showNotify("Sucesso", "Competência gerada e obrigações criadas com sucesso!", "success");
+                }
+                // O erro de duplicação já lança showNotify lá no Store
+
+                btnConfirmAddComp.innerHTML = '<i class="fa-solid fa-check"></i> Gerar Competência';
+                btnConfirmAddComp.disabled = false;
+            } else if (inputVal) {
+                showNotify("Atenção", "Formato inválido. Use YYYY-MM (Ex: 2024-03).", "warning");
+            }
+        });
+    }
+
+    window.closeAddCompetenciaModal = function () {
+        const modal = document.getElementById('modal-add-competencia');
+        if (modal) modal.classList.remove('active');
     }
 
     const btnConfirmDeleteComp = document.getElementById('btn-confirm-delete-comp');
@@ -542,6 +572,11 @@ async function initApp() {
             applyBranding();
             showNotify("Sucesso", "Identidade visual personalizada com sucesso!", "success");
         });
+    }
+
+    const btnGenCode = document.getElementById('btn-generate-code');
+    if (btnGenCode) {
+        btnGenCode.addEventListener('click', generateRandomClientCode);
     }
 }
 
@@ -1686,7 +1721,7 @@ function renderClientes() {
             <td style="text-align: center;">
                 <input type="checkbox" class="client-checkbox custom-checkbox" value="${c.id}">
             </td>
-            <td class="clickable-cell" onclick="openClientDetail(${c.id})" style="cursor: pointer; color: var(--primary-light); font-weight: 700; width: 80px;">
+            <td class="clickable-cell client-code-cell" onclick="openClientDetail(${c.id})" style="cursor: pointer;">
                 ${c.codigo || 'S/C'}
             </td>
             <td class="clickable-cell" onclick="openClientDetail(${c.id})" style="cursor: pointer;">
@@ -2054,6 +2089,31 @@ async function handleAddClient(e) {
     renderOperacional();
     renderDashboard();
     closeClientDetail();
+}
+
+function generateRandomClientCode() {
+    const clientes = Store.getData().clientes || [];
+    const codigosExistentes = new Set(clientes.map(c => c.codigo).filter(c => c));
+    let code = '';
+    let attempts = 0;
+    const maxAttempts = 1000;
+
+    while (attempts < maxAttempts) {
+        // Gera um código com prefixo RB- e 4 dígitos
+        const num = Math.floor(1000 + Math.random() * 9000).toString();
+        code = `RB-${num}`;
+        if (!codigosExistentes.has(code)) {
+            break;
+        }
+        attempts++;
+    }
+
+    const input = document.getElementById('client-codigo');
+    if (input) {
+        input.value = code;
+        input.classList.add('fade-in');
+        setTimeout(() => input.classList.remove('fade-in'), 500);
+    }
 }
 
 /**
@@ -2645,8 +2705,8 @@ function renderCompetenciasAdmin() {
         const tr = document.createElement('tr');
 
         let statusBadge = m.ativo
-            ? `<span class="badge" style="background:var(--success); color:#fff; border:none; white-space:nowrap;"><i class="fa-solid fa-check-circle"></i> Mês Ativo</span>`
-            : `<span class="badge" style="white-space:nowrap;"><i class="fa-solid fa-lock"></i> Histórico / Futuro</span>`;
+            ? `<span class="table-badge success" style="white-space:nowrap; padding: 0.5rem 0.8rem; border-radius: 8px;"><i class="fa-solid fa-check-circle"></i> Mês Ativo</span>`
+            : `<span class="table-badge" style="white-space:nowrap; padding: 0.5rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-muted);"><i class="fa-solid fa-lock"></i> Histórico / Futuro</span>`;
 
         tr.innerHTML = `
             <td><strong style="color:var(--text-light);">${m.id}</strong></td>
@@ -2741,11 +2801,16 @@ function renderMenuReorderList() {
 
     listContainer.addEventListener('dragover', e => {
         e.preventDefault();
-        const draggingItem = document.querySelector('.dragging');
+        const draggingItem = document.querySelector('.reorder-item.dragging');
+        if (!draggingItem) return;
+
         const siblings = [...listContainer.querySelectorAll('.reorder-item:not(.dragging)')];
 
-        const nextSibling = siblings.find(sibling => {
-            return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+        // Encontrar o elemento sobre o qual o mouse está passando
+        let nextSibling = siblings.find(sibling => {
+            const box = sibling.getBoundingClientRect();
+            const offset = e.clientY - box.top - box.height / 2;
+            return offset < 0;
         });
 
         listContainer.insertBefore(draggingItem, nextSibling);
@@ -2754,7 +2819,13 @@ function renderMenuReorderList() {
 
 async function saveMenuOrder() {
     const listContainer = document.getElementById('menu-reorder-list');
+    const saveBtn = document.getElementById('btn-save-menu-order');
+    const saveIcon = saveBtn ? saveBtn.querySelector('i') : null;
+
     if (!listContainer) return;
+
+    if (saveIcon) saveIcon.classList.add('icon-saving');
+    if (saveBtn) saveBtn.disabled = true;
 
     const items = listContainer.querySelectorAll('.reorder-item');
     const newOrder = Array.from(items).map(i => i.getAttribute('data-view'));
@@ -2772,7 +2843,10 @@ async function saveMenuOrder() {
         ...config,
         menu_order: newOrder
     });
+
     hideLoading();
+    if (saveIcon) saveIcon.classList.remove('icon-saving');
+    if (saveBtn) saveBtn.disabled = false;
 
     if (success) {
         // Re-apply immediately
@@ -3068,7 +3142,7 @@ function initInboxTabs() {
                 showNotify("Informação", "Configurações de Mensagens em breve...", "info");
             }
             if (e.target.closest('#btn-inbox-help')) {
-                alert('Ajuda:\n• Clique nas pastas para navegar\n• Use ☆ para favoritar\n• Marque checkboxes para ações em massa\n• Lixeira mostra mensagens excluídas');
+                showNotify("Ajuda das Mensagens", "• Clique nas pastas para navegar\n• Use ☆ para favoritar\n• Marque checkboxes para ações em massa", "info");
             }
         });
 
@@ -3859,7 +3933,7 @@ async function handleSaveDemandaEventual() {
         renderDashboard();
         showFeedbackToast('Demanda eventual criada com sucesso!', 'success');
     } else {
-        alert(result.msg || 'Erro ao criar demanda eventual.');
+        showNotify("Aviso", result.msg || 'Erro ao criar demanda eventual.', "warning");
     }
 }
 

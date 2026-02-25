@@ -78,6 +78,11 @@
                     <i class="fa-solid fa-gauge"></i>
                     <span>Manager Dashboard</span>
                 </a>
+                <a href="#" class="nav-item" data-view="meu-desempenho">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Meu Desempenho</span>
+                </a>
+
                 <a href="#" class="nav-item" data-view="operacional">
                     <i class="fa-solid fa-list-check"></i>
                     <span>Painel Operacional</span>
@@ -86,15 +91,11 @@
                     <i class="fa-solid fa-users"></i>
                     <span>Gestão de Clientes</span>
                 </a>
-
-                <a href="#" class="nav-item" data-view="meu-desempenho">
-                    <i class="fa-solid fa-chart-pie"></i>
-                    <span>Meu Desempenho</span>
-                </a>
                 <a href="#" class="nav-item" data-view="rotinas">
                     <i class="fa-solid fa-layer-group"></i>
                     <span>Gestão de Rotinas</span>
                 </a>
+
                 <a href="#" class="nav-item" data-view="mensagens">
                     <i class="fa-solid fa-envelope"></i>
                     <span>Mensagens</span>
@@ -166,21 +167,20 @@
                     </div>
                 </header>
 
-                <div class="kpi-grid" style="margin-bottom: 2rem;">
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary);">
-                            <i class="fa-solid fa-layer-group"></i>
-                        </div>
-                        <div class="kpi-data">
-                            <h3>Total Competências</h3>
-                            <p class="kpi-value" id="kpi-total-comp-admin">0</p>
+                <div class="kpi-dashboard-grid" style="margin-bottom: 2rem;">
+                    <div class="glass-card kpi-chip" style="background: rgba(99, 102, 241, 0.05); border: none;">
+                        <div class="kpi-chip-icon"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="kpi-chip-info">
+                            <span class="kpi-chip-label">Total Competências</span>
+                            <span class="kpi-chip-value" id="kpi-total-comp-admin">0</span>
                         </div>
                     </div>
-                    <div class="glass-card kpi-card status-success">
-                        <div class="kpi-icon"><i class="fa-solid fa-calendar-check"></i></div>
-                        <div class="kpi-data">
-                            <h3>Mês Vigente</h3>
-                            <p class="kpi-value" id="kpi-active-comp-admin" style="font-size: 1.25rem;">Nenhum</p>
+                    <div class="glass-card kpi-chip" style="background: rgba(16, 185, 129, 0.05); border: none;">
+                        <div class="kpi-chip-icon" style="color: var(--success);"><i
+                                class="fa-solid fa-calendar-check"></i></div>
+                        <div class="kpi-chip-info">
+                            <span class="kpi-chip-label">Mês Vigente</span>
+                            <span class="kpi-chip-value" id="kpi-active-comp-admin">Nenhum</span>
                         </div>
                     </div>
                 </div>
@@ -959,15 +959,25 @@
                     </header>
 
                     <nav class="modal-tabs">
-                        <button type="button" class="modal-tab-btn active" data-tab="tab-geral"><i
-                                class="fa-solid fa-circle-info"></i> Geral</button>
-                        <button type="button" class="modal-tab-btn" data-tab="tab-contato"><i
-                                class="fa-solid fa-address-book"></i> Contatos</button>
-                        <button type="button" class="modal-tab-btn" data-tab="tab-acessos"><i
-                                class="fa-solid fa-key"></i>
-                            Acessos/Logins</button>
-                        <button type="button" class="modal-tab-btn" data-tab="tab-rotinas"><i
-                                class="fa-solid fa-calendar-check"></i> Rotinas</button>
+                        <div style="display: flex; gap: 3rem;">
+                            <button type="button" class="modal-tab-btn active" data-tab="tab-geral"><i
+                                    class="fa-solid fa-circle-info"></i> Geral</button>
+                            <button type="button" class="modal-tab-btn" data-tab="tab-contato"><i
+                                    class="fa-solid fa-address-book"></i> Contatos</button>
+                            <button type="button" class="modal-tab-btn" data-tab="tab-acessos"><i
+                                    class="fa-solid fa-key"></i>
+                                Acessos/Logins</button>
+                            <button type="button" class="modal-tab-btn" data-tab="tab-rotinas"><i
+                                    class="fa-solid fa-calendar-check"></i> Rotinas</button>
+                        </div>
+                        <div id="client-status-container"
+                            style="display: none; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-glass);">
+                            <label class="custom-toggle" style="margin: 0;">
+                                <input type="checkbox" id="client-ativo" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label" id="client-status-label">Ativo</span>
+                            </label>
+                        </div>
                     </nav>
 
                     <div class="panel-body">
@@ -977,19 +987,15 @@
                             <!-- Tab: Geral -->
                             <div id="tab-geral" class="tab-content active">
                                 <div class="form-grid" style="grid-template-columns: 1fr 2fr;">
-                                    <div class="form-group" style="display: flex; align-items: flex-end; gap: 0.5rem;">
-                                        <div style="flex: 1;">
-                                            <label>Código</label>
+                                    <div class="form-group">
+                                        <label>Código</label>
+                                        <div style="display: flex; gap: 0.5rem;">
                                             <input type="text" id="client-codigo" class="glass-input"
                                                 placeholder="Ex: 001">
-                                        </div>
-                                        <div id="client-status-container"
-                                            style="display: none; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-glass); align-self: center; margin-top: 1.2rem;">
-                                            <label class="custom-toggle" style="margin: 0;">
-                                                <input type="checkbox" id="client-ativo" checked>
-                                                <span class="toggle-slider"></span>
-                                                <span class="toggle-label" id="client-status-label">Ativo</span>
-                                            </label>
+                                            <button type="button" id="btn-generate-code" class="btn btn-secondary"
+                                                title="Gerar Código Aleatório" style="padding: 0 1rem;">
+                                                <i class="fa-solid fa-dice"></i>
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -1518,59 +1524,59 @@
                 </div>
             </div>
 
-            <!-- Global Settings Hub View -->
             <div id="view-settings" class="view-section" style="display: none;">
                 <header class="section-header">
                     <div>
-                        <h1><i class="fa-solid fa-gear highlight-text"></i> Painel de Controle Administrativo</h1>
-                        <p class="subtitle">Centro de Comando do Sistema. Acesse as opções pelo menu lateral abaixo.
-                        </p>
+                        <h1><i class="fa-solid fa-gear highlight-text"></i> Painel de Controle</h1>
+                        <p class="subtitle">Gerencie as configurações e acessos do sistema</p>
                     </div>
                 </header>
 
-                <div class="settings-layout" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <!-- Settings Top Menu (Tabs) -->
-                    <div class="glass-panel settings-tabs-header" style="padding: 0.75rem; width: 100%;">
-                        <nav class="settings-menu"
-                            style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-start;">
+                <div class="settings-layout-modern">
+                    <!-- Internal Settings Sidebar -->
+                    <aside class="settings-sidebar-mini">
+                        <nav class="settings-nav-list">
+                            <div class="settings-nav-group">Sistema</div>
                             <button class="settings-tab-btn active" data-target="set-rbac">
-                                <i class="fa-solid fa-shield-halved"></i> Segurança e Acessos
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>Segurança e Acessos</span>
                             </button>
                             <button class="settings-tab-btn" data-target="set-equipe">
-                                <i class="fa-solid fa-users"></i> Contas e Equipe
+                                <i class="fa-solid fa-users"></i>
+                                <span>Contas e Equipe</span>
                             </button>
                             <button class="settings-tab-btn" data-target="set-backup">
-                                <i class="fa-solid fa-cloud-arrow-down"></i> Backups de Sistema
+                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                                <span>Backups</span>
                             </button>
-                            <div class="nav-divider-v"
-                                style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); align-self: center; margin: 0 0.5rem;">
-                            </div>
+
+                            <div class="settings-nav-group">Auditoria</div>
                             <button class="settings-tab-btn" data-target="set-auditoria">
-                                <i class="fa-solid fa-clipboard-list"></i> Logs de Atividade
+                                <i class="fa-solid fa-clipboard-list"></i>
+                                <span>Logs de Atividade</span>
                             </button>
                             <button class="settings-tab-btn" data-target="set-auditoria-comp">
-                                <i class="fa-solid fa-magnifying-glass-chart"></i> Auditoria de Competência
+                                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                                <span>Auditoria Entregas</span>
                             </button>
-                            <div class="nav-divider-v"
-                                style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); align-self: center; margin: 0 0.5rem;">
-                            </div>
+
+                            <div class="settings-nav-group">Personalização</div>
                             <button class="settings-tab-btn" data-target="set-branding">
-                                <i class="fa-solid fa-pen-to-square"></i> Personalização
+                                <i class="fa-solid fa-palette"></i>
+                                <span>Layout e Ordem</span>
                             </button>
                         </nav>
-                    </div>
+                    </aside>
 
-                    <!-- Settings Content Panes -->
-                    <div class="settings-content">
+                    <!-- Settings Right Content Area -->
+                    <div class="settings-content-area">
 
                         <!-- TAB: Segurança / Cargos / RBAC -->
                         <div class="settings-pane active fade-in" id="set-rbac">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <div class="settings-action-header">
                                 <div>
                                     <h2 style="font-size: 1.25rem;">Cargos e Permissões</h2>
-                                    <p style="color: var(--text-muted); font-size: 0.9rem;">Crie perfis e defina
-                                        quais
+                                    <p style="color: var(--text-muted); font-size: 0.9rem;">Crie perfis e defina quais
                                         telas eles podem ver.</p>
                                 </div>
                                 <button class="btn btn-primary" id="btn-add-cargo">
@@ -1598,8 +1604,7 @@
 
                         <!-- TAB: Gestão de Equipe -->
                         <div class="settings-pane fade-in" id="set-equipe" style="display: none;">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <div class="settings-action-header">
                                 <div>
                                     <h2 style="font-size: 1.25rem;">Gestão de Contas (Equipe)</h2>
                                     <p style="color: var(--text-muted); font-size: 0.9rem;">Crie, inative e edite
@@ -1610,7 +1615,7 @@
                                 </button>
                             </div>
 
-                            <div class="kpi-grid" style="margin-bottom: 1.5rem;">
+                            <div class="settings-grid-3" style="margin-bottom: 1.5rem;">
                                 <div class="glass-card kpi-card" style="padding: 1rem;">
                                     <div class="kpi-icon"
                                         style="background: rgba(99, 102, 241, 0.15); color: var(--primary); font-size: 1.2rem; width: 40px; height: 40px;">
@@ -1634,8 +1639,7 @@
                                             class="fa-solid fa-user-xmark"></i></div>
                                     <div class="kpi-data">
                                         <h3 style="font-size: 0.8rem;">Contas Inativas</h3>
-                                        <p class="kpi-value" id="kpi-equipe-inativos" style="font-size: 1.5rem;">0
-                                        </p>
+                                        <p class="kpi-value" id="kpi-equipe-inativos" style="font-size: 1.5rem;">0</p>
                                     </div>
                                 </div>
                             </div>
@@ -1669,7 +1673,7 @@
                                 <p style="color: var(--text-muted); font-size: 0.9rem;">Garanta a segurança dos seus
                                     dados realizando cópias locais.</p>
                             </div>
-                            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+                            <div class="settings-grid-2">
                                 <div class="glass-card table-container">
                                     <h3 style="margin-bottom: 1rem; color: var(--primary);"><i
                                             class="fa-solid fa-download"></i>
@@ -1710,8 +1714,7 @@
 
                         <!-- TAB: Logs Auditoria Geral -->
                         <div class="settings-pane fade-in" id="set-auditoria" style="display: none;">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <div class="settings-action-header">
                                 <div>
                                     <h2 style="font-size: 1.25rem;">Auditoria de Sistema (Logs)</h2>
                                     <p style="color: var(--text-muted); font-size: 0.9rem;">Rastreador de acessos,
@@ -1751,8 +1754,7 @@
                                     quebrou o prazo, etc).</p>
                             </div>
                             <div class="glass-card table-container" style="margin-bottom: 1rem; padding: 1.5rem;">
-                                <div class="kpi-grid"
-                                    style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: end;">
+                                <div class="settings-grid-3" style="align-items: end;">
                                     <div class="form-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
                                         <label
                                             style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500; margin: 0;">Mês
@@ -1768,7 +1770,7 @@
                                     </div>
                                     <div>
                                         <button class="btn btn-primary" id="btn-run-audit-comp"
-                                            style="height: 46px; min-width: 160px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary-light), var(--accent)); border: none; font-weight: 600; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: all 0.3s ease; gap: 0.5rem;">
+                                            style="height: 46px; width: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary-light), var(--accent)); border: none; font-weight: 600; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: all 0.3s ease; gap: 0.5rem;">
                                             <i class="fa-solid fa-magnifying-glass"></i> <span>Auditar</span>
                                         </button>
                                     </div>
@@ -1778,8 +1780,7 @@
                             <!-- Resultados da Auditoria de Competência -->
                             <div class="glass-card full-table-container" id="audit-comp-results"
                                 style="display: none; padding-bottom: 2rem;">
-                                <div
-                                    style="display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem 2rem;">
+                                <div class="settings-action-header" style="padding: 1.5rem 2rem;">
                                     <div>
                                         <h3
                                             style="margin:0; font-size: 1.25rem; font-weight: 700; color: var(--primary-light); letter-spacing: -0.02em;">
@@ -1793,13 +1794,12 @@
                                     </div>
                                     <button class="btn btn-secondary no-print" id="btn-print-audit-comp"
                                         style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass);">
-                                        <i class="fa-solid fa-print"></i> <span>Imprimir Relatório</span>
+                                        <i class="fa-solid fa-print"></i> <span>Imprimir</span>
                                     </button>
                                 </div>
 
                                 <!-- Grid de KPIs Moderno -->
-                                <div class="kpi-grid"
-                                    style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); padding: 0 2rem 2rem;">
+                                <div class="settings-grid-3" style="padding: 0 2rem 2rem;">
                                     <div class="kpi-card-mini"
                                         style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 1rem; border-radius: 8px;">
                                         <div
@@ -1854,8 +1854,7 @@
 
                             <div class="glass-card" style="max-width: 600px; padding: 2rem;">
                                 <form id="form-branding">
-                                    <div
-                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                                    <div class="settings-grid-2" style="margin-bottom: 1.5rem;">
                                         <div class="form-group">
                                             <label>Nome da Empresa</label>
                                             <input type="text" id="brand-name" class="glass-input"
@@ -1868,8 +1867,7 @@
                                         </div>
                                     </div>
 
-                                    <div
-                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                                    <div class="settings-grid-2" style="margin-bottom: 1.5rem;">
                                         <div class="form-group">
                                             <label>Tema de Sistema</label>
                                             <select id="brand-theme" class="glass-select" style="width: 100%;">
@@ -1912,10 +1910,12 @@
                                     <!-- Populada por JS -->
                                 </div>
 
-                                <button class="btn btn-secondary" onclick="saveMenuOrder()"
-                                    style="width: 100%; margin-top: 1.5rem;">
-                                    <i class="fa-solid fa-save"></i> Salvar Ordem do Menu
-                                </button>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+                                    <button class="btn btn-primary btn-small" onclick="saveMenuOrder()"
+                                        id="btn-save-menu-order">
+                                        <i class="fa-solid fa-floppy-disk btn-save-anim"></i> Salvar
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -2386,6 +2386,37 @@
                 <button class="btn btn-primary" onclick="Marketing.saveEquipeMember()">
                     <i class="fa-solid fa-save"></i> Adicionar Membro
                 </button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal: Forçar Nova Competência -->
+    <div id="modal-add-competencia" class="modal-overlay">
+        <div class="glass-card modal-content" style="max-width: 450px;">
+            <header class="modal-header">
+                <h2><i class="fa-solid fa-calendar-plus highlight-text"></i> Nova Competência</h2>
+                <button class="close-btn" onclick="closeAddCompetenciaModal()"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </header>
+            <div class="modal-body" style="text-align: center;">
+                <div
+                    style="background: rgba(99, 102, 241, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                    <i class="fa-solid fa-calendar-days" style="font-size: 2.5rem; color: var(--primary);"></i>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.5; font-size: 0.95rem;">
+                    Preencha o código da nova competência. Serão geradas automaticamente todas as rotinas atreladas aos
+                    clientes para este mês.
+                </p>
+                <div class="form-group" style="text-align: left;">
+                    <label>Código da Competência (YYYY-MM)</label>
+                    <input type="text" id="add-comp-input" class="glass-input" placeholder="Ex: 2024-03" required
+                        style="font-size: 1.25rem; text-align: center; letter-spacing: 2px;">
+                </div>
+            </div>
+            <footer class="modal-footer" style="margin-top: 1rem;">
+                <button class="btn btn-secondary" onclick="closeAddCompetenciaModal()">Cancelar</button>
+                <button class="btn btn-primary" id="btn-confirm-add-comp"><i class="fa-solid fa-check"></i> Gerar
+                    Competência</button>
             </footer>
         </div>
     </div>
