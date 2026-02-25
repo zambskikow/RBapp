@@ -6,7 +6,7 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
-# Allow CORS for local testing and Vercel
+# Permitir CORS para testes locais e Vercel
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,7 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Supabase Client
+# Inicializar Cliente Supabase
 url: str = os.getenv("SUPABASE_URL", "https://khbdbuoryxqiprlkdcpz.supabase.co")
 key: str = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYmRidW9yeXhxaXBybGtkY3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODU4ODcsImV4cCI6MjA4NzI2MTg4N30.1rr3_-LVO6b2PR96lJl8d7vVfHseWwUeAQDY4tdJR-M")
 
@@ -27,7 +27,7 @@ except Exception as e:
     import traceback
     supabase_error = str(e) + " | " + traceback.format_exc()
 
-# --- Pydantic Models for incoming POST/PUT requests ---
+# --- Modelos Pydantic para solicitações POST/PUT recebidas ---
 class ClienteCreate(BaseModel):
     razao_social: str
     cnpj: str
@@ -250,7 +250,7 @@ class GlobalConfigUpdate(BaseModel):
     theme: str | None = None
     menu_order: list | None = None
 
-# --- API Endpoints ---
+# --- Endpoints da API ---
 
 @app.get("/api/status")
 def read_root():
@@ -480,7 +480,7 @@ def delete_cargo(cargo_id: int):
     response = supabase.table("cargos_permissoes").delete().eq("id", cargo_id).execute()
     return response.data
 
-# --- Marketing Posts ---
+# --- Posts de Marketing ---
 @app.get("/api/marketing_posts")
 def get_marketing_posts():
     response = supabase.table("marketing_posts").select("*").execute()
@@ -501,7 +501,7 @@ def delete_marketing_post(post_id: int):
     response = supabase.table("marketing_posts").delete().eq("id", post_id).execute()
     return response.data
 
-# --- Marketing Campanhas ---
+# --- Campanhas de Marketing ---
 @app.get("/api/marketing_campanhas")
 def get_marketing_campanhas():
     response = supabase.table("marketing_campanhas").select("*").execute()
@@ -522,7 +522,7 @@ def delete_marketing_campanha(campanha_id: int):
     response = supabase.table("marketing_campanhas").delete().eq("id", campanha_id).execute()
     return response.data
 
-# --- Marketing Equipe ---
+# --- Equipe de Marketing ---
 @app.get("/api/marketing_equipe")
 def get_marketing_equipe():
     response = supabase.table("marketing_equipe").select("*").execute()
@@ -543,7 +543,7 @@ def delete_marketing_equipe(id: int):
     response = supabase.table("marketing_equipe").delete().eq("id", id).execute()
     return response.data
 
-# --- Marketing Metricas ---
+# --- Métricas de Marketing ---
 @app.get("/api/marketing_metricas")
 def get_marketing_metricas():
     response = supabase.table("marketing_metricas").select("*").order("data_referencia", desc=True).limit(100).execute()
@@ -554,7 +554,7 @@ def create_marketing_metrica(metrica: MarketingMetricaCreate):
     response = supabase.table("marketing_metricas").insert(metrica.model_dump()).execute()
     return response.data
 
-# --- Global Config ---
+# --- Configuração Global ---
 @app.get("/api/global_config")
 def get_global_config():
     response = supabase.table("global_config").select("*").execute()

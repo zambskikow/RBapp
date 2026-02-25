@@ -5,7 +5,7 @@
     --accent: #8B5CF6;
     --accent-glow: rgba(139, 92, 246, 0.4);
 
-    /* Status Colors (Globais) */
+    /* Cores de Status (Globais) */
     --success: #10B981;
     --success-bg: rgba(16, 185, 129, 0.15);
     --warning: #F59E0B;
@@ -96,7 +96,7 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Glassmorphism Utilities */
+/* Utilitários Glassmorphism */
 .glass-panel {
     background: var(--bg-panel);
     backdrop-filter: blur(20px);
@@ -104,7 +104,7 @@ body {
     border-right: 1px solid var(--border-glass);
 }
 
-/* GLOBAL ELEGANT SCROLLBAR */
+/* SCROLLBAR ELEGANTE GLOBAL */
 *::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -145,7 +145,7 @@ body {
     border-color: var(--border-glass-light);
 }
 
-/* Layout Grid System */
+/* Sistema de Grid de Layout */
 .login-fullscreen {
     position: fixed;
     top: 0;
@@ -153,7 +153,7 @@ body {
     width: 100vw;
     height: 100vh;
     background: var(--bg-base);
-    /* covers everything */
+    /* cobre tudo */
     background-image:
         radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
         radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
@@ -171,7 +171,7 @@ body {
     pointer-events: auto;
 }
 
-/* Global Loading Overlay */
+/* Camada de Carregamento Global */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -305,7 +305,7 @@ body {
     overflow: hidden;
 }
 
-/* Sidebar Navigation */
+/* Navegação da Barra Lateral */
 .sidebar {
     width: var(--sidebar-width);
     display: flex;
@@ -459,7 +459,7 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Notification Bell in Sidebar */
+/* Sino de Notificação na Barra Lateral */
 .sidebar-notification {
     margin-left: auto;
     background: rgba(255, 255, 255, 0.05);
@@ -471,10 +471,10 @@ body {
 
 .sidebar.collapsed .sidebar-notification {
     display: none;
-    /* Hide when collapsed to avoid layout break */
+    /* Esconder quando colapsado para evitar quebra de layout */
 }
 
-/* Shake Animation */
+/* Animação de Tremor */
 @keyframes bell-shake {
     0% {
         transform: rotate(0);
@@ -514,7 +514,7 @@ body {
     color: var(--warning) !important;
 }
 
-/* Sidebar Icon Animation - Pop effect */
+/* Animação do Ícone da Barra Lateral - Efeito Pop */
 @keyframes icon-pop {
     0% {
         transform: scale(1);
@@ -533,7 +533,7 @@ body {
     animation: icon-pop 0.3s ease-out;
 }
 
-/* Save Icon Animation */
+/* Animação do Ícone de Salvar */
 @keyframes save-pulse {
     0% {
         transform: scale(1);
@@ -553,7 +553,7 @@ body {
     color: var(--success) !important;
 }
 
-/* Main Content Area */
+/* Área de Conteúdo Principal */
 .main-content {
     flex: 1;
     display: flex;
@@ -565,7 +565,7 @@ body {
     width: 100%;
 }
 
-/* Top Header Bar */
+/* Barra de Cabeçalho Superior */
 .topbar {
     height: var(--topbar-height);
     flex-shrink: 0;
@@ -701,7 +701,7 @@ body {
     display: inline-block;
 }
 
-/* Views General Styles */
+/* Estilos Gerais de Visualizações */
 .view-section {
     padding: 1.5rem;
     /* Ajustado para ser mais flexível */
@@ -749,7 +749,7 @@ body {
     max-width: 400px;
 }
 
-/* Inputs and Controls */
+/* Entradas e Controles */
 .glass-select {
     appearance: none;
     -webkit-appearance: none;
@@ -776,7 +776,7 @@ body {
     color: var(--text-main);
 }
 
-/* KPI Grid elements */
+/* Elementos da Grade KPI */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -851,7 +851,7 @@ body {
     box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
 }
 
-/* Charts & Dashboard layouts */
+/* Layouts de Gráficos e Dashboards */
 .charts-grid {
     display: grid;
     grid-template-columns: minmax(300px, 1fr) 2fr;
@@ -879,7 +879,7 @@ body {
     align-items: center;
 }
 
-/* Tables Styling */
+/* Estilização de Tabelas */
 .table-header-action {
     display: flex;
     justify-content: space-between;
@@ -982,7 +982,7 @@ body {
     width: 60px;
 }
 
-/* Orbs and Markers */
+/* Orbes e Marcadores */
 .status-indicator {
     display: flex;
     align-items: center;
@@ -1016,7 +1016,7 @@ body {
     box-shadow: 0 0 10px #3B82F6;
 }
 
-/* Badges Tags */
+/* Tags e Emblemas */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -1065,7 +1065,7 @@ body {
     font-size: 0.8rem;
 }
 
-/* Modals */
+/* Modais */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -1097,7 +1097,7 @@ body {
     display: flex;
     flex-direction: column;
     max-height: 90vh;
-    /* Responsive constraint */
+    /* Restrição responsiva */
 }
 
 .modal-overlay.active .modal-content {
@@ -1276,7 +1276,7 @@ body {
     color: var(--text-muted);
 }
 
-/* Toggle Slider */
+/* Controle Deslizante (Toggle) */
 .actions-section {
     margin-top: 2rem;
     padding-top: 2rem;
@@ -1349,7 +1349,7 @@ body {
     background: rgba(0, 0, 0, 0.2);
 }
 
-/* Base Buttons */
+/* Botões Base */
 .btn {
     padding: 0.65rem 1.25rem;
     border-radius: var(--radius-sm);
@@ -1421,7 +1421,7 @@ body {
     border-radius: 6px;
 }
 
-/* Routine Action Buttons UX */
+/* UX dos Botões de Ação da Rotina */
 .btn-action-container {
     display: flex;
     gap: 12px;
@@ -1483,7 +1483,7 @@ body {
     animation: delete-pop 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Routine Grouping in Operacional */
+/* Agrupamento de Rotinas no Operacional */
 .routine-group {
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid var(--border-glass);
@@ -1524,7 +1524,7 @@ body {
     background: transparent;
 }
 
-/* Forms & Inputs */
+/* Formulários e Entradas */
 .form-group {
     margin-bottom: 1.2rem;
 }
@@ -1574,7 +1574,7 @@ body {
 @media (max-width: 900px) {
     .settings-layout {
         grid-template-columns: 1fr;
-        /* Stack on smaller screens */
+        /* Empilhar em telas menores */
     }
 }
 
@@ -1625,12 +1625,12 @@ body {
     display: block;
 }
 
-/* General animations */
+/* Animações gerais */
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
 }
 
-/* Deletion Animation */
+/* Animação de Exclusão */
 .row-fade-out {
     animation: rowFadeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
     pointer-events: none;
@@ -2375,7 +2375,7 @@ body {
     text-decoration: underline;
 }
 
-/* Empty State Animation refined */
+/* Animação de Estado Vazio refinada */
 .bottle-animation {
     width: 120px;
     height: 120px;
@@ -2852,7 +2852,7 @@ body {
     padding: 0.6rem 0.8rem;
 }
 
-/* Password Visibility Toggle */
+/* Alternador de Visibilidade de Senha */
 .password-wrapper {
     position: relative;
     width: 100%;
@@ -2884,7 +2884,7 @@ body {
     padding-right: 40px !important;
 }
 
-/* Operational Toggle List Styles */
+/* Estilos da Lista de Alternância Operacional */
 .routine-group-content {
     max-height: 2000px;
     overflow: hidden;
@@ -3215,7 +3215,7 @@ body {
     /* Firefox */
 }
 
-/* Custom Scroll horizontal ultra-fino e moderno para o settings menu */
+/* Scroll horizontal customizado ultra-fino e moderno para o menu de configurações */
 .settings-menu::-webkit-scrollbar {
     height: 4px;
     /* Barra fina */
@@ -3263,7 +3263,7 @@ body {
     color: white;
 }
 
-/* Global Premium Trash Animation */
+/* Animação Premium Global de Lixeira */
 @keyframes trash-bounce {
     0% { transform: translateY(0) rotate(0deg); }
     30% { transform: translateY(-3px) rotate(-8deg); }
@@ -3277,7 +3277,7 @@ button:hover i.fa-trash,
 .btn-delete-comp:hover i.fa-trash,
 .text-danger:hover i.fa-trash {
     animation: trash-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    display: inline-block; /* Ensure transform applies */
+    display: inline-block; /* Garantir que a transformação se aplique */
 }
 
 .settings-tab-btn.active {
@@ -3474,7 +3474,7 @@ button:hover i.fa-trash,
     }
 }
 
-/* Power Off / Shutdown Animation */
+/* Animação de Desligar / Encerrar */
 .shutdown-overlay {
     position: fixed;
     top: 0;
@@ -3557,7 +3557,7 @@ button:hover i.fa-trash,
     }
 }
 
-/* Menu Reordering Drag & Drop */
+/* Reordenação de Menu Arrastar e Soltar */
 .reorder-list {
     display: flex;
     flex-direction: column;
@@ -3689,7 +3689,7 @@ button:hover i.fa-trash,
 .settings-content-area {
     flex: 1;
     min-width: 0;
-    /* Prevents overflow */
+    /* Previne vazamento */
 }
 
 @media (max-width: 1024px) {
@@ -3718,7 +3718,7 @@ button:hover i.fa-trash,
     }
 }
 
-/* Global Toast Notifications - Premium Glassmorphism */
+/* Notificações Toast Globais - Glassmorphism Premium */
 .toast-container {
     position: fixed;
     top: 2rem;
@@ -3735,7 +3735,7 @@ button:hover i.fa-trash,
     min-width: 320px;
     max-width: 450px;
     background: rgba(15, 23, 42, 0.85);
-    /* Slate ultra dark */
+    /* Slate ultra escuro */
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -3899,7 +3899,7 @@ button:hover i.fa-trash,
     /* Garante que a tabela não esmague em mobile */
 }
 
-/* Fix for reorder list items height and alignment */
+/* Correção para altura e alinhamento dos itens da lista de reordenação */
 .reorder-item {
     display: flex;
     align-items: center;

@@ -1642,7 +1642,7 @@ window.updateEmployeePerformanceModal = updateEmployeePerformanceModal;
 function renderOperacional() {
     let tasks = Store.getExecucoesWithDetails(currentOperacionalUser);
 
-    // Filter by selected Competencia (History/Auditing)
+    // Filtrar by selected Competencia (History/Auditing)
     if (currentCompetencia) {
         tasks = tasks.filter(t => t.competencia && t.competencia.startsWith(currentCompetencia));
     }
@@ -2051,11 +2051,11 @@ function showSuccessOverlay(title = 'Parabéns!', message = 'Você concluiu a co
     if (overlay && titleEl && msgEl) {
         titleEl.textContent = title;
         msgEl.textContent = message;
-        // The display logic is flex by default, but hidden with opacity
+        // A lógica de exibição é flex por padrão, mas oculta com opacidade
         overlay.style.pointerEvents = 'all';
         overlay.style.opacity = '1';
 
-        // Auto-hide after 5 seconds
+        // Ocultar automaticamente após 5 segundos
         setTimeout(() => {
             hideSuccessOverlay();
         }, 5000);
@@ -2094,11 +2094,11 @@ function setupClientCheckboxes() {
     let deleteBtn = document.getElementById('btn-delete-clients-header');
     const badge = document.getElementById('delete-clients-header-count');
 
-    // Remove old listeners by cloning
+    // Remover listeners antigos clonando
     if (deleteBtn) {
         const newDeleteBtn = deleteBtn.cloneNode(true);
         deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-        deleteBtn = newDeleteBtn; // Update reference to the one in DOM
+        deleteBtn = newDeleteBtn; // Atualizar referência para o que está no DOM
     }
 
     const updateDeleteBtnVisibility = () => {
@@ -2150,13 +2150,13 @@ function setupClientCheckboxes() {
                 deleteBtn.disabled = true;
                 deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-                // Animation phase
+                // Fase de animação
                 selectedChecks.forEach(cb => {
                     const row = cb.closest('tr');
                     if (row) row.classList.add('row-fade-out');
                 });
 
-                // Wait for animation
+                // Esperar pela animação
                 await new Promise(r => setTimeout(r, 500));
 
                 for (let id of selectedIds) {
@@ -2174,13 +2174,13 @@ function setupClientCheckboxes() {
 function openClientDetail(id = null) {
     document.getElementById('add-client-form').reset();
 
-    // Toggle panels
+    // Alternar painéis
     document.getElementById('clientes-list-container').style.display = 'none';
     const detailPanel = document.getElementById('clientes-detail-panel');
     detailPanel.style.display = 'block';
     detailPanel.classList.add('active');
 
-    // Reset tabs
+    // Resetar abas
     document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelector('[data-tab="tab-geral"]').classList.add('active');
@@ -2206,7 +2206,7 @@ function openClientDetail(id = null) {
     }
 
 
-    // Load Rotinas for checklist
+    // Carregar Rotinas para checklist
     const rotinasGrid = document.getElementById('rotinas-checkbox-grid');
     if (rotinasGrid) {
         rotinasGrid.innerHTML = '';
@@ -2220,7 +2220,7 @@ function openClientDetail(id = null) {
         });
     }
 
-    // Status Toggle Setup
+    // Configuração de Alternância de Status
     const statusContainer = document.getElementById('client-status-container');
     const statusToggle = document.getElementById('client-ativo');
     const statusLabel = document.getElementById('client-status-label');
@@ -2255,7 +2255,7 @@ function openClientDetail(id = null) {
             if (statusContainer) statusContainer.style.display = 'flex';
             if (statusToggle) {
                 statusToggle.checked = cliente.ativo !== false;
-                statusToggle.onchange(); // Trigger label update
+                statusToggle.onchange(); // Disparar atualização de rótulo
             }
 
             // Contato
@@ -2381,7 +2381,7 @@ async function toggleClientStatus(id, newStatus) {
         if (cliente) {
             await Store.editClient(id, { ...cliente, ativo: newStatus, rotinasSelecionadasIds: cliente.rotinasSelecionadas || [] });
             showFeedbackToast(`Status de ${cliente.razaoSocial} alterado para ${newStatus ? 'Ativo' : 'Inativo'}.`, 'success');
-            // Refresh counts and dashboard if needed
+            // Atualizar contagens e dashboard se necessário
             renderDashboard();
         }
     } catch (e) {
@@ -2399,7 +2399,7 @@ function renderEquipe() {
 
     const func = Store.getData().funcionarios;
 
-    // Restrict UI for non-managers
+    // Restringir UI para não gerentes
     const btnNovoMembro = document.getElementById('btn-add-equipe');
     if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() !== 'gerente') {
         btnNovoMembro.style.display = 'none';
@@ -2424,7 +2424,7 @@ function renderEquipe() {
         tr.className = 'fade-in';
 
         const badgeColor = f.permissao === 'Gerente' ? 'var(--primary)' : 'var(--success)';
-        const isAtivo = f.ativo !== false; // default true
+        const isAtivo = f.ativo !== false; // padrão verdadeiro
 
         let statusHtml = '';
         if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'gerente') {
@@ -2542,7 +2542,7 @@ async function handleAddFuncionario(e) {
     const permissao = document.getElementById('equipe-permissao').value;
     const senha = document.getElementById('equipe-senha').value;
 
-    // Status is only used if editing, or defaults to true for new ones
+    // O status só é usado se estiver editando, ou por padrão é verdadeiro para novos
     const isEditing = !!id;
     const ativo = isEditing ? document.getElementById('equipe-ativo').checked : true;
 
@@ -2717,11 +2717,11 @@ async function toggleFuncionarioStatus(id) {
 
     const novoStatus = f.ativo === false ? true : false;
 
-    // Optimistic UI update
+    // Atualização Otimista da UI
     f.ativo = novoStatus;
     renderEquipe();
 
-    // Push backend change
+    // Enviar mudança para o backend
     await Store.editFuncionario(f.id, f.nome, f.setor, f.permissao, f.senha, novoStatus);
 }
 
@@ -2742,7 +2742,7 @@ function renderRotinas() {
     rotinas.forEach(r => {
         let badgeClass = "noprazo";
         if (r.frequencia === 'Anual') badgeClass = 'hoje';
-        else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Using red to highlight
+        else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Usando vermelho para destacar
 
         const diaText = r.frequencia === 'Mensal' ? `Dia ${r.diaPrazoPadrao}` :
             (r.frequencia === 'Anual' ? `${r.diaPrazoPadrao}` : `${r.diaPrazoPadrao} d.c.`);
@@ -2811,10 +2811,10 @@ function openRotinaModal(id = null) {
     }
 
     form.reset();
-    currentChecklistBuilder = []; // Reset builder
+    currentChecklistBuilder = []; // Resetar construtor
     document.getElementById('new-checklist-item').value = '';
 
-    // Reset Search
+    // Resetar Busca
     const filterInput = document.getElementById('filter-clientes-rotina');
     if (filterInput) {
         filterInput.value = '';
@@ -2839,7 +2839,7 @@ function openRotinaModal(id = null) {
 
     selectFreq.onchange = (e) => updateUIForFreq(e.target.value);
 
-    // Dynamic loading of Clientes checkboxes with sorting
+    // Carregamento dinâmico de checkboxes de Clientes com ordenação
     const sortMode = document.getElementById('sort-clientes-rotina')?.value || 'az';
     renderRoutineClientsGrid(sortMode, id);
 
@@ -2858,7 +2858,7 @@ function openRotinaModal(id = null) {
             document.getElementById('rotina-setor').value = rotina.setor || '';
             document.getElementById('rotina-prazo').value = rotina.diaPrazoPadrao;
 
-            // Check the responsible employees
+            // Verificar os funcionários responsáveis
             const reps = (rotina.responsavel || "").split(",").map(s => s.trim());
             document.querySelectorAll('.resp-checkbox').forEach(cb => {
                 if (reps.includes(cb.value)) cb.checked = true;
@@ -3154,7 +3154,7 @@ function renderCompetenciasAdmin() {
         return;
     }
 
-    // Sort descending by ID (YYYY-MM)
+    // Ordenar decrescente por ID (AAAA-MM)
     const sortedMeses = [...meses].sort((a, b) => b.id.localeCompare(a.id));
 
     sortedMeses.forEach(m => {
@@ -3183,7 +3183,7 @@ function renderCompetenciasAdmin() {
         tbody.appendChild(tr);
     });
 
-    // Attach Delete Events
+    // Anexar Eventos de Exclusão
     document.querySelectorAll('.btn-delete-comp').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = e.currentTarget.getAttribute('data-id');
@@ -3225,7 +3225,7 @@ function closeDeleteCompetenciaModal() {
         setTimeout(() => modal.style.display = 'none', 300);
         document.getElementById('delete-comp-id').value = '';
 
-        // Reset button state
+        // Resetar estado do botão
         const submitBtn = document.getElementById('btn-confirm-delete-comp');
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -3264,7 +3264,7 @@ function renderMenuReorderList() {
             <i class="fa-solid fa-grip-vertical drag-handle"></i>
         `;
 
-        // Drag events
+        // Eventos de arrastar
         div.addEventListener('dragstart', () => div.classList.add('dragging'));
         div.addEventListener('dragend', () => div.classList.remove('dragging'));
 
@@ -3302,7 +3302,7 @@ async function saveMenuOrder() {
     const items = listContainer.querySelectorAll('.reorder-item');
     const newOrder = Array.from(items).map(i => i.getAttribute('data-view'));
 
-    // Always keep settings at the end
+    // Sempre manter as configurações no final
     newOrder.push('settings');
 
     showLoading('Salvando Ordem', 'Atualizando layout do menu lateral...');
@@ -3321,7 +3321,7 @@ async function saveMenuOrder() {
     if (saveBtn) saveBtn.disabled = false;
 
     if (success) {
-        // Re-apply immediately
+        // Reaplicar imediatamente
         applyUserPermissions(LOGGED_USER);
         showNotify("Sucesso", "Ordem do menu salva com sucesso!", "success");
     } else {
@@ -3341,7 +3341,7 @@ function loadSetoresSelects() {
 
 
 
-    // Update Equipe Modal Sector Select
+    // Atualizar Seleção de Setor no Modal de Equipe
 
     const eqSetor = document.getElementById('equipe-setor');
 
@@ -3359,7 +3359,7 @@ function loadSetoresSelects() {
 
 
 
-    // Update Rotina Modal Sector Select
+    // Atualizar Seleção de Setor no Modal de Rotina
 
     const rotSetor = document.getElementById('rotina-setor');
 
@@ -3465,7 +3465,7 @@ function handleAddSetor() {
 
         renderSetoresListPreview();
 
-        loadSetoresSelects(); // Update all selects globally
+        loadSetoresSelects(); // Atualizar todos os selects globalmente
 
     }
 
@@ -3486,7 +3486,7 @@ async function handleDeleteSetor(nome) {
         hideLoading();
         if (success) {
             showFeedbackToast(`Setor '${nome}' excluído com sucesso.`, 'success');
-            renderSetoresListPreview(); // Changed from renderSetores() to renderSetoresListPreview() to match existing function
+            renderSetoresListPreview(); // Alterado para corresponder à função existente() to renderSetoresListPreview() to match existing function
             loadSetoresSelects();
         } else {
             showNotify("Erro", "Erro ao excluir setor. Verifique a conexão.", "error");
@@ -3514,10 +3514,10 @@ function updateMensagensBadges() {
     const unreadInbox = Store.getUnreadInboxCount(LOGGED_USER.nome);
     const unreadSystem = Store.getUnreadSystemCount(LOGGED_USER.nome);
 
-    // Global Topbar Badge
+    // Badge Global da Barra Superior
     const badges = document.querySelectorAll('.badge');
     badges.forEach(b => {
-        // Only update the global topbar notification badge here
+        // Apenas atualizar o badge global de notificação da barra superior aqui
         if (b.parentElement.id === 'btn-notification') {
             if (unreadTotal > 0) {
                 b.textContent = unreadTotal;
@@ -3528,7 +3528,7 @@ function updateMensagensBadges() {
         }
     });
 
-    // Sidebar Inbox Badge (Caixa de Entrada)
+    // Badge da Caixa de Entrada na Barra Lateral
     const inboxBadge = document.getElementById('inbox-unread-badge');
     if (inboxBadge) {
         if (unreadInbox > 0) {
@@ -3539,7 +3539,7 @@ function updateMensagensBadges() {
         }
     }
 
-    // Sidebar System Badge (Alertas do Sistema)
+    // Badge do Sistema na Barra Lateral
     const systemBadge = document.getElementById('system-unread-badge');
     if (systemBadge) {
         if (unreadSystem > 0) {
@@ -3647,7 +3647,7 @@ function initInboxTabs() {
                 );
 
                 if (confirmacao) {
-                    // Animation first
+                    // Animação primeiro
                     document.querySelectorAll('.msg-check:checked').forEach(cb => {
                         const row = cb.closest('.msg-item-refined');
                         if (row) row.classList.add('fade-out-item');
@@ -3658,7 +3658,7 @@ function initInboxTabs() {
                         await Store.deleteMensagem(id, LOGGED_USER.nome);
                     }
                     showFeedbackToast(`${selected.length} mensagens excluídas.`, 'success');
-                    renderMensagens(); // Re-render the list
+                    renderMensagens(); // Renderizar novamente a lista
                 }
             });
         }
@@ -3697,7 +3697,7 @@ function updateBulkActionsVisibility() {
 }
 
 function renderMensagens() {
-    // Reset bulk actions visibility
+    // Resetar visibilidade das ações em massa
     updateBulkActionsVisibility();
     const selectAllCheck = document.getElementById('select-all-msgs');
     if (selectAllCheck) selectAllCheck.checked = false;
@@ -3789,7 +3789,7 @@ function renderMensagens() {
         container.appendChild(div);
     });
 
-    // Update pagination info if needed
+    // Atualizar informações de paginação se necessário
     const countInfo = document.getElementById('msgs-count-info');
     if (countInfo) countInfo.textContent = msgs.length > 0 ? `1 - ${msgs.length} de ${msgs.length}` : '0 - 0 de 0';
 
@@ -3830,7 +3830,7 @@ function loadMessageIntoReader(id) {
     const reader = document.querySelector('.reader-content-refined');
     reader.style.display = 'flex';
 
-    // Refresh animation
+    // Atualizar animação
     reader.classList.remove('fade-in');
     void reader.offsetWidth;
     reader.classList.add('fade-in');
@@ -3838,7 +3838,7 @@ function loadMessageIntoReader(id) {
     const subjectStr = msg.assunto || 'Sem Assunto';
     document.getElementById('reader-subject').textContent = subjectStr;
 
-    // Avatar text (iniciais)
+    // Texto do Avatar (iniciais)
     const senderName = msg.remetente || 'S';
     document.getElementById('reader-avatar-text').textContent = senderName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     document.getElementById('reader-email-text').textContent = `${senderName.toLowerCase().replace(/ /g, '.')}@fiscal.app`;
@@ -3996,13 +3996,13 @@ function triggerPaperPlaneAnimation() {
     plane.className = 'paper-plane';
     plane.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
 
-    // Start position (roughly center-right where modal usually is)
+    // Posição inicial (aproximadamente centro-direita onde o modal geralmente fica)
     plane.style.left = '50%';
     plane.style.top = '50%';
 
     container.appendChild(plane);
 
-    // Remove element after animation
+    // Remover elemento após animação
     setTimeout(() => {
         plane.remove();
     }, 2000);
@@ -4012,11 +4012,11 @@ function triggerPaperPlaneAnimation() {
 
 // ==========================================
 
-// MODAL CONTROLLERS & CHECKLISTS
+// CONTROLADORES DE MODAL E CHECKLISTS
 
 // ==========================================
 
-// MODAL CONTROLLERS & CHECKLISTS
+// CONTROLADORES DE MODAL E CHECKLISTS
 
 // ==========================================
 
@@ -4046,7 +4046,7 @@ function openTaskModal(taskId) {
 
 
 
-    // Fill Header contents
+    // Preencher conteúdos do Cabeçalho
 
     document.getElementById('modal-rotina-name').textContent = task.rotina;
 
@@ -4078,7 +4078,7 @@ function openTaskModal(taskId) {
 
 
 
-    // Render Subitems
+    // Renderizar Subitens
 
     renderChecklist();
 
@@ -4090,7 +4090,7 @@ function openTaskModal(taskId) {
 
 
 
-    // Binding the main Toggle inside modal
+    // Vinculando o Toggle principal dentro do modal
 
     const mainToggle = document.getElementById('modal-done-toggle');
 
@@ -4103,7 +4103,7 @@ function openTaskModal(taskId) {
     newToggle.checked = task.feito;
     const isAdmin = LOGGED_USER && ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(LOGGED_USER.permissao);
 
-    // Lock global toggle if done and NOT admin/supervisor
+    // Bloquear toggle global se concluído e NÃO for admin/supervisor
     if (task.feito && !isAdmin) {
         newToggle.disabled = true;
         document.getElementById('modal-status').innerHTML += ' <i class="fa-solid fa-lock" title="Bloqueado para edição"></i>';
@@ -4123,7 +4123,7 @@ function openTaskModal(taskId) {
         }
         task.feito = checked;
 
-        // Refresh views natively
+        // Atualizar visualizações nativamente
 
         renderChecklist();
 
@@ -4133,7 +4133,7 @@ function openTaskModal(taskId) {
 
 
 
-        // Auto update header
+        // Atualizar cabeçalho automaticamente
 
         document.getElementById('modal-status').innerHTML = checked
 
@@ -4183,7 +4183,7 @@ function renderChecklist() {
 
         div.className = 'checklist-item fade-in';
 
-        div.style.animationDelay = `${index * 0.04}s`; // Micro-staggered entry
+        div.style.animationDelay = `${index * 0.04}s`; // Entrada micro-escalonada
 
 
 
@@ -4197,7 +4197,7 @@ function renderChecklist() {
 
 
 
-        // Single checklist item changed
+        // Único item de checklist alterado
 
         const chk = div.querySelector('input');
 
@@ -4209,7 +4209,7 @@ function renderChecklist() {
 
 
 
-            // Re-render checklist and update underlaying lists
+            // Renderizar novamente checklist e atualizar listas subjacentes
 
             renderChecklist();
 
@@ -4219,7 +4219,7 @@ function renderChecklist() {
 
 
 
-            // Re-sync header if state changed due to all checks
+            // Re-sincronizar cabeçalho se o estado mudou devido a todos os checks
 
             const refreshedTask = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
 
@@ -4243,7 +4243,7 @@ function renderChecklist() {
 
 
 
-    // Update Progress UI
+    // Atualizar UI de Progresso
 
     const total = task.subitems.length;
 
@@ -4257,7 +4257,7 @@ function renderChecklist() {
 
 
 
-    // Sync Main Toggle visually
+    // Sincronizar Toggle Principal visualmente
 
     const toggle = document.getElementById('modal-done-toggle');
 
@@ -4437,7 +4437,7 @@ async function handleSaveDemandaEventual() {
 
 
 
-// Helpers
+// Auxiliares
 
 function formatDate(dateStr) {
 
@@ -4455,7 +4455,7 @@ function formatDate(dateStr) {
 
 
 
-// Easing Animation for Numbers
+// Animação de Suavização para Números
 
 function animateValue(id, start, end, duration) {
 
@@ -4469,7 +4469,7 @@ function animateValue(id, start, end, duration) {
 
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
 
-        // Exponential easeout
+        // Suavização exponencial para fora
 
         const easeAmount = 1 - Math.pow(1 - progress, 4);
 
@@ -4481,7 +4481,7 @@ function animateValue(id, start, end, duration) {
 
         } else {
 
-            // Guarantee end state
+            // Garantir estado final
 
             obj.innerHTML = end;
 
@@ -4533,7 +4533,7 @@ function renderAuditoria() {
 
 
 
-        // Format date BR
+        // Formatar data BR
 
         const d = new Date(log.timestamp);
 
@@ -4577,7 +4577,7 @@ function downloadAuditoriaCSV() {
 
 
 
-    // CSV Header
+    // Cabeçalho CSV
 
     let csvContent = "Data/Hora,Usuário,Permissão,Ação,Detalhes\n";
 
@@ -4591,7 +4591,7 @@ function downloadAuditoriaCSV() {
 
 
 
-        // Escape quotes and commas
+        // Escapar aspas e vírgulas
 
         const escUser = (l.user_name || "").replace(/"/g, '""');
 
@@ -4609,7 +4609,7 @@ function downloadAuditoriaCSV() {
 
 
 
-    // Create Blob URL and trigger download
+    // Criar URL Blob e disparar download
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 
@@ -4662,7 +4662,7 @@ function handleRestoreBackup(e) {
                 return;
             }
 
-            // Validate the uploadedData structure before proceeding
+            // Validar a estrutura uploadedData antes de prosseguir
             if (!uploadedData.clientes || !uploadedData.funcionarios || !uploadedData.config || !uploadedData.version) {
                 throw new Error("O arquivo selecionado não parece ser um backup válido do FiscalApp.");
 
@@ -4766,30 +4766,30 @@ function renderAuditoriaCompetencia() {
     const userSelect = document.getElementById('audit-comp-user');
     const btnRun = document.getElementById('btn-run-audit-comp');
 
-    // Populate Meses
+    // Povoar Meses
     mesSelect.innerHTML = '<option value="">Todos os Meses</option>';
     const mesesObj = Store.getData().meses || [];
     [...mesesObj].sort((a, b) => b.id.localeCompare(a.id)).forEach(m => {
         mesSelect.innerHTML += `<option value="${m.id}">${m.mes}</option>`;
     });
 
-    // Populate Users
+    // Povoar Usuários
     userSelect.innerHTML = '<option value="">Todos os Funcionários</option>';
     const usersObj = Store.getData().funcionarios || [];
     usersObj.forEach(u => {
         userSelect.innerHTML += `<option value="${u.nome}">${u.nome}</option>`;
     });
 
-    // Reset Table
+    // Resetar Tabela
     document.getElementById('audit-comp-results').style.display = 'none';
 
-    // Remove old listeners to prevent bubbling
+    // Remover listeners antigos para evitar bubbling
     const cloneBtn = btnRun.cloneNode(true);
     btnRun.parentNode.replaceChild(cloneBtn, btnRun);
 
     cloneBtn.addEventListener('click', runAuditoriaCompetencia);
 
-    // Print Button Listener
+    // Listener do Botão Imprimir
     const btnPrint = document.getElementById('btn-print-audit-comp');
     if (btnPrint) {
         btnPrint.addEventListener('click', () => {
@@ -4811,10 +4811,10 @@ function runAuditoriaCompetencia() {
     const tbody = document.querySelector('#audit-comp-table tbody');
     tbody.innerHTML = '';
 
-    // Ler all rotinas
+    // Ler todas as rotinas
     const allExecs = Store.getData().execucoes || [];
 
-    // Filter
+    // Filtrar
     let filtered = allExecs;
     if (mesId) {
         filtered = filtered.filter(e => e.competencia === mesId);
@@ -4823,7 +4823,7 @@ function runAuditoriaCompetencia() {
         filtered = filtered.filter(e => e.responsavel === userName);
     }
 
-    // Stats
+    // Estatísticas
     let noPrazo = 0;
     let atrasado = 0;
     let pendente = 0;
@@ -4883,7 +4883,7 @@ function runAuditoriaCompetencia() {
         });
     }
 
-    // Update KPIs
+    // Atualizar KPIs
     document.getElementById('audit-comp-noprazo').textContent = noPrazo;
     document.getElementById('audit-comp-atrasado').textContent = atrasado;
     document.getElementById('audit-comp-pendente').textContent = pendente;
@@ -4896,7 +4896,7 @@ function runAuditoriaCompetencia() {
 }
 
 // ==========================================
-// Settings Hub Tabs Initialization
+// Inicialização das Abas de Configurações
 // ==========================================
 let settingsInitDone = false;
 function initSettingsTabs() {
@@ -4905,7 +4905,7 @@ function initSettingsTabs() {
 
     tabs.forEach(tab => {
         tab.addEventListener("click", () => {
-            // Remove active classes
+            // Remover classes ativas
             tabs.forEach(t => {
                 t.classList.remove("active");
             });
@@ -4914,12 +4914,12 @@ function initSettingsTabs() {
                 pane.classList.remove("active");
             });
 
-            // Set active class to clicked tab
+            // Definir classe ativa na aba clicada
             tab.classList.add("active");
 
             const targetId = tab.getAttribute("data-target");
 
-            // Persist the tab state
+            // Persistir o estado da aba
             sessionStorage.setItem("fiscalapp_settings_tab", targetId);
 
             const targetPane = document.getElementById(targetId);
@@ -4928,7 +4928,7 @@ function initSettingsTabs() {
                 setTimeout(() => targetPane.classList.add("active"), 10);
             }
 
-            // Fire Specific Tab Renders
+            // Disparar Renderizações Específicas de Abas
             if (targetId === "set-rbac") {
                 renderAdminPanel();
             } else if (targetId === "set-setores") {

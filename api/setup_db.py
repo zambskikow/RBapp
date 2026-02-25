@@ -10,10 +10,10 @@ supabase: Client = create_client(url, key)
 
 print("Tentando criar a tabela cargos_permissoes via API supabase.rpc...")
 try:
-    # Notice: supabase-js/py cannot run raw SQL natively without an RPC function
-    # Setup RPC:
-    # Since we can't easily run DDL through REST without an existing RPC function
-    # We will inform the user to run the SQL in their Supabase dashboard directly.
+    # Aviso: supabase-js/py não pode executar SQL bruto nativamente sem uma função RPC
+    # Configuração RPC:
+    # Como não podemos executar facilmente o DDL através de REST sem uma função RPC existente
+    # Vamos informar o usuário para rodar o SQL em seu dashboard Supabase diretamente.
     pass
 except Exception as e:
     print(e)

@@ -1,4 +1,4 @@
-// js/store.js - Configured to fetch from Python API / Vercel
+// js/store.js - Configurado para buscar da API Python / Vercel
 
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://127.0.0.1:8000/api' // URL do servidor local FastAPI para testes
@@ -11,7 +11,7 @@ const addDays = (date, days) => {
     return d;
 };
 
-// Initial state cache - starts empty and gets populated by the API
+// Cache do estado inicial - começa vazio e é preenchido pela API
 let db = {
     setores: [],
     funcionarios: [],
@@ -40,7 +40,7 @@ let db = {
 
 window.Store = {
     // -----------------------------------------------------------------
-    // API HYDRATION
+    // HIDRATAÇÃO DA API
     // -----------------------------------------------------------------
     async fetchAllData() {
         try {
@@ -86,7 +86,7 @@ window.Store = {
             })) || [];
             db.logs = await logsRes.json() || [];
 
-            // Try to set cargos (can fail if table doesn't exist yet, fallback to empty array)
+            // Tentar definir os cargos (pode falhar se a tabela não existir, fallback para array vazio)
             try {
                 const cargosData = await cargosRes.json();
                 db.cargos = Array.isArray(cargosData) ? cargosData : [];
@@ -137,7 +137,7 @@ window.Store = {
                 }
             } catch (e) { }
 
-            // Map python rotinasBase to expected camelCase names for legacy frontend compatibility
+            // Mapear rotinasBase do python para camelCase esperado por compatibilidade de frontend legado
             db.rotinasBase = db.rotinasBase.map(r => ({
                 id: r.id,
                 nome: r.nome,
@@ -198,7 +198,7 @@ window.Store = {
             return true;
         } catch (error) {
             console.error("Erro ao puxar dados do banco:", error);
-            // Fallback for visual offline testing if needed, or notify user
+            // Fallback para testes offline visuais se necessário, ou notificar o usuário
             if (typeof window.showNotify === 'function') {
                 window.showNotify("Erro de Conexão", "Erro de conexão com o banco de dados. Tente atualizar a página.", "error");
             } else {
@@ -208,7 +208,7 @@ window.Store = {
         }
     },
 
-    // As in local storage, but now wait for fetch
+    // Como no storage local, mas agora espera o fetch
     async loadFromStorage() {
         const loaded = await this.fetchAllData();
         if (loaded) {
@@ -229,13 +229,13 @@ window.Store = {
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         const currentExt = `${monthNames[now.getMonth()]} ${year}`;
 
-        // Check if current real-world month exists in DB
+        // Checar se o mês real atual existe no Banco de Dados
         const exists = db.meses.find(m => m.id === currentCompId);
 
         if (!exists) {
             console.log(`[Rollover] Mês ${currentCompId} não existe. Iniciando virada de competência...`);
 
-            // Deactivate old active months
+            // Desativar meses ativos antigos
             const oldActives = db.meses.filter(m => m.ativo);
             for (let m of oldActives) {
                 m.ativo = false;
@@ -250,7 +250,7 @@ window.Store = {
                 }
             }
 
-            // Create new month
+            // Criar novo mês
             const newMonth = {
                 id: currentCompId,
                 mes: currentExt,
@@ -270,14 +270,14 @@ window.Store = {
                 });
 
                 if (res.ok) {
-                    // It returns array, map back
+                    // Ele retorna um array, mapeando de volta
                     const data = await res.json();
                     db.meses.push(data[0]);
                     this.registerLog("Sistema", `Competência virada para ${currentExt}`);
 
-                    // Bootstrapping engine: Trigger creation of tasks for all clients
+                    // Bootstrapping da engine: Disparar criação de tarefas para todos os clientes
                     console.log(`[Rollover] Gerando tarefas para ${db.clientes.length} clientes...`);
-                    // We must wait a tiny bit to assure month was pushed locally
+                    // Devemos esperar um pouco para garantir que o mês foi inserido localmente
                     for (let cliente of db.clientes) {
                         this.engineRotinas(cliente);
                     }
@@ -286,7 +286,7 @@ window.Store = {
                 console.error("Erro ao criar nova competência:", e);
             }
         } else if (!exists.ativo) {
-            // Fix edge case where month exists but is not marked active
+            // Corrigir caso extremo onde o mês existe, mas não está marcado como ativo
             exists.ativo = true;
             await fetch(`${API_BASE}/meses/${exists.id}`, {
                 method: 'PUT',
@@ -302,7 +302,7 @@ window.Store = {
         // você vai notar que os métodos individuais abaixo estão sendo adaptados para fazer POST imediatamente.
     },
 
-    // ... rest of the original function structures
+    // ... resto das estruturas da função original
     async registerLog(action, details) {
         const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
         const permissao = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.permissao : "Automático";
@@ -318,7 +318,7 @@ window.Store = {
                     details: details
                 })
             });
-            // Also add locally for instant UI update
+            // Também adicionar localmente para atualização instantânea da UI
             const now = new Date();
             const timestamp = now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
             db.logs.push({ timestamp, user_name: username, permissao, action, details });
@@ -331,7 +331,7 @@ window.Store = {
         return db;
     },
 
-    // UI Engine gets filtered from the local Cache (which was populated via loadFromStorage mapping)
+    // A engine da UI é filtrada a partir do Cache local (que foi preenchido via mapeamento loadFromStorage)
     getExecucoesWithDetails(userFilter = 'All') {
         const tToday = new Date().setHours(0, 0, 0, 0);
         // Filtra execuções órfãs ou de clientes que perderam o vínculo com a rotina
@@ -456,8 +456,8 @@ window.Store = {
             .sort((a, b) => new Date(a.diaPrazo || new Date()) - new Date(b.diaPrazo || new Date()));
     },
 
-    // Action Disparators - API MOCK
-    // In a real deep restructuring we would have an app.put('/api/execucoes/{id}') on Python
+    // Disparadores de Ação - MOCK DA API
+    // Em uma restruturação profunda real, teríamos um app.put('/api/execucoes/{id}') no Python
     async toggleExecucaoFeito(id, isFeito) {
         const ex = db.execucoes.find(e => e.id === id);
         const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
@@ -818,7 +818,7 @@ window.Store = {
             }
         }
 
-        return deletedLocally || true; // Always return true for now to update UI, but locally it will be gone
+        return deletedLocally || true; // Por enquanto sempre retorne verdadeiro para atualizar a UI, mas localmente será removido
     },
 
     async addClient(clientData) {
@@ -1051,7 +1051,7 @@ window.Store = {
         }
     },
 
-    // Mocks for edit - in a full refactor these would be PUT requests
+    // Mocks para edição - em uma refatoração completa, estes seriam requisições PUT
     async editClient(id, clientData) {
         const {
             razaoSocial, cnpj, regime, responsavelFiscal, driveLink,
@@ -1064,12 +1064,12 @@ window.Store = {
 
         const c = db.clientes.find(x => x.id === parseInt(id));
         if (c) {
-            // Determine added and removed routines
+            // Determinar rotinas adicionadas e removidas
             const oldRotinas = c.rotinasSelecionadas || [];
             const newRotinasIds = finalRotinasIds.filter(rId => !oldRotinas.includes(rId));
             const removedRotinasIds = oldRotinas.filter(rId => !finalRotinasIds.includes(rId));
 
-            // Update local object
+            // Atualizar objeto local
             Object.assign(c, {
                 razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadas: finalRotinasIds, driveLink,
                 codigo, ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
@@ -1077,7 +1077,7 @@ window.Store = {
                 ativo: clientData.ativo
             });
 
-            // Handle Removals
+            // Lidar com remoções
             if (removedRotinasIds.length > 0) {
                 const month = db.meses.find(m => m.ativo);
                 if (month) {
@@ -1102,7 +1102,7 @@ window.Store = {
                 }
             }
 
-            // Persist Client Changes
+            // Persistir alterações do cliente
             try {
                 const res = await fetch(`${API_BASE}/clientes/${id}`, {
                     method: 'PUT',
@@ -1145,7 +1145,7 @@ window.Store = {
 
             this.registerLog("Editou Cliente", razaoSocial);
 
-            // Handle Additions
+            // Lidar com adições
             if (newRotinasIds.length > 0) {
                 const tempClient = { ...c, rotinasSelecionadas: newRotinasIds };
                 await this.engineRotinas(tempClient);
@@ -1588,14 +1588,14 @@ window.Store = {
 
     async engineRotinas(cliente) {
 
-        // Build routines for the active month
+        // Construir rotinas para o mês ativo
         const month = db.meses.find(m => m.ativo);
         if (!month) {
             console.warn("Rotinas Engine abortado: Nenhum mês ativo definido no sistema.");
             return;
         }
 
-        const currentComp = month.id; // e.g. "2026-02"
+        const currentComp = month.id; // p. ex. "2026-02"
         const routinesToProcess = cliente.rotinasSelecionadas || [];
         if (routinesToProcess.length === 0) return;
 
@@ -1635,7 +1635,7 @@ window.Store = {
                 dateStr = `${execY}-${execM}-${dia}`;
             }
 
-            // Checklists might be arrays of strings or objects. Normalize to objects for 'execucoes'.
+            // Checklists podem ser arrays de strings ou objetos. Normalizar para objetos em "execuções".
             const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
                 const text = typeof item === 'string' ? item : item.texto;
                 return {
@@ -1645,7 +1645,7 @@ window.Store = {
                 };
             });
 
-            // Verify if task already exists to avoid duplication
+            // Verificar se a tarefa já existe para evitar duplicação
             const exists = db.execucoes.find(e =>
                 e.clienteId === cliente.id &&
                 e.rotina === rotina.nome &&
@@ -1657,7 +1657,7 @@ window.Store = {
                 continue;
             }
 
-            // Dispatch task to API
+            // Enviar tarefa para a API
             try {
                 const res = await fetch(`${API_BASE}/execucoes`, {
                     method: 'POST',
@@ -1706,7 +1706,7 @@ window.Store = {
     },
 
     // -----------------------------------------------------------------
-    // MARKETING METHODS
+    // MÉTODOS DE MARKETING
     // -----------------------------------------------------------------
     async saveMarketingPost(postData) {
         const isEdit = !!postData.id;
@@ -1799,7 +1799,7 @@ window.Store = {
         try {
             const res = await fetch(`${API_BASE}/marketing_equipe/${id}`, { method: 'DELETE' });
             if (res.ok) {
-                // Remove from local cache
+                // Remover do cache local
                 db.marketing_equipe = db.marketing_equipe.filter(m => m.id !== id);
                 return true;
             }
