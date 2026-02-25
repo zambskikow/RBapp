@@ -1780,6 +1780,20 @@ window.Store = {
         return null;
     },
 
+    async deleteMarketingEquipeMember(id) {
+        try {
+            const res = await fetch(`${API_BASE}/marketing_equipe/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                // Remove from local cache
+                db.marketing_equipe = db.marketing_equipe.filter(m => m.id !== id);
+                return true;
+            }
+        } catch (e) {
+            console.error("Erro Store deleteMarketingEquipeMember:", e);
+        }
+        return false;
+    },
+
     async updateBranding(configData) {
         // Objeto db.config já é atualizado localmente pela UI se necessário,
         // mas aqui garantimos o PUT para o banco (global_config/1 assumido)
