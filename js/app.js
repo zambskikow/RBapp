@@ -2687,6 +2687,29 @@ async function deleteFuncionarioDirectly(id, nome) {
     }
 }
 
+async function deleteCargo(id) {
+    if (!id) return;
+
+    const confirmacao = await showConfirm(
+        "Excluir Cargo?",
+        "Tem certeza que deseja excluir esse Cargo e suas Permissões de Acesso de forma definitiva?",
+        'danger'
+    );
+
+    if (confirmacao) {
+        showLoading("Processando", "Excluindo cargo do sistema...");
+        const success = await Store.deleteCargo(id);
+        hideLoading();
+
+        if (success) {
+            showFeedbackToast("Cargo excluído com sucesso!", "success");
+            renderCargos();
+            populateDashboardSelects();
+        } else {
+            showNotify("Atenção", "Cargo em uso ou erro na requisição.", "error");
+        }
+    }
+}
 async function toggleFuncionarioStatus(id) {
     const stringId = id.toString();
     const f = Store.getData().funcionarios.find(x => x.id.toString() === stringId);
@@ -3152,8 +3175,8 @@ function renderCompetenciasAdmin() {
                 </div>
             </td>
             <td style="text-align: right;">
-                <button class="btn btn-outline btn-delete-comp" data-id="${m.id}" style="border-color:var(--danger); color:var(--danger); padding:0.4rem 0.8rem;" ${m.ativo ? 'disabled title="Não é possível apagar o mês atual"' : ''}>
-                    <i class="fa-solid fa-trash"></i> Apagar
+                <button class="btn btn-small btn-secondary text-danger btn-delete-comp" data-id="${m.id}" title="Apagar Competência" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;" ${m.ativo ? 'disabled title="Não é possível apagar o mês atual"' : ''}>
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </td>
         `;
@@ -3162,18 +3185,34 @@ function renderCompetenciasAdmin() {
 
     // Attach Delete Events
     document.querySelectorAll('.btn-delete-comp').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const id = e.currentTarget.getAttribute('data-id');
-            const modal = document.getElementById('modal-delete-competencia');
-            const hiddenId = document.getElementById('delete-comp-id');
-            const msgEl = document.getElementById('delete-comp-msg');
+            if (!id) return;
 
-            if (modal && hiddenId && msgEl) {
-                hiddenId.value = id;
-                msgEl.innerHTML = `Você está prestes a apagar a competência <strong>${id}</strong> inteira, junto com todas as tarefas vinculadas a ela. Esta é uma ação destrutiva irreversível.`;
-                modal.style.display = 'flex';
-                // Trigger CSS transitions
-                setTimeout(() => modal.classList.add('active'), 10);
+            const confirmacao = await showConfirm(
+                "Excluir Competência?",
+                `Você está prestes a apagar a competência <strong>${id}</strong> inteira, junto com todas as tarefas vinculadas a ela. Esta é uma ação destrutiva irreversível.
+                <br><br>Tem 100% de certeza absoluta?`,
+                'danger'
+            );
+
+            if (confirmacao) {
+                const icon = e.currentTarget.querySelector('i');
+                if (icon) icon.className = "fa-solid fa-spinner fa-spin";
+                e.currentTarget.disabled = true;
+
+                showLoading('Processando', `Apagando ${id}...`);
+                const success = await Store.deleteCompetencia(id);
+                hideLoading();
+
+                if (success) {
+                    showFeedbackToast(`Competência ${id} removida.`, 'success');
+                    renderCompetenciasAdmin();
+                } else {
+                    showNotify("Erro", "Houve um erro na exclusão. Tente novamente.", "error");
+                    if (icon) icon.className = "fa-solid fa-trash";
+                    e.currentTarget.disabled = false;
+                }
             }
         });
     });
@@ -3435,17 +3474,24 @@ function handleAddSetor() {
 
 
 async function handleDeleteSetor(nome) {
+    const confirmacao = await showConfirm(
+        "Excluir Setor?",
+        `Atenção: Tem certeza que deseja excluir o setor '${nome}' de forma definitiva? Isso não altera as rotinas e funcionários que já estão nomeados para ele, mas ele deixará de aparecer nas opções futuras.`,
+        'danger'
+    );
 
-    if (confirm(`Atenção: Tem certeza que deseja excluir o setor '${nome}'? Isso não altera as rotinas e funcionários que já estão nomeados para ele, mas ele deixará de aparecer nas opções.`)) {
-
-        await Store.deleteSetor(nome);
-
-        renderSetoresListPreview();
-
-        loadSetoresSelects();
-
+    if (confirmacao) {
+        showLoading('Processando', `Excluindo setor '${nome}'...`);
+        const success = await Store.deleteSetor(nome);
+        hideLoading();
+        if (success) {
+            showFeedbackToast(`Setor '${nome}' excluído com sucesso.`, 'success');
+            renderSetoresListPreview(); // Changed from renderSetores() to renderSetoresListPreview() to match existing function
+            loadSetoresSelects();
+        } else {
+            showNotify("Erro", "Erro ao excluir setor. Verifique a conexão.", "error");
+        }
     }
-
 }
 
 
@@ -3588,22 +3634,34 @@ function initInboxTabs() {
         });
 
         // === Exclusão em Massa ===
-        document.addEventListener('click', async (e) => {
-            if (!e.target.closest('#btn-bulk-delete-msgs')) return;
-            const selected = document.querySelectorAll('.msg-check:checked');
-            if (selected.length === 0) return;
-            if (confirm(`Excluir ${selected.length} mensagens selecionadas?`)) {
-                for (let check of selected) {
-                    const item = check.closest('.msg-item-refined');
-                    if (item) {
-                        const id = item.getAttribute('data-msg-id');
+        const btnDeleteMass = document.getElementById('btn-bulk-delete-msgs');
+        if (btnDeleteMass) {
+            btnDeleteMass.addEventListener('click', async () => {
+                const selected = Array.from(document.querySelectorAll('.msg-check:checked')).map(cb => cb.closest('.msg-item-refined').getAttribute('data-msg-id'));
+                if (selected.length === 0) return;
+
+                const confirmacao = await showConfirm(
+                    "Excluir Mensagens?",
+                    `Deseja realmente excluir as ${selected.length} mensagens selecionadas?`,
+                    'danger'
+                );
+
+                if (confirmacao) {
+                    // Animation first
+                    document.querySelectorAll('.msg-check:checked').forEach(cb => {
+                        const row = cb.closest('.msg-item-refined');
+                        if (row) row.classList.add('fade-out-item');
+                    });
+
+                    await new Promise(r => setTimeout(r, 400));
+                    for (let id of selected) {
                         await Store.deleteMensagem(id, LOGGED_USER.nome);
                     }
+                    showFeedbackToast(`${selected.length} mensagens excluídas.`, 'success');
+                    renderMensagens(); // Re-render the list
                 }
-                renderMensagens();
-            }
-        });
-
+            });
+        }
         // === Marcar como Lidas em Massa ===
         document.addEventListener('click', async (e) => {
             if (!e.target.closest('#btn-bulk-read-msgs')) return;
@@ -3808,7 +3866,13 @@ function loadMessageIntoReader(id) {
 
     btnDelete.style.display = currentInboxFolder === 'trash' ? 'none' : 'flex';
     btnDelete.onclick = async () => {
-        if (confirm("Deseja mesmo arquivar esta mensagem? (Ela ficará disponível na Lixeira para auditoria)")) {
+        const confirmacao = await showConfirm(
+            "Arquivar Mensagem?",
+            "Deseja mesmo arquivar esta mensagem? Ela ficará disponível na Lixeira para auditoria e restauração.",
+            'warning'
+        );
+
+        if (confirmacao) {
             btnDelete.disabled = true;
             btnDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             const success = await Store.deleteMensagem(id, LOGGED_USER.nome);
@@ -4567,329 +4631,6 @@ function downloadAuditoriaCSV() {
 
     document.body.removeChild(link);
 
-}
-
-
-
-// ==========================================
-
-// VIEW: Painel de Administração (RBAC)
-
-// ==========================================
-
-function renderAdminPanel() {
-
-    const tbody = document.querySelector('#admin-cargos-table tbody');
-
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-
-
-
-    const cargos = Store.getData().cargos || [];
-
-
-
-    if (cargos.length === 0) {
-
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 3rem;">Nenhum cargo de segurança configurado ainda.</td></tr>`;
-
-        return;
-
-    }
-
-
-
-    cargos.forEach(cargo => {
-
-        const tr = document.createElement('tr');
-
-        tr.className = 'fade-in';
-
-
-
-        let tagsHtml = '';
-
-        if (cargo.telas_permitidas && cargo.telas_permitidas.length > 0) {
-
-            cargo.telas_permitidas.forEach(tela => {
-
-                let badgeClass = 'table-badge ';
-
-                if (tela === 'settings') {
-
-                    badgeClass += 'danger';
-
-                } else if (tela === 'dashboard' || tela === 'operacional') {
-
-                    badgeClass += 'primary';
-
-                } else {
-
-                    badgeClass += 'info';
-
-                }
-
-                tagsHtml += `<span class="${badgeClass}" style="margin-right: 4px; margin-bottom: 4px; display: inline-block;">${tela}</span>`;
-
-            });
-
-        } else {
-
-            tagsHtml = '<span class="text-muted">Nenhum acesso definido</span>';
-
-        }
-
-
-
-        tr.innerHTML = `
-
-            <td>#${cargo.id}</td>
-
-            <td><strong>${cargo.nome_cargo}</strong></td>
-
-            <td style="max-width: 400px; line-height: 1.8;">${tagsHtml}</td>
-
-            <td style="text-align: right;">
-
-                <button class="action-btn text-primary" onclick="openCargoModal(${cargo.id})" title="Editar Permissões"><i class="fa-solid fa-pen-to-square"></i></button>
-
-                <button class="action-btn text-danger" onclick="deleteCargo(${cargo.id})" title="Excluir Cargo"><i class="fa-solid fa-trash"></i></button>
-
-            </td>
-
-        `;
-
-        tbody.appendChild(tr);
-
-    });
-
-}
-
-
-
-function openCargoModal(cargoId = null) {
-
-    const modal = document.getElementById('admin-cargo-modal');
-
-    modal.style.display = 'flex';
-
-    // trigger animation
-
-    setTimeout(() => modal.classList.add('active'), 10);
-
-
-
-    const form = document.getElementById('admin-cargo-form');
-
-    form.reset();
-
-    document.getElementById('cargo-id').value = '';
-
-
-
-    if (cargoId) {
-
-        const cargo = Store.getData().cargos.find(c => c.id === cargoId);
-
-        if (cargo) {
-
-            document.getElementById('cargo-id').value = cargo.id;
-
-            document.getElementById('cargo-nome').value = cargo.nome_cargo;
-
-
-
-            const checks = document.querySelectorAll('.cargo-perm-check');
-
-            checks.forEach(chk => {
-
-                chk.checked = cargo.telas_permitidas && cargo.telas_permitidas.includes(chk.value);
-
-            });
-
-        }
-
-    }
-
-}
-
-
-
-function closeCargoModal(e) {
-
-    if (e) e.preventDefault();
-
-    const modal = document.getElementById('admin-cargo-modal');
-
-    modal.classList.remove('active');
-
-    setTimeout(() => modal.style.display = 'none', 300);
-
-}
-
-
-
-async function handleSaveCargo(e) {
-
-    e.preventDefault();
-
-    const id = document.getElementById('cargo-id').value;
-
-    const nome = document.getElementById('cargo-nome').value.trim();
-
-
-
-    const checkboxes = document.querySelectorAll('.cargo-perm-check:checked');
-
-    const permitidas = Array.from(checkboxes).map(chk => chk.value);
-
-
-
-    // Disable button to prevent double submit
-    const submitBtn = document.getElementById('btn-save-cargo') || e.target.querySelector('button[type="submit"]') || document.querySelector('#admin-cargo-modal button[type="submit"]');
-
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
-    }
-
-
-
-    let success = false;
-
-    if (id) {
-
-        success = await Store.updateCargo(parseInt(id), nome, permitidas);
-
-    } else {
-
-        success = await Store.addCargo(nome, permitidas);
-
-    }
-
-
-
-    if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Salvar Permissões';
-    }
-
-
-
-    if (success) {
-
-        closeCargoModal();
-
-        renderAdminPanel();
-
-        showFeedbackToast(`Permissões do cargo ${nome} salvas!`, 'success');
-
-        // Se o usuário logado tiver esse permissão editada, seria ideal um recarregamento, 
-
-        // mas assumimos que o Admin Master está gerenciando outras.
-
-    } else {
-
-        showFeedbackToast('Erro ao salvar cargo. Verifique a API.', 'danger');
-
-    }
-
-}
-
-
-
-async function deleteCargo(id) {
-
-    if (confirm("Tem certeza que deseja excluir esse Cargo e suas Permissões de Acesso?")) {
-
-        const success = await Store.deleteCargo(id);
-
-        if (success) {
-
-            renderAdminPanel();
-
-            showFeedbackToast('Cargo excluído com sucesso.', 'success');
-
-        } else {
-
-            showFeedbackToast('Erro ao excluir cargo.', 'danger');
-
-        }
-
-    }
-
-}
-
-
-
-// ==========================================
-
-// VIEW: Backup e Segurança
-
-// ==========================================
-
-function renderBackupView() {
-
-    const config = Store.getData().config;
-
-    const toggle = document.getElementById('toggle-auto-backup');
-
-    if (toggle) toggle.checked = config && config.autoBackup;
-
-
-
-    const lastBackupText = document.getElementById('last-backup-text');
-
-    if (lastBackupText) {
-
-        if (config && config.lastBackupData) {
-
-            const d = new Date(config.lastBackupData);
-
-            lastBackupText.innerHTML = `Último backup automático: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
-
-        } else {
-
-            lastBackupText.innerHTML = `Último backup: Nunca`;
-
-        }
-
-    }
-
-}
-
-
-
-function downloadBackupFile() {
-
-    const dataStr = JSON.stringify(Store.getData(), null, 2);
-
-    const blob = new Blob([dataStr], { type: 'application/json' });
-
-    const url = URL.createObjectURL(blob);
-
-
-
-    const d = new Date();
-
-    const dateString = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}${d.getDate().toString().padStart(2, '0')}`;
-
-
-
-    const link = document.createElement('a');
-
-    link.setAttribute('href', url);
-
-    link.setAttribute('download', `fiscalapp_backup_${dateString}.json`);
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-
 
 
     Store.registerLog("Backup de Segurança", "Realizou o download manual da base de dados");
@@ -4900,44 +4641,29 @@ function downloadBackupFile() {
 
 
 
-function restoreBackupFile() {
-
-    const fileInput = document.getElementById('backup-file-input');
-
-    const file = fileInput.files[0];
-
-    if (!file) {
-
-        showNotify("Atenção", "Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.", "warning");
-
-        return;
-
-    }
-
-
-
-    if (!confirm("⚠️ ATENÇÃO EXTREMA ⚠️\n\nIsso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execuções, mensagens, clientes novos feitos DEPOIS desse backup vão SUMIR para sempre.\n\nVocê tem 100% de certeza absoluta?")) {
-
-        return;
-
-    }
-
-
+function handleRestoreBackup(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
     const reader = new FileReader();
-
-    reader.onload = function (e) {
-
+    reader.onload = async function (event) {
         try {
+            const uploadedData = JSON.parse(event.target.result);
 
-            const rawData = e.target.result;
+            const confirmacao = await showConfirm(
+                "⚠️ ATENÇÃO EXTREMA ⚠️",
+                `Isso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execuções, mensagens, e clientes novos feitos DEPOIS desse backup vão <strong>SUMIR para sempre</strong>.
+                <br><br>Você tem 100% de certeza absoluta?`,
+                'danger'
+            );
 
-            const parsedData = JSON.parse(rawData);
+            if (!confirmacao) {
+                e.target.value = '';
+                return;
+            }
 
-
-
-            if (!parsedData.clientes || !parsedData.funcionarios || !parsedData.config || !parsedData.version) {
-
+            // Validate the uploadedData structure before proceeding
+            if (!uploadedData.clientes || !uploadedData.funcionarios || !uploadedData.config || !uploadedData.version) {
                 throw new Error("O arquivo selecionado não parece ser um backup válido do FiscalApp.");
 
             }
