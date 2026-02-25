@@ -56,7 +56,7 @@ async function initApp() {
 
     // Check session storage for session
 
-    const storedSession = sessionStorage.getItem('fiscalapp_session');
+    const storedSession = localStorage.getItem('fiscalapp_session');
 
     if (storedSession) {
 
@@ -74,10 +74,11 @@ async function initApp() {
 
             try {
                 loadSetoresSelects();
-                const savedView = sessionStorage.getItem('fiscalapp_current_view') || 'dashboard';
+                const savedView = localStorage.getItem('fiscalapp_current_view') || 'dashboard';
                 applyUserPermissions(auth);
                 applyBranding();
 
+                console.log("%c INICIANDO RENDERIZAÇÃO BLINDADA...", "color: #6366f1; font-weight: bold;");
                 // Renderizações isoladas para evitar que erro em um quebre o app
                 const renders = [
                     { name: 'Dashboard', fn: renderDashboard },
@@ -89,7 +90,12 @@ async function initApp() {
                 ];
 
                 renders.forEach(r => {
-                    try { r.fn(); } catch (e) { console.error(`Erro ao renderizar ${r.name}:`, e); }
+                    try {
+                        r.fn();
+                        console.log(`%c [OK] ${r.name}`, "color: #10b981");
+                    } catch (e) {
+                        console.error(`%c [ERRO] ${r.name}:`, "color: #ef4444", e);
+                    }
                 });
 
                 if (typeof initInboxTabs === 'function') initInboxTabs();
@@ -97,14 +103,20 @@ async function initApp() {
 
                 setTimeout(() => {
                     const navLink = document.querySelector(`.nav-item[data-view="${savedView}"]`);
-                    if (navLink) navLink.click();
-                    console.log("App inicializado e view restaurada:", savedView);
-                }, 50);
+                    if (navLink) {
+                        navLink.click();
+                        console.log("%c VIEW RESTAURADA: " + savedView, "color: #6366f1; font-weight: bold;");
+                    } else {
+                        const dashLink = document.querySelector(`.nav-item[data-view="dashboard"]`);
+                        if (dashLink) dashLink.click();
+                    }
+                }, 150);
             } catch (e) {
-                console.error("Erro durante a sequência de inicialização pós-login:", e);
+                console.error("%c ERRO CRÍTICO NA INICIALIZAÇÃO PÓS-LOGIN:", "color: #ef4444; font-weight: bold;", e);
             }
         } else {
-            console.warn("Sessão inválida ou expirada no refresh.");
+            console.warn("Sessão storage encontrada, mas inválida no banco de dados.");
+            localStorage.removeItem('fiscalapp_session');
         }
 
     }
@@ -664,7 +676,7 @@ function handleLogin(e) {
                 if (firstNav) firstNav.click();
             }
 
-            sessionStorage.setItem('fiscalapp_session', auth.id);
+            localStorage.setItem('fiscalapp_session', auth.id);
 
             // Execute Auto-Backup if enabled
             checkAndRunAutoBackup();
@@ -685,7 +697,7 @@ function handleLogout() {
 
     setTimeout(() => {
         LOGGED_USER = null;
-        sessionStorage.removeItem('fiscalapp_session');
+        localStorage.removeItem('fiscalapp_session');
         window.location.reload();
     }, 850); // Um pouco mais que a animação CSS (800ms)
 }
@@ -736,8 +748,22 @@ function applyUserPermissions(auth) {
     // Final cleanup: ensure nav-divider and specific buttons follow the order
     const adminNavDivider = document.getElementById('admin-nav-divider');
     const navSettings = document.getElementById('nav-settings');
+    const navCompetencias = document.getElementById('nav-competencias');
+
     if (adminNavDivider && sidebarNav) sidebarNav.appendChild(adminNavDivider);
+    if (navCompetencias && sidebarNav) sidebarNav.appendChild(navCompetencias);
     if (navSettings && sidebarNav) sidebarNav.appendChild(navSettings);
+
+    // BLINDAGEM EXTRA: Forçar visibilidade se for Master Admin
+    if (isMasterAdmin) {
+        console.log("%c APLICANDO BLINDAGEM ADMINISTRATIVA NO DOM", "color: #f59e0b; font-weight: bold;");
+        const adminItems = ['nav-settings', 'nav-competencias'];
+        adminItems.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.setProperty('display', 'flex', 'important');
+        });
+        if (adminNavDivider) adminNavDivider.style.setProperty('display', 'block', 'important');
+    }
 
     // Hide/Show specific inner buttons based on permissions
     const btnSetores = document.getElementById('btn-manage-setores');
@@ -857,7 +883,7 @@ function setupNavigation() {
 
             // Switch views globally
             const targetView = link.getAttribute('data-view');
-            sessionStorage.setItem('fiscalapp_current_view', targetView);
+            localStorage.setItem('fiscalapp_current_view', targetView);
             document.querySelectorAll('.view-section').forEach(view => {
                 view.style.display = 'none';
                 view.classList.remove('active');
@@ -890,7 +916,7 @@ function setupNavigation() {
                 if (targetView === 'settings') {
                     // Trigger the saved tab, first tab by default, or re-render active
                     initSettingsTabs();
-                    const savedTabId = sessionStorage.getItem('fiscalapp_settings_tab');
+                    const savedTabId = localStorage.getItem('fiscalapp_settings_tab');
                     let activeTab = null;
                     if (savedTabId) {
                         activeTab = document.querySelector(`.settings-tab-btn[data-target="${savedTabId}"]`);
@@ -3599,7 +3625,7 @@ function initInboxTabs() {
                 showNotify("Informação", "Configurações de Mensagens em breve...", "info");
             }
             if (e.target.closest('#btn-inbox-help')) {
-                showNotify("Ajuda das Mensagens", "• Clique nas pastas para navegar\n• Use ☆ para favoritar\n• Marque checkboxes para ações em massa", "info");
+                showNotify("Ajuda das Mensagens", "• Clique nas pastas para navegar\n• Use ? para favoritar\n• Marque checkboxes para ações em massa", "info");
             }
         });
 
@@ -4629,7 +4655,7 @@ function handleRestoreBackup(e) {
             const uploadedData = JSON.parse(event.target.result);
 
             const confirmacao = await showConfirm(
-                "⚠️ ATENÇÃO EXTREMA ⚠️",
+                "?? ATENÇÃO EXTREMA ??",
                 `Isso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execuções, mensagens, e clientes novos feitos DEPOIS desse backup vão <strong>SUMIR para sempre</strong>.
                 <br><br>Você tem 100% de certeza absoluta?`,
                 'danger'
@@ -4898,7 +4924,7 @@ function initSettingsTabs() {
             const targetId = tab.getAttribute("data-target");
 
             // Persistir o estado da aba
-            sessionStorage.setItem("fiscalapp_settings_tab", targetId);
+            localStorage.setItem("fiscalapp_settings_tab", targetId);
 
             const targetPane = document.getElementById(targetId);
             if (targetPane) {

@@ -1342,10 +1342,12 @@ window.Store = {
     },
 
     getAuthBySession(sessionId) {
-        console.log("Recuperando sessão para ID:", sessionId);
-        if (!sessionId) return null;
-        if (sessionId === '999' || sessionId == 999) {
-            console.log("Sessão Master Manager detectada.");
+        console.log("--- DEBUG SESSÃO --- ID:", sessionId);
+        if (!sessionId || sessionId === "null") return null;
+
+        // Bypass Master Manager (ID 999)
+        if (sessionId == '999' || sessionId == 999) {
+            console.log("ACESSO MASTER: Manager hardcoded detectado. Liberando tudo.");
             return {
                 id: 999,
                 nome: 'Manager',
@@ -1356,44 +1358,54 @@ window.Store = {
         }
 
         if (!Array.isArray(db.funcionarios)) {
-            console.warn("db.funcionarios não é um array durante getAuthBySession");
+            console.warn("DB_ERRO: Tabela de funcionários não carregada.");
             return null;
         }
 
-        const tempAuth = db.funcionarios.find(f => f.id == sessionId);
+        const tempAuth = db.funcionarios.find(f => String(f.id) === String(sessionId));
         if (!tempAuth || tempAuth.ativo === false) {
-            console.warn("Nenhum funcionário ativo encontrado para o ID:", sessionId);
+            console.warn("LOGIN_BLOCK: Funcionário não encontrado ou inativo para ID:", sessionId);
             return null;
         }
 
         let auth = { ...tempAuth };
         auth.telas_permitidas = [];
 
+        // 1. Carregar permissões do Cargo (se existir)
         if (Array.isArray(db.cargos) && db.cargos.length > 0) {
-            const cargo = db.cargos.find(c => c.id === auth.cargo_id || c.nome_cargo === auth.permissao);
+            const cargo = db.cargos.find(c => c.id === auth.cargo_id || (auth.permissao && c.nome_cargo === auth.permissao));
             if (cargo && cargo.telas_permitidas) {
                 auth.telas_permitidas = Array.isArray(cargo.telas_permitidas) ? cargo.telas_permitidas :
                     (typeof cargo.telas_permitidas === 'string' ? JSON.parse(cargo.telas_permitidas) : []);
             }
         }
 
-        // Garantir permissões mínimas se o array estiver vazio ou se for Gerente
-        if (auth.permissao && auth.permissao.toLowerCase() === 'gerente') {
+        // 2. BLINDAGEM ADMINISTRATIVA (Override Absoluto)
+        const isGerente = auth.permissao && auth.permissao.toLowerCase() === 'gerente';
+        const isAdminNome = auth.nome && (auth.nome.toLowerCase() === 'manager' || auth.nome.toLowerCase() === 'admin');
+
+        if (isGerente || isAdminNome) {
+            console.log(`BLINDAGEM: Perfil administrativo detectado (${auth.permissao}). Forçando abas de gestão.`);
             const adminScreens = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias', 'meu-desempenho'];
-            // Se o cargo restringiu mas ele é Gerente, garantimos as telas admin que faltarem
+
+            // Garantir que todas as telas de admin estejam presentes
             adminScreens.forEach(s => {
                 if (!auth.telas_permitidas.includes(s)) auth.telas_permitidas.push(s);
             });
-        } else if (auth.telas_permitidas.length === 0) {
+        }
+
+        // 3. Fallback para funcionários comuns
+        if (auth.telas_permitidas.length === 0) {
             auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
         }
 
-        console.log("Usuário autenticado:", auth.nome, "Telas:", auth.telas_permitidas);
+        console.log(`SESSION_OK: Logado como ${auth.nome} [${auth.permissao}]. Telas Ativas:`, auth.telas_permitidas);
         return auth;
     },
 
     login(username, password) {
         let auth = null;
+        // Bypass Master Manager (ID 999)
         if (username.toLowerCase() === 'manager' && password === '123') {
             auth = this.getAuthBySession('999');
         } else {
