@@ -1398,6 +1398,16 @@ function renderMeuDesempenho() {
 // ==========================================
 let currentEmployeeForPerformance = null;
 
+function formatCompetencia(comp) {
+    if (!comp) return "---";
+    const parts = comp.split('-');
+    if (parts.length === 2 && parts[0].length === 4) {
+        return `${parts[1]}/${parts[0]}`;
+    }
+    return comp;
+}
+window.formatCompetencia = formatCompetencia;
+
 function openEmployeePerformanceModal(employeeName) {
     currentEmployeeForPerformance = employeeName;
     document.getElementById('emp-perf-name').textContent = employeeName;
