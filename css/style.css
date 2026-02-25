@@ -979,6 +979,14 @@ body {
     text-decoration-color: var(--primary-light) !important;
 }
 
+.client-code-cell {
+    color: var(--primary-light) !important;
+    font-weight: 700;
+    font-size: 0.75rem !important;
+    white-space: nowrap;
+    width: 60px;
+}
+
 /* Orbs and Markers */
 .status-indicator {
     display: flex;
@@ -3775,6 +3783,88 @@ body {
 }
 
 /* Ajustes no Layout do Painel de Controle para Responsividade */
+.settings-grid-2 {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.5rem !important;
+}
+
+.settings-grid-3 {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1.5rem !important;
+}
+
+@media (max-width: 768px) {
+
+    .settings-grid-2,
+    .settings-grid-3 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .settings-content-area {
+        padding: 0.5rem;
+    }
+
+    .settings-pane {
+        padding: 0.5rem;
+    }
+
+    .glass-card {
+        padding: 1.5rem !important;
+    }
+}
+
+.settings-action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.settings-action-header h2 {
+    margin: 0;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+    min-width: 600px;
+    /* Garante que a tabela não esmague em mobile */
+}
+
+/* Fix for reorder list items height and alignment */
+.reorder-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5rem;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.reorder-item i {
+    width: 20px;
+    text-align: center;
+    color: var(--primary-light);
+}
+
+.reorder-item span {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
 .settings-pane {
     animation: fadeIn 0.4s ease-out;
 }

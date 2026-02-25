@@ -122,15 +122,16 @@ window.Store = {
                     db.config.slogan = c.slogan || db.config.slogan;
                     db.config.theme = c.theme || db.config.theme;
                     let mOrder = c.menu_order || c.menuOrder || db.config.menuOrder;
-                    if (typeof mOrder === 'string' && mOrder.trim() !== "") {
-                        try {
-                            mOrder = JSON.parse(mOrder);
-                        } catch (e) {
-                            console.error("Erro ao parsear menuOrder do BD:", e);
-                            // Tentar lidar com strings separadas por vírgula se o JSON falhar
-                            if (mOrder.includes(',')) mOrder = mOrder.split(',').map(s => s.trim());
+
+                    if (mOrder) {
+                        if (typeof mOrder === 'string' && mOrder.trim() !== "") {
+                            try { mOrder = JSON.parse(mOrder); }
+                            catch (e) {
+                                if (mOrder.includes(',')) mOrder = mOrder.split(',').map(s => s.trim());
+                            }
                         }
                     }
+
                     db.config.menuOrder = Array.isArray(mOrder) ? mOrder : [];
                     db.config.menu_order = db.config.menuOrder; // Garantir sincronia local
                 }
@@ -1775,6 +1776,9 @@ window.Store = {
     },
 
     async updateGlobalConfig(newConfig) {
+        // Garantir que a ordem do menu seja uma string JSON para o banco se for array
+        let menuOrderValue = newConfig.menu_order || newConfig.menuOrder || db.config.menuOrder;
+
         try {
             const res = await fetch(`${API_BASE}/global_config/1`, {
                 method: 'PUT',
@@ -1785,17 +1789,18 @@ window.Store = {
                     accent_color: newConfig.accentColor || db.config.accentColor,
                     slogan: newConfig.slogan || db.config.slogan,
                     theme: newConfig.theme || db.config.theme,
-                    menu_order: newConfig.menu_order || newConfig.menuOrder || db.config.menuOrder
+                    menu_order: Array.isArray(menuOrderValue) ? JSON.stringify(menuOrderValue) : menuOrderValue
                 })
             });
             if (res.ok) {
-                // Atualizar cache local garantindo que as duas variantes existam
-                const updatedOrder = newConfig.menu_order || newConfig.menuOrder || db.config.menuOrder;
+                // Atualizar cache local garantindo que as duas variantes existam e sejam arrays
+                const finalOrder = Array.isArray(menuOrderValue) ? menuOrderValue : (typeof menuOrderValue === 'string' ? JSON.parse(menuOrderValue) : []);
+
                 db.config = {
                     ...db.config,
                     ...newConfig,
-                    menuOrder: updatedOrder,
-                    menu_order: updatedOrder
+                    menuOrder: finalOrder,
+                    menu_order: finalOrder
                 };
                 this.registerLog("Sistema", `Configurações globais atualizadas.`);
                 return true;

@@ -1716,7 +1716,7 @@ function renderClientes() {
             <td style="text-align: center;">
                 <input type="checkbox" class="client-checkbox custom-checkbox" value="${c.id}">
             </td>
-            <td class="clickable-cell" onclick="openClientDetail(${c.id})" style="cursor: pointer; color: var(--primary-light); font-weight: 700; width: 80px;">
+            <td class="clickable-cell client-code-cell" onclick="openClientDetail(${c.id})" style="cursor: pointer;">
                 ${c.codigo || 'S/C'}
             </td>
             <td class="clickable-cell" onclick="openClientDetail(${c.id})" style="cursor: pointer;">
