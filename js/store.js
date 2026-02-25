@@ -114,7 +114,7 @@ window.Store = {
 
             try {
                 const configData = await global_configRes.json();
-                if (configData && configData.length > 0) {
+                if (Array.isArray(configData) && configData.length > 0) {
                     const c = configData[0];
                     db.config.brandName = c.brand_name || db.config.brandName;
                     db.config.brandLogoUrl = c.brand_logo_url || db.config.brandLogoUrl;
@@ -135,7 +135,9 @@ window.Store = {
                     db.config.menuOrder = Array.isArray(mOrder) ? mOrder : [];
                     db.config.menu_order = db.config.menuOrder; // Garantir sincronia local
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.warn("Erro ao processar global_config:", e);
+            }
 
             // Mapear rotinasBase do python para camelCase esperado por compatibilidade de frontend legado
             db.rotinasBase = db.rotinasBase.map(r => ({
@@ -1340,32 +1342,53 @@ window.Store = {
     },
 
     getAuthBySession(sessionId) {
+        console.log("Recuperando sessão para ID:", sessionId);
         if (!sessionId) return null;
         if (sessionId === '999' || sessionId == 999) {
-            return { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias'] };
+            console.log("Sessão Master Manager detectada.");
+            return {
+                id: 999,
+                nome: 'Manager',
+                setor: 'Todos',
+                permissao: 'Gerente',
+                telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias', 'meu-desempenho']
+            };
+        }
+
+        if (!Array.isArray(db.funcionarios)) {
+            console.warn("db.funcionarios não é um array durante getAuthBySession");
+            return null;
         }
 
         const tempAuth = db.funcionarios.find(f => f.id == sessionId);
-        if (!tempAuth || tempAuth.ativo === false) return null;
+        if (!tempAuth || tempAuth.ativo === false) {
+            console.warn("Nenhum funcionário ativo encontrado para o ID:", sessionId);
+            return null;
+        }
 
         let auth = { ...tempAuth };
         auth.telas_permitidas = [];
 
-        if (db.cargos && db.cargos.length > 0) {
+        if (Array.isArray(db.cargos) && db.cargos.length > 0) {
             const cargo = db.cargos.find(c => c.id === auth.cargo_id || c.nome_cargo === auth.permissao);
             if (cargo && cargo.telas_permitidas) {
-                auth.telas_permitidas = cargo.telas_permitidas;
+                auth.telas_permitidas = Array.isArray(cargo.telas_permitidas) ? cargo.telas_permitidas :
+                    (typeof cargo.telas_permitidas === 'string' ? JSON.parse(cargo.telas_permitidas) : []);
             }
         }
 
-        if (auth.telas_permitidas.length === 0) {
-            if (auth.permissao && auth.permissao.toLowerCase() === 'gerente') {
-                auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias'];
-            } else {
-                auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
-            }
+        // Garantir permissões mínimas se o array estiver vazio ou se for Gerente
+        if (auth.permissao && auth.permissao.toLowerCase() === 'gerente') {
+            const adminScreens = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias', 'meu-desempenho'];
+            // Se o cargo restringiu mas ele é Gerente, garantimos as telas admin que faltarem
+            adminScreens.forEach(s => {
+                if (!auth.telas_permitidas.includes(s)) auth.telas_permitidas.push(s);
+            });
+        } else if (auth.telas_permitidas.length === 0) {
+            auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
         }
 
+        console.log("Usuário autenticado:", auth.nome, "Telas:", auth.telas_permitidas);
         return auth;
     },
 

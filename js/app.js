@@ -63,72 +63,48 @@ async function initApp() {
         // Find user
 
         const auth = Store.getAuthBySession(storedSession);
-
         if (auth) {
-
+            console.log("Sessão recuperada com sucesso para:", auth.nome);
             LOGGED_USER = auth;
-
             document.getElementById('login-overlay').style.display = 'none';
-
             document.getElementById('main-app-container').style.display = 'flex';
 
-
-
-            // Apply User info to sidebar
-
             document.querySelector('.sidebar .user-name').textContent = auth.nome;
-
             document.querySelector('.sidebar .user-role').textContent = auth.permissao;
 
+            try {
+                loadSetoresSelects();
+                const savedView = sessionStorage.getItem('fiscalapp_current_view') || 'dashboard';
+                applyUserPermissions(auth);
+                applyBranding();
 
+                // Renderizações isoladas para evitar que erro em um quebre o app
+                const renders = [
+                    { name: 'Dashboard', fn: renderDashboard },
+                    { name: 'Operacional', fn: renderOperacional },
+                    { name: 'Clientes', fn: renderClientes },
+                    { name: 'Rotinas', fn: renderRotinas },
+                    { name: 'Mensagens', fn: renderMensagens },
+                    { name: 'Auditoria', fn: renderAuditoria }
+                ];
 
-            // Trigger renders since we now have contextual access
+                renders.forEach(r => {
+                    try { r.fn(); } catch (e) { console.error(`Erro ao renderizar ${r.name}:`, e); }
+                });
 
-            loadSetoresSelects();
+                if (typeof initInboxTabs === 'function') initInboxTabs();
+                updateMensagensBadges();
 
-
-
-            const savedView = sessionStorage.getItem('fiscalapp_current_view') || 'dashboard';
-
-
-
-            // Apply permissions to Navbar BEFORE clicking!
-
-            applyUserPermissions(auth);
-
-            // Aplicar Identidade Visual (Branding)
-            applyBranding();
-
-
-
-            // Render everything invisibly first
-
-            renderDashboard();
-
-            renderOperacional();
-
-            renderClientes();
-
-            renderRotinas();
-
-            renderMensagens();
-            initInboxTabs();
-            renderAuditoria();
-
-            updateMensagensBadges();
-
-
-
-            // Set the active view dynamically based on previous state
-
-            setTimeout(() => {
-
-                const navLink = document.querySelector(`.nav-item[data-view="${savedView}"]`);
-
-                if (navLink) navLink.click();
-
-            }, 50);
-
+                setTimeout(() => {
+                    const navLink = document.querySelector(`.nav-item[data-view="${savedView}"]`);
+                    if (navLink) navLink.click();
+                    console.log("App inicializado e view restaurada:", savedView);
+                }, 50);
+            } catch (e) {
+                console.error("Erro durante a sequência de inicialização pós-login:", e);
+            }
+        } else {
+            console.warn("Sessão inválida ou expirada no refresh.");
         }
 
     }
@@ -747,12 +723,13 @@ function applyUserPermissions(auth) {
     // Loop through all navigation links and show/hide based on array
     document.querySelectorAll('.nav-item').forEach(navItem => {
         const view = navItem.getAttribute('data-view');
-        if (!view) return; // Skip non-view links like logout
+        if (!view) return;
 
-        if (isMasterAdmin || permitidas.includes(view)) {
-            navItem.style.display = 'flex'; // our UI uses flex for all nav-items
+        const shouldShow = isMasterAdmin || permitidas.includes(view);
+        if (shouldShow) {
+            navItem.style.setProperty('display', 'flex', 'important');
         } else {
-            navItem.style.display = 'none';
+            navItem.style.setProperty('display', 'none', 'important');
         }
     });
 
@@ -3302,8 +3279,9 @@ async function saveMenuOrder() {
     const items = listContainer.querySelectorAll('.reorder-item');
     const newOrder = Array.from(items).map(i => i.getAttribute('data-view'));
 
-    // Sempre manter as configurações no final
-    newOrder.push('settings');
+    // Garantir que abas críticas de admin estejam na ordem (ao menos no final se não foram movidas)
+    if (!newOrder.includes('competencias')) newOrder.push('competencias');
+    if (!newOrder.includes('settings')) newOrder.push('settings');
 
     showLoading('Salvando Ordem', 'Atualizando layout do menu lateral...');
 
