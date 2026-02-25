@@ -387,6 +387,16 @@ def update_rotina_put(rotina_id: int, updates: RotinaBaseUpdate):
 
 @app.delete("/api/rotinas_base/{rotina_id}")
 def delete_rotina(rotina_id: int):
+    # Buscar nome da rotina para apagar execuções
+    try:
+        rotina_res = supabase.table("rotinas_base").select("nome").eq("id", rotina_id).execute()
+        if rotina_res.data and len(rotina_res.data) > 0:
+            rotina_nome = rotina_res.data[0]["nome"]
+            supabase.table("execucoes").delete().eq("rotina", rotina_nome).execute()
+    except Exception as e:
+        print(f"Aviso ao deletar execucoes da rotina {rotina_id}: {e}")
+
+    # Deletar a rotina base em si
     response = supabase.table("rotinas_base").delete().eq("id", rotina_id).execute()
     return response.data
 
