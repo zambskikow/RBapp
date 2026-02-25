@@ -2439,9 +2439,14 @@ function renderEquipe() {
             <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${f.permissao}</span></td>
             <td>${statusHtml}</td>
             <td>
-                <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                    <i class="fa-solid fa-pen"></i> Editar
-                </button>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        <i class="fa-solid fa-pen"></i> Editar
+                    </button>
+                    <button class="action-btn text-danger" onclick="deleteFuncionarioDirectly('${f.id}', '${f.nome.replace(/'/g, "\\'")}')" title="Excluir" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: rgba(239, 68, 68, 0.1); border-radius: 4px;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
             </td>
         `;
 
@@ -2637,6 +2642,31 @@ async function handleDeleteFuncionario() {
     if (success) {
         showFeedbackToast("Conta excluída com sucesso!", "success");
         closeEquipeModal();
+        renderEquipe();
+        populateDashboardSelects();
+    } else {
+        showFeedbackToast("Erro ao excluir conta. Verifique a conexão.", "error");
+    }
+}
+
+async function deleteFuncionarioDirectly(id, nome) {
+    if (!id) return;
+
+    // Confirmação Premium
+    const confirmacao = await showConfirm(
+        "Excluir Funcionário?",
+        `Tem certeza que deseja remover permanentemente a conta de "${nome}"? Esta ação não pode ser desfeita.`,
+        'danger'
+    );
+
+    if (!confirmacao) return;
+
+    showLoading("Processando", "Excluindo funcionário...");
+    const success = await Store.deleteFuncionario(id);
+    hideLoading();
+
+    if (success) {
+        showFeedbackToast("Conta excluída com sucesso!", "success");
         renderEquipe();
         populateDashboardSelects();
     } else {
