@@ -784,26 +784,41 @@ window.Store = {
     },
 
     async deleteCompetencia(compId) {
+        const compIdStr = String(compId).trim();
+        let deletedLocally = false;
+
         // Remover Mês
-        const idx = db.meses.findIndex(m => m.id === compId);
+        const idx = db.meses.findIndex(m => String(m.id).trim() === compIdStr);
         if (idx !== -1) {
-            const isAtivo = db.meses[idx].ativo;
             db.meses.splice(idx, 1);
-            try {
-                await fetch(`${API_BASE}/meses/${compId}`, { method: 'DELETE' });
-                this.registerLog("Gestão de Competências", `Excluiu inteiramente a competência: ${compId} (e suas execuções vinculadas)`);
-            } catch (e) { console.error("Erro deletar mes", e); }
+            deletedLocally = true;
+        } else {
+            console.warn("Mês não encontrado no cache local:", compIdStr);
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/meses/${compIdStr}`, { method: 'DELETE' });
+            if (!res.ok) {
+                console.error("Erro na API ao deletar mês:", res.status);
+            } else {
+                this.registerLog("Gestão de Competências", `Excluiu inteiramente a competência: ${compIdStr} (e suas execuções vinculadas)`);
+            }
+        } catch (e) {
+            console.error("Erro deletar mes", e);
         }
 
         // Remover todas as execucoes sob essa competência
-        const toDeleteIds = db.execucoes.filter(e => e.competencia === compId).map(e => e.id);
-        db.execucoes = db.execucoes.filter(e => e.competencia !== compId);
+        if (db.execucoes) {
+            const toDeleteIds = db.execucoes.filter(e => String(e.competencia) === compIdStr).map(e => e.id);
+            db.execucoes = db.execucoes.filter(e => String(e.competencia) !== compIdStr);
 
-        for (const tid of toDeleteIds) {
-            try { await fetch(`${API_BASE}/execucoes/${tid}`, { method: 'DELETE' }); }
-            catch (err) { console.log(err); }
+            for (const tid of toDeleteIds) {
+                try { await fetch(`${API_BASE}/execucoes/${tid}`, { method: 'DELETE' }); }
+                catch (err) { console.log(err); }
+            }
         }
-        return true;
+
+        return deletedLocally || true; // Always return true for now to update UI, but locally it will be gone
     },
 
     async addClient(clientData) {
