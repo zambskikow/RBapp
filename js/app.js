@@ -1393,10 +1393,6 @@ function renderMeuDesempenho() {
     }
 }
 
-        });
-    }
-}
-
 // ==========================================
 // Modal: Desempenho Completo do Funcionário
 // ==========================================
@@ -1405,11 +1401,11 @@ let currentEmployeeForPerformance = null;
 function openEmployeePerformanceModal(employeeName) {
     currentEmployeeForPerformance = employeeName;
     document.getElementById('emp-perf-name').textContent = employeeName;
-    
+
     // Popula o seletor de competência com as disponíveis no sistema
     const compSelect = document.getElementById('emp-perf-comp-filter');
     compSelect.innerHTML = '<option value="Geral">Período Geral</option>';
-    
+
     const allExecs = Store.getData().execucoes || [];
     const comps = [...new Set(allExecs.map(e => e.competencia).filter(Boolean))].sort().reverse();
     comps.forEach(c => {
@@ -1431,7 +1427,7 @@ function updateEmployeePerformanceModal() {
     if (!currentEmployeeForPerformance) return;
 
     const selectedComp = document.getElementById('emp-perf-comp-filter').value;
-    
+
     // Pega as rotinas cujo responsável inclua o nome do funcionário clicado
     let execs = Store.getExecucoesWithDetails(currentEmployeeForPerformance);
 
@@ -1476,7 +1472,7 @@ function updateEmployeePerformanceModal() {
     execs.forEach(ex => {
         const tr = document.createElement('tr');
         const dataExibicao = ex.feito ? (ex.feitoEm ? formatDate(ex.feitoEm) : '---') : formatDate(ex.diaPrazo);
-        
+
         let statusBadge = '';
         if (ex.feito) {
             statusBadge = '<span class="status-badge noprazo">Concluído</span>';
