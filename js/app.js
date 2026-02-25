@@ -2705,8 +2705,8 @@ function renderCompetenciasAdmin() {
         const tr = document.createElement('tr');
 
         let statusBadge = m.ativo
-            ? `<span class="badge" style="background:var(--success); color:#fff; border:none; white-space:nowrap;"><i class="fa-solid fa-check-circle"></i> Mês Ativo</span>`
-            : `<span class="badge" style="white-space:nowrap;"><i class="fa-solid fa-lock"></i> Histórico / Futuro</span>`;
+            ? `<span class="table-badge success" style="white-space:nowrap; padding: 0.5rem 0.8rem; border-radius: 8px;"><i class="fa-solid fa-check-circle"></i> Mês Ativo</span>`
+            : `<span class="table-badge" style="white-space:nowrap; padding: 0.5rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-muted);"><i class="fa-solid fa-lock"></i> Histórico / Futuro</span>`;
 
         tr.innerHTML = `
             <td><strong style="color:var(--text-light);">${m.id}</strong></td>

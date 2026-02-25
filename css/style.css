@@ -1384,6 +1384,36 @@ body {
     border-color: var(--border-glass-light);
 }
 
+.btn-outline {
+    background: transparent;
+    border: 1px solid currentColor;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-outline:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-delete-comp {
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.btn-delete-comp:hover:not(:disabled) {
+    opacity: 1;
+    background: var(--danger-bg) !important;
+    border-color: var(--danger) !important;
+    color: #ff8080 !important;
+}
+
+.btn-delete-comp:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
 .btn-small {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
