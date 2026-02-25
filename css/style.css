@@ -38,6 +38,8 @@ body.theme-glass,
         radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
     --bg-topbar: rgba(15, 23, 42, 0.95);
     --bg-hover: rgba(255, 255, 255, 0.05);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+    --scrollbar-thumb-hover: var(--primary-light);
 }
 
 /* TEMA DARK (Sólido Profissional) */
@@ -54,6 +56,8 @@ body.theme-dark {
     --bg-gradient: none;
     --bg-topbar: #1e293b;
     --bg-hover: rgba(255, 255, 255, 0.05);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+    --scrollbar-thumb-hover: var(--primary-light);
 }
 
 /* TEMA LIGHT (Claro Elegante) */
@@ -70,6 +74,8 @@ body.theme-light {
     --bg-gradient: none;
     --bg-topbar: rgba(255, 255, 255, 0.9);
     --bg-hover: rgba(0, 0, 0, 0.05);
+    --scrollbar-thumb: rgba(0, 0, 0, 0.1);
+    --scrollbar-thumb-hover: var(--primary);
 }
 
 * {
@@ -96,6 +102,26 @@ body {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-right: 1px solid var(--border-glass);
+}
+
+/* GLOBAL ELEGANT SCROLLBAR */
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
 }
 
 .glass-bar {
@@ -335,19 +361,6 @@ body {
     padding-right: 4px;
 }
 
-.nav-menu::-webkit-scrollbar {
-    width: 4px;
-}
-
-.nav-menu::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.nav-menu::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-}
-
 .nav-item {
     display: flex;
     align-items: center;
@@ -550,24 +563,6 @@ body {
     scroll-behavior: smooth;
     position: relative;
     width: 100%;
-}
-
-/* Custom Scrollbar for Main Content */
-.main-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.main-content::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.main-content::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-}
-
-.main-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Top Header Bar */
@@ -1473,33 +1468,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-/* Custom Scrollbars for Routine Detail Lists */
-#clientes-checkbox-grid::-webkit-scrollbar,
-#rotina-responsavel-grid::-webkit-scrollbar,
-#rotina-checklist-preview::-webkit-scrollbar {
-    width: 6px;
-}
-
-#clientes-checkbox-grid::-webkit-scrollbar-track,
-#rotina-responsavel-grid::-webkit-scrollbar-track,
-#rotina-checklist-preview::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-#clientes-checkbox-grid::-webkit-scrollbar-thumb,
-#rotina-responsavel-grid::-webkit-scrollbar-thumb,
-#rotina-checklist-preview::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    transition: background 0.3s;
-}
-
-#clientes-checkbox-grid::-webkit-scrollbar-thumb:hover,
-#rotina-responsavel-grid::-webkit-scrollbar-thumb:hover,
-#rotina-checklist-preview::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-light);
 }
 
 .routine-group-header h2 {
