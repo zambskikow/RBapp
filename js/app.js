@@ -448,6 +448,10 @@ async function initApp() {
 
     document.getElementById('equipe-modal-cancel').addEventListener('click', closeEquipeModal);
     document.getElementById('add-equipe-form').addEventListener('submit', handleAddFuncionario);
+    const btnDeleteEquipe = document.getElementById('btn-delete-equipe');
+    if (btnDeleteEquipe) {
+        btnDeleteEquipe.addEventListener('click', handleDeleteFuncionario);
+    }
 
     // 8. Rotinas Base View Events
     document.getElementById('btn-add-rotina').addEventListener('click', () => openRotinaModal());
@@ -2430,7 +2434,19 @@ function openEquipeModal() {
     document.getElementById('add-equipe-form').reset();
     document.getElementById('equipe-id').value = '';
     document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Novo Funcionário';
-    document.getElementById('equipe-status-container').style.display = 'none';
+    document.getElementById('btn-save-equipe').textContent = 'Cadastrar';
+
+    // Resetar erro visual
+    const errorDiv = document.getElementById('equipe-error');
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+
+    // Esconder botão de excluir no novo cadastro
+    document.getElementById('btn-delete-equipe').style.display = 'none';
+
+    document.getElementById('equipe-status-container').style.display = 'block';
+    document.getElementById('equipe-ativo').checked = true;
+
     document.getElementById('add-equipe-modal').classList.add('active');
 }
 
@@ -2445,6 +2461,15 @@ function openEditEquipeModal(id) {
     document.getElementById('add-equipe-form').reset();
     document.getElementById('equipe-id').value = f.id;
     document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Editar Funcionário';
+    document.getElementById('btn-save-equipe').textContent = 'Salvar Alterações';
+
+    // Esconder erro prévio
+    const errorDiv = document.getElementById('equipe-error');
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+
+    // Mostrar botão de excluir apenas na edição
+    document.getElementById('btn-delete-equipe').style.display = 'block';
 
     document.getElementById('equipe-nome').value = f.nome;
     document.getElementById('equipe-setor').value = f.setor;
@@ -2473,6 +2498,11 @@ async function handleAddFuncionario(e) {
     const isEditing = !!id;
     const ativo = isEditing ? document.getElementById('equipe-ativo').checked : true;
 
+    // Resetar erro visual
+    const errorDiv = document.getElementById('equipe-error');
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+
     // Verificação de nome duplicado (trava solicitada pelo usuário)
     const todosFuncionarios = Store.getData().funcionarios;
     const nomeJaExiste = todosFuncionarios.some(f =>
@@ -2481,7 +2511,8 @@ async function handleAddFuncionario(e) {
     );
 
     if (nomeJaExiste) {
-        showNotify("Ação Bloqueada", `Já existe um funcionário cadastrado com o nome "${nome}".`, "warning");
+        errorDiv.textContent = `Já existe um funcionário cadastrado com o nome "${nome}".`;
+        errorDiv.style.display = 'block';
         return;
     }
 
@@ -2494,6 +2525,34 @@ async function handleAddFuncionario(e) {
     closeEquipeModal();
     renderEquipe();
     populateDashboardSelects();
+}
+
+async function handleDeleteFuncionario() {
+    const id = document.getElementById('equipe-id').value;
+    const nome = document.getElementById('equipe-nome').value;
+
+    if (!id) return;
+
+    // Confirmação Premium usando o estilo do sistema se disponível (Senão window.confirm)
+    const confirmacao = window.confirm(`Tem certeza que deseja excluir permanentemente a conta de "${nome}"? Esta ação não pode ser desfeita.`);
+    if (!confirmacao) return;
+
+    showLoading("Processando", "Excluindo funcionário...");
+    const success = await Store.deleteFuncionario(id);
+    hideLoading();
+
+    if (success) {
+        if (typeof showFeedbackToast === 'function') {
+            showFeedbackToast("Conta excluída com sucesso!", "success");
+        }
+        closeEquipeModal();
+        renderEquipe();
+        populateDashboardSelects();
+    } else {
+        if (typeof showFeedbackToast === 'function') {
+            showFeedbackToast("Erro ao excluir conta. Verifique a conexão.", "error");
+        }
+    }
 }
 
 async function toggleFuncionarioStatus(id) {

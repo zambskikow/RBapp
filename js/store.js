@@ -916,6 +916,20 @@ window.Store = {
         return false;
     },
 
+    async deleteFuncionario(id) {
+        try {
+            const res = await fetch(`${API_BASE}/funcionarios/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                db.funcionarios = db.funcionarios.filter(f => f.id == id ? false : true);
+                this.registerLog("Gestão de Equipe", `Conta de funcionário removida (ID: ${id})`);
+                return true;
+            }
+        } catch (e) {
+            console.error("Erro Store deleteFuncionario:", e);
+        }
+        return false;
+    },
+
     async addSetor(nome) {
         const res = await fetch(`${API_BASE}/setores`, {
             method: 'POST',
