@@ -2004,7 +2004,14 @@ function renderClientes() {
         btn.addEventListener('click', async (e) => {
             const id = parseInt(e.currentTarget.getAttribute('data-id'));
             const c = Store.getData().clientes.find(x => x.id === id);
-            if (c && confirm(`Atenção: Tem certeza que deseja excluir o cliente '${c.razaoSocial}' e TUDO que estiver atrelado a ele?`)) {
+
+            const confirmacao = await showConfirm(
+                "Excluir Cliente?",
+                `Atenção: Tem certeza que deseja excluir o cliente '${c.razaoSocial}' e TUDO que estiver atrelado a ele? Esta ação não pode ser desfeita.`,
+                'danger'
+            );
+
+            if (c && confirmacao) {
                 await Store.deleteClient(id);
                 renderClientes();
                 renderOperacional();
@@ -2133,7 +2140,13 @@ function setupClientCheckboxes() {
             const selectedIds = selectedChecks.map(cb => parseInt(cb.value));
             if (selectedIds.length === 0) return;
 
-            if (confirm(`Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados?`)) {
+            const confirmacao = await showConfirm(
+                "Excluir Clientes Selecionados?",
+                `Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados de forma definitiva?`,
+                'danger'
+            );
+
+            if (confirmacao) {
                 deleteBtn.disabled = true;
                 deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
@@ -2737,11 +2750,11 @@ function renderRotinas() {
             <td>
                 <div class="btn-action-container">
                     ${isOperacional ? '' : `
-                    <button class="btn btn-small btn-secondary btn-edit" onclick="openRotinaModal(${r.id})">
+                    <button class="btn btn-small btn-secondary btn-edit" onclick="openRotinaModal(${r.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                         <i class="fa-solid fa-pen"></i> Editar
                     </button>
-                    <button class="btn btn-small btn-secondary btn-delete" onclick="handleDeleteRotina(${r.id}, this)" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);">
-                        <i class="fa-solid fa-trash"></i> Excluir
+                    <button class="btn btn-small btn-secondary text-danger" onclick="handleDeleteRotina(${r.id}, this)" title="Excluir Rotina" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem; margin-left: 0.5rem;">
+                        <i class="fa-solid fa-trash"></i>
                     </button>
                     `}
                 </div>
@@ -3062,21 +3075,27 @@ async function handleDeleteRotina(id, btnElement = null) {
     const rotina = Store.getData().rotinasBase.find(r => r.id === id);
     if (!rotina) return;
 
-    if (confirm(`Atenção: Tem certeza que deseja EXCLUIR a rotina '${rotina.nome}'? Isso a removerá da base de rotinas disponíveis.`)) {
+    const confirmacao = await showConfirm(
+        "Excluir Rotina Base?",
+        `Atenção: Tem certeza que deseja EXCLUIR a rotina '${rotina.nome}' permanentemente? Isso a removerá da base de rotinas e afetará as vinculações existentes.`,
+        'danger'
+    );
+
+    if (confirmacao) {
         // Efeito visual no ícone antes de sumir
         if (btnElement) {
             const icon = btnElement.querySelector('i');
             if (icon) icon.classList.add('delete-pop');
         }
 
-        showLoading('Excluindo Rotina', `Removendo '${rotina.nome}' e todas as tarefas vinculadas...`);
+        showLoading('Excluindo Rotina', `Removendo '${rotina.nome}' e todas as vinculações...`);
 
         try {
             // Pequeno delay para a animação aparecer antes da remoção
             await new Promise(resolve => setTimeout(resolve, 500));
             await Store.deleteRotinaBase(id);
             renderRotinas();
-            // alert(`Rotina '${rotina.nome}' excluída com sucesso!`); // Alert opcional, UI já some
+            showFeedbackToast(`Rotina '${rotina.nome}' excluída com sucesso!`, 'success');
         } catch (error) {
             console.error(error);
             showNotify("Erro", "Ocorreu um erro ao excluir a rotina. Verifique o console.", "error");
