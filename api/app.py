@@ -352,6 +352,13 @@ def update_funcionario(funcionario_id: int, updates: FuncionarioUpdate):
 
 @app.delete("/api/funcionarios/{funcionario_id}")
 def delete_funcionario(funcionario_id: int):
+    # Deletar dependências para evitar erro de Foreign Key (Constraint 409)
+    try:
+        supabase.table("marketing_equipe").delete().eq("funcionario_id", funcionario_id).execute()
+    except Exception as e:
+        print(f"Aviso ao deletar dependências do funcionário {funcionario_id}: {e}")
+
+    # Deletar o funcionário em si
     response = supabase.table("funcionarios").delete().eq("id", funcionario_id).execute()
     return response.data
 
