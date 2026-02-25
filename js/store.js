@@ -873,6 +873,12 @@ window.Store = {
     },
 
     async addFuncionario(nome, setor, permissao, senha, ativo = true) {
+        const todos = db.funcionarios;
+        if (todos.some(f => f.nome.trim().toLowerCase() === nome.trim().toLowerCase())) {
+            console.error("Erro Store: Nome de funcionário duplicado.");
+            return false;
+        }
+
         const res = await fetch(`${API_BASE}/funcionarios`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -882,22 +888,32 @@ window.Store = {
             const data = await res.json();
             db.funcionarios.push({ id: data[0].id, nome, setor, permissao, senha, ativo });
             this.registerLog("Gestão de Equipe", `Novo membro cadastrado: ${nome}`);
+            return true;
         }
+        return false;
     },
 
     async editFuncionario(id, nome, setor, permissao, senha, ativo) {
+        const todos = db.funcionarios;
+        if (todos.some(f => f.id != id && f.nome.trim().toLowerCase() === nome.trim().toLowerCase())) {
+            console.error("Erro Store: Nome de funcionário duplicado na edição.");
+            return false;
+        }
+
         const res = await fetch(`${API_BASE}/funcionarios/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome, setor, permissao, senha, ativo })
         });
         if (res.ok) {
-            const index = db.funcionarios.findIndex(f => f.id === parseInt(id));
+            const index = db.funcionarios.findIndex(f => f.id == id);
             if (index !== -1) {
                 db.funcionarios[index] = { ...db.funcionarios[index], nome, setor, permissao, senha, ativo };
                 this.registerLog("Gestão de Equipe", `Membro editado: ${nome} (Ativo: ${ativo})`);
+                return true;
             }
         }
+        return false;
     },
 
     async addSetor(nome) {

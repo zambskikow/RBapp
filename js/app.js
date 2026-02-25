@@ -2435,8 +2435,12 @@ function openEquipeModal() {
 }
 
 function openEditEquipeModal(id) {
-    const f = Store.getData().funcionarios.find(x => x.id === id);
-    if (!f) return;
+    // Uso de == para permitir comparação entre string (do HTML) e número (do Store)
+    const f = Store.getData().funcionarios.find(x => x.id == id);
+    if (!f) {
+        console.error("Funcionário não encontrado para ID:", id);
+        return;
+    }
 
     document.getElementById('add-equipe-form').reset();
     document.getElementById('equipe-id').value = f.id;
@@ -2468,6 +2472,18 @@ async function handleAddFuncionario(e) {
     // Status is only used if editing, or defaults to true for new ones
     const isEditing = !!id;
     const ativo = isEditing ? document.getElementById('equipe-ativo').checked : true;
+
+    // Verificação de nome duplicado (trava solicitada pelo usuário)
+    const todosFuncionarios = Store.getData().funcionarios;
+    const nomeJaExiste = todosFuncionarios.some(f =>
+        f.nome.trim().toLowerCase() === nome.trim().toLowerCase() &&
+        (isEditing ? f.id != id : true)
+    );
+
+    if (nomeJaExiste) {
+        showNotify("Ação Bloqueada", `Já existe um funcionário cadastrado com o nome "${nome}".`, "warning");
+        return;
+    }
 
     if (isEditing) {
         await Store.editFuncionario(id, nome, setor, permissao, senha, ativo);
