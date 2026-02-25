@@ -4895,6 +4895,688 @@ function runAuditoriaCompetencia() {
     resultsDiv.style.display = 'block';
 }
 
+// VIEW: Painel de Administração (RBAC)
+
+
+
+// ==========================================
+
+
+
+function renderAdminPanel() {
+
+
+
+    const tbody = document.querySelector('#admin-cargos-table tbody');
+
+
+
+    if (!tbody) return;
+
+
+
+    tbody.innerHTML = '';
+
+
+
+
+
+
+
+    const cargos = Store.getData().cargos || [];
+
+
+
+
+
+
+
+    if (cargos.length === 0) {
+
+
+
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 3rem;">Nenhum cargo de seguran├ºa configurado ainda.</td></tr>`;
+
+
+
+        return;
+
+
+
+    }
+
+
+
+
+
+
+
+    cargos.forEach(cargo => {
+
+
+
+        const tr = document.createElement('tr');
+
+
+
+        tr.className = 'fade-in';
+
+
+
+
+
+
+
+        let tagsHtml = '';
+
+
+
+        if (cargo.telas_permitidas && cargo.telas_permitidas.length > 0) {
+
+
+
+            cargo.telas_permitidas.forEach(tela => {
+
+
+
+                let badgeClass = 'table-badge ';
+
+
+
+                if (tela === 'settings') {
+
+
+
+                    badgeClass += 'danger';
+
+
+
+                } else if (tela === 'dashboard' || tela === 'operacional') {
+
+
+
+                    badgeClass += 'primary';
+
+
+
+                } else {
+
+
+
+                    badgeClass += 'info';
+
+
+
+                }
+
+
+
+                tagsHtml += `<span class="${badgeClass}" style="margin-right: 4px; margin-bottom: 4px; display: inline-block;">${tela}</span>`;
+
+
+
+            });
+
+
+
+        } else {
+
+
+
+            tagsHtml = '<span class="text-muted">Nenhum acesso definido</span>';
+
+
+
+        }
+
+
+
+
+
+
+
+        tr.innerHTML = `
+
+
+
+            <td>#${cargo.id}</td>
+
+
+
+            <td><strong>${cargo.nome_cargo}</strong></td>
+
+
+
+            <td style="max-width: 400px; line-height: 1.8;">${tagsHtml}</td>
+
+
+
+            <td style="text-align: right;">
+
+
+
+                <button class="action-btn text-primary" onclick="openCargoModal(${cargo.id})" title="Editar Permissões"><i class="fa-solid fa-pen-to-square"></i></button>
+
+
+
+                <button class="action-btn text-danger" onclick="deleteCargo(${cargo.id})" title="Excluir Cargo"><i class="fa-solid fa-trash"></i></button>
+
+
+
+            </td>
+
+
+
+        `;
+
+
+
+        tbody.appendChild(tr);
+
+
+
+    });
+
+
+
+}
+
+
+
+
+
+
+
+function openCargoModal(cargoId = null) {
+
+
+
+    const modal = document.getElementById('admin-cargo-modal');
+
+
+
+    modal.style.display = 'flex';
+
+
+
+    // trigger animation
+
+
+
+    setTimeout(() => modal.classList.add('active'), 10);
+
+
+
+
+
+
+
+    const form = document.getElementById('admin-cargo-form');
+
+
+
+    form.reset();
+
+
+
+    document.getElementById('cargo-id').value = '';
+
+
+
+
+
+
+
+    if (cargoId) {
+
+
+
+        const cargo = Store.getData().cargos.find(c => c.id === cargoId);
+
+
+
+        if (cargo) {
+
+
+
+            document.getElementById('cargo-id').value = cargo.id;
+
+
+
+            document.getElementById('cargo-nome').value = cargo.nome_cargo;
+
+
+
+
+
+
+
+            const checks = document.querySelectorAll('.cargo-perm-check');
+
+
+
+            checks.forEach(chk => {
+
+
+
+                chk.checked = cargo.telas_permitidas && cargo.telas_permitidas.includes(chk.value);
+
+
+
+            });
+
+
+
+        }
+
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+function closeCargoModal(e) {
+
+
+
+    if (e) e.preventDefault();
+
+
+
+    const modal = document.getElementById('admin-cargo-modal');
+
+
+
+    modal.classList.remove('active');
+
+
+
+    setTimeout(() => modal.style.display = 'none', 300);
+
+
+
+}
+
+
+
+
+
+
+
+async function handleSaveCargo(e) {
+
+
+
+    e.preventDefault();
+
+
+
+    const id = document.getElementById('cargo-id').value;
+
+
+
+    const nome = document.getElementById('cargo-nome').value.trim();
+
+
+
+
+
+
+
+    const checkboxes = document.querySelectorAll('.cargo-perm-check:checked');
+
+
+
+    const permitidas = Array.from(checkboxes).map(chk => chk.value);
+
+
+
+
+
+
+
+    // Disable button to prevent double submit
+
+    const submitBtn = document.getElementById('btn-save-cargo') || e.target.querySelector('button[type="submit"]') || document.querySelector('#admin-cargo-modal button[type="submit"]');
+
+
+
+    if (submitBtn) {
+
+        submitBtn.disabled = true;
+
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+    }
+
+
+
+
+
+
+
+    let success = false;
+
+
+
+    if (id) {
+
+
+
+        success = await Store.updateCargo(parseInt(id), nome, permitidas);
+
+
+
+    } else {
+
+
+
+        success = await Store.addCargo(nome, permitidas);
+
+
+
+    }
+
+
+
+
+
+
+
+    if (submitBtn) {
+
+        submitBtn.disabled = false;
+
+        submitBtn.innerHTML = 'Salvar Permissões';
+
+    }
+
+
+
+
+
+
+
+    if (success) {
+
+
+
+        closeCargoModal();
+
+
+
+        renderAdminPanel();
+
+
+
+        showFeedbackToast(`Permissões do cargo ${nome} salvas!`, 'success');
+
+
+
+        // Se o usuário logado tiver esse permiss├úo editada, seria ideal um recarregamento, 
+
+
+
+        // mas assumimos que o Admin Master está gerenciando outras.
+
+
+
+    } else {
+
+
+
+        showFeedbackToast('Erro ao salvar cargo. Verifique a API.', 'danger');
+
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+async function deleteCargo(id) {
+
+
+
+    if (confirm("Tem certeza que deseja excluir esse Cargo e suas Permissões de Acesso?")) {
+
+
+
+        const success = await Store.deleteCargo(id);
+
+
+
+        if (success) {
+
+
+
+            renderAdminPanel();
+
+
+
+            showFeedbackToast('Cargo excluído com sucesso.', 'success');
+
+
+
+        } else {
+
+
+
+            showFeedbackToast('Erro ao excluir cargo.', 'danger');
+
+
+
+        }
+
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+// ==========================================
+
+
+
+// VIEW: Backup e Seguran├ºa
+
+
+
+// ==========================================
+
+
+
+function renderBackupView() {
+
+
+
+    const config = Store.getData().config;
+
+
+
+    const toggle = document.getElementById('toggle-auto-backup');
+
+
+
+    if (toggle) toggle.checked = config && config.autoBackup;
+
+
+
+
+
+
+
+    const lastBackupText = document.getElementById('last-backup-text');
+
+
+
+    if (lastBackupText) {
+
+
+
+        if (config && config.lastBackupData) {
+
+
+
+            const d = new Date(config.lastBackupData);
+
+
+
+            lastBackupText.innerHTML = `├Ültimo backup automático: ${d.toLocaleDateString('pt-BR')} ├ás ${d.toLocaleTimeString('pt-BR')}`;
+
+
+
+        } else {
+
+
+
+            lastBackupText.innerHTML = `├Ültimo backup: Nunca`;
+
+
+
+        }
+
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+function downloadBackupFile() {
+
+
+
+    const dataStr = JSON.stringify(Store.getData(), null, 2);
+
+
+
+    const blob = new Blob([dataStr], { type: 'application/json' });
+
+
+
+    const url = URL.createObjectURL(blob);
+
+
+
+
+
+
+
+    const d = new Date();
+
+
+
+    const dateString = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}${d.getDate().toString().padStart(2, '0')}`;
+
+
+
+
+
+
+
+    const link = document.createElement('a');
+
+
+
+    link.setAttribute('href', url);
+
+
+
+    link.setAttribute('download', `fiscalapp_backup_${dateString}.json`);
+
+
+
+    document.body.appendChild(link);
+
+
+
+    link.click();
+
+
+
+    document.body.removeChild(link);
+
+
+
+function restoreBackupFile() {
+
+
+
+    const fileInput = document.getElementById('backup-file-input');
+
+
+
+    const file = fileInput.files[0];
+
+
+
+    if (!file) {
+
+
+
+        showNotify("Atenção", "Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.", "warning");
+
+
+
+        return;
+
+
+
+    }
+
+
+
+
+
+
+
+    if (!confirm("⚠️ ATENÇÃO EXTREMA ⚠️\n\nIsso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execu├ºões, mensagens, clientes novos feitos DEPOIS desse backup v├úo SUMIR para sempre.\n\nVocê tem 100% de certeza absoluta?")) {
+
+
+
+        return;
+
+
+
+    }
+
+
+
+
+
+
+
 // ==========================================
 // Inicialização das Abas de Configurações
 // ==========================================
