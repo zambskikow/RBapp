@@ -2443,7 +2443,7 @@ function renderEquipe() {
                     <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                         <i class="fa-solid fa-pen"></i> Editar
                     </button>
-                    <button class="action-btn text-danger" onclick="deleteFuncionarioDirectly('${f.id}', '${f.nome.replace(/'/g, "\\'")}')" title="Excluir" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: rgba(239, 68, 68, 0.1); border-radius: 4px;">
+                    <button class="btn btn-small btn-secondary text-danger" onclick="deleteFuncionarioDirectly('${f.id}', '${f.nome.replace(/'/g, "\\'")}')" title="Excluir" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>

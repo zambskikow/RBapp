@@ -350,6 +350,11 @@ def update_funcionario(funcionario_id: int, updates: FuncionarioUpdate):
     response = supabase.table("funcionarios").update(updates.model_dump(exclude_unset=True)).eq("id", funcionario_id).execute()
     return response.data
 
+@app.delete("/api/funcionarios/{funcionario_id}")
+def delete_funcionario(funcionario_id: int):
+    response = supabase.table("funcionarios").delete().eq("id", funcionario_id).execute()
+    return response.data
+
 # --- Rotinas Base ---
 @app.get("/api/rotinas_base")
 def get_rotinas_base():
