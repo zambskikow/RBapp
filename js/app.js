@@ -911,9 +911,16 @@ function setupNavigation() {
                 if (targetView === 'mensagens') renderMensagens();
                 if (targetView === 'competencias') renderCompetenciasAdmin();
                 if (targetView === 'settings') {
-                    // Trigger the first tab by default or re-render active
+                    // Trigger the saved tab, first tab by default, or re-render active
                     initSettingsTabs();
-                    const activeTab = document.querySelector('.settings-tab-btn.active');
+                    const savedTabId = sessionStorage.getItem('fiscalapp_settings_tab');
+                    let activeTab = null;
+                    if (savedTabId) {
+                        activeTab = document.querySelector(`.settings-tab-btn[data-target="${savedTabId}"]`);
+                    }
+                    if (!activeTab) {
+                        activeTab = document.querySelector('.settings-tab-btn.active');
+                    }
                     if (activeTab) activeTab.click();
                 }
             }
@@ -5136,6 +5143,10 @@ function initSettingsTabs() {
             tab.classList.add("active");
 
             const targetId = tab.getAttribute("data-target");
+
+            // Persist the tab state
+            sessionStorage.setItem("fiscalapp_settings_tab", targetId);
+
             const targetPane = document.getElementById(targetId);
             if (targetPane) {
                 targetPane.style.display = "block";
