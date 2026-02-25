@@ -2595,6 +2595,17 @@ body {
     animation: slideInRight 0.4s ease-out;
 }
 
+#emp-perf-detail-table tbody tr {
+    cursor: default;
+}
+#team-performance-table tbody tr {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#team-performance-table tbody tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
 #clientes-detail-panel.active {
     display: block;
     padding: 3rem;

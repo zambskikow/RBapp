@@ -1052,6 +1052,7 @@ function renderDashboard() {
             `;
 
             const tr = document.createElement('tr');
+            tr.setAttribute('onclick', `openEmployeePerformanceModal('${resp}')`);
             tr.innerHTML = `
                 <td><span class="resp-tag"><i class="fa-solid fa-user-circle"></i> ${resp}</span></td>
                 <td>${st.total}</td>
@@ -1391,6 +1392,119 @@ function renderMeuDesempenho() {
         });
     }
 }
+
+        });
+    }
+}
+
+// ==========================================
+// Modal: Desempenho Completo do Funcionário
+// ==========================================
+let currentEmployeeForPerformance = null;
+
+function openEmployeePerformanceModal(employeeName) {
+    currentEmployeeForPerformance = employeeName;
+    document.getElementById('emp-perf-name').textContent = employeeName;
+    
+    // Popula o seletor de competência com as disponíveis no sistema
+    const compSelect = document.getElementById('emp-perf-comp-filter');
+    compSelect.innerHTML = '<option value="Geral">Período Geral</option>';
+    
+    const allExecs = Store.getData().execucoes || [];
+    const comps = [...new Set(allExecs.map(e => e.competencia).filter(Boolean))].sort().reverse();
+    comps.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c;
+        if (c === currentCompetencia) option.selected = true; // Pré-selecionar o mês do dashboard
+        option.textContent = formatCompetencia(c);
+        compSelect.appendChild(option);
+    });
+
+    updateEmployeePerformanceModal();
+
+    const modal = document.getElementById('modal-employee-performance');
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function updateEmployeePerformanceModal() {
+    if (!currentEmployeeForPerformance) return;
+
+    const selectedComp = document.getElementById('emp-perf-comp-filter').value;
+    
+    // Pega as rotinas cujo responsável inclua o nome do funcionário clicado
+    let execs = Store.getExecucoesWithDetails(currentEmployeeForPerformance);
+
+    if (selectedComp !== "Geral") {
+        execs = execs.filter(e => e.competencia === selectedComp);
+    }
+
+    // Calcular os KPIs
+    const total = execs.length;
+    const concluidas = execs.filter(e => e.feito).length;
+    const pendencias = execs.filter(e => !e.feito);
+    const atrasadas = pendencias.filter(e => e.semaforo === 'red').length;
+    const pendentes = pendencias.length - atrasadas; // No prazo ou vencendo
+
+    const scoreEficiencia = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+
+    // Atualizar UI dos KPIs
+    document.getElementById('emp-kpi-total').textContent = total;
+    document.getElementById('emp-kpi-done').textContent = concluidas;
+    document.getElementById('emp-kpi-pend').textContent = pendentes;
+    document.getElementById('emp-kpi-late').textContent = atrasadas;
+    document.getElementById('emp-kpi-score').innerHTML = scoreEficiencia + '<span style="font-size:0.8rem; margin-left:2px;">%</span>';
+
+    // Popular a tabela Detalhada
+    const tbody = document.querySelector('#emp-perf-detail-table tbody');
+    tbody.innerHTML = '';
+
+    if (execs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+            Selecione outro período. Nenhuma tarefa encontrada.
+        </td></tr>`;
+        return;
+    }
+
+    // Ordenar: primeiro as atrasadas, depois data de prazo
+    execs.sort((a, b) => {
+        if (a.semaforo === 'red' && b.semaforo !== 'red') return -1;
+        if (a.semaforo !== 'red' && b.semaforo === 'red') return 1;
+        return new Date(a.diaPrazo) - new Date(b.diaPrazo);
+    });
+
+    execs.forEach(ex => {
+        const tr = document.createElement('tr');
+        const dataExibicao = ex.feito ? (ex.feitoEm ? formatDate(ex.feitoEm) : '---') : formatDate(ex.diaPrazo);
+        
+        let statusBadge = '';
+        if (ex.feito) {
+            statusBadge = '<span class="status-badge noprazo">Concluído</span>';
+        } else {
+            statusBadge = `<span class="status-badge ${ex.semaforo === 'red' ? 'atrasado' : (ex.semaforo === 'yellow' ? 'vencendo' : 'hoje')}">${ex.statusAuto}</span>`;
+        }
+
+        tr.innerHTML = `
+            <td style="color: var(--text-muted); font-size: 0.85rem;">${formatCompetencia(ex.competencia)}</td>
+            <td><strong>${ex.clientName}</strong></td>
+            <td><span class="resp-tag">${ex.rotina}</span></td>
+            <td>${dataExibicao}</td>
+            <td>${statusBadge}</td>
+            <td style="color: var(--text-muted);">---</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function closeEmployeePerformanceModal() {
+    const modal = document.getElementById('modal-employee-performance');
+    modal.classList.remove('active');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        currentEmployeeForPerformance = null;
+    }, 300);
+}
+
 
 // ==========================================
 // VIEW: Painel Operacional
