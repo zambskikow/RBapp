@@ -448,23 +448,6 @@ async function initApp() {
 
     document.getElementById('equipe-modal-cancel').addEventListener('click', closeEquipeModal);
     document.getElementById('add-equipe-form').addEventListener('submit', handleAddFuncionario);
-    const btnDeleteEquipe = document.getElementById('btn-delete-equipe');
-    if (btnDeleteEquipe) {
-        btnDeleteEquipe.addEventListener('click', handleDeleteFuncionario);
-    }
-    const toggleEquipeAtivo = document.getElementById('equipe-ativo');
-    if (toggleEquipeAtivo) {
-        toggleEquipeAtivo.addEventListener('change', (e) => {
-            const badge = document.getElementById('equipe-status-badge');
-            if (e.target.checked) {
-                badge.className = 'table-badge success';
-                badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
-            } else {
-                badge.className = 'table-badge danger';
-                badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Inativo';
-            }
-        });
-    }
 
     // 8. Rotinas Base View Events
     document.getElementById('btn-add-rotina').addEventListener('click', () => openRotinaModal());
@@ -911,16 +894,9 @@ function setupNavigation() {
                 if (targetView === 'mensagens') renderMensagens();
                 if (targetView === 'competencias') renderCompetenciasAdmin();
                 if (targetView === 'settings') {
-                    // Trigger the saved tab, first tab by default, or re-render active
+                    // Trigger the first tab by default or re-render active
                     initSettingsTabs();
-                    const savedTabId = sessionStorage.getItem('fiscalapp_settings_tab');
-                    let activeTab = null;
-                    if (savedTabId) {
-                        activeTab = document.querySelector(`.settings-tab-btn[data-target="${savedTabId}"]`);
-                    }
-                    if (!activeTab) {
-                        activeTab = document.querySelector('.settings-tab-btn.active');
-                    }
+                    const activeTab = document.querySelector('.settings-tab-btn.active');
                     if (activeTab) activeTab.click();
                 }
             }
@@ -1076,7 +1052,6 @@ function renderDashboard() {
             `;
 
             const tr = document.createElement('tr');
-            tr.setAttribute('onclick', `openEmployeePerformanceModal('${resp}')`);
             tr.innerHTML = `
                 <td><span class="resp-tag"><i class="fa-solid fa-user-circle"></i> ${resp}</span></td>
                 <td>${st.total}</td>
@@ -1094,8 +1069,6 @@ function renderDashboard() {
 let healthChartInst = null;
 let teamChartInst = null;
 let sectorChartInst = null;
-let empStatusChartInst = null;
-let empProductionChartInst = null;
 
 function renderHealthChart(kpis) {
     const ctxValue = document.getElementById('semaforoChart');
@@ -1420,229 +1393,12 @@ function renderMeuDesempenho() {
 }
 
 // ==========================================
-// Modal: Desempenho Completo do Funcionário
-// ==========================================
-let currentEmployeeForPerformance = null;
-
-function formatCompetencia(comp) {
-    if (!comp) return "---";
-    const parts = comp.split('-');
-    if (parts.length === 2 && parts[0].length === 4) {
-        return `${parts[1]}/${parts[0]}`;
-    }
-    return comp;
-}
-window.formatCompetencia = formatCompetencia;
-
-function openEmployeePerformanceModal(employeeName) {
-    currentEmployeeForPerformance = employeeName;
-    document.getElementById('emp-perf-name').textContent = employeeName;
-
-    // Popula o seletor de competência com as disponíveis no sistema
-    const compSelect = document.getElementById('emp-perf-comp-filter');
-    compSelect.innerHTML = '<option value="Geral">Período Geral</option>';
-
-    const allExecs = Store.getData().execucoes || [];
-    const comps = [...new Set(allExecs.map(e => e.competencia).filter(Boolean))].sort().reverse();
-    comps.forEach(c => {
-        const option = document.createElement('option');
-        option.value = c;
-        if (c === currentCompetencia) option.selected = true; // Pré-selecionar o mês do dashboard
-        option.textContent = formatCompetencia(c);
-        compSelect.appendChild(option);
-    });
-
-    updateEmployeePerformanceModal();
-
-    const modal = document.getElementById('modal-employee-performance');
-    if (modal) {
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
-    } else {
-        console.error("ERRO: Elemento 'modal-employee-performance' não encontrado no DOM.");
-    }
-}
-window.openEmployeePerformanceModal = openEmployeePerformanceModal;
-
-function updateEmployeePerformanceModal() {
-    if (!currentEmployeeForPerformance) return;
-
-    const selectedComp = document.getElementById('emp-perf-comp-filter').value;
-
-    // Pega as rotinas cujo responsável inclua o nome do funcionário clicado
-    let execs = Store.getExecucoesWithDetails(currentEmployeeForPerformance);
-
-    if (selectedComp !== "Geral") {
-        execs = execs.filter(e => e.competencia === selectedComp);
-    }
-
-    // Calcular os KPIs
-    const total = execs.length;
-    const concluidas = execs.filter(e => e.feito).length;
-    const pendencias = execs.filter(e => !e.feito);
-    const atrasadas = pendencias.filter(e => e.semaforo === 'red').length;
-    const pendentes = pendencias.length - atrasadas; // No prazo ou vencendo
-
-    const scoreEficiencia = total > 0 ? Math.round((concluidas / total) * 100) : 0;
-
-    // Atualizar UI dos KPIs
-    document.getElementById('emp-kpi-total').textContent = total;
-    document.getElementById('emp-kpi-done').textContent = concluidas;
-    document.getElementById('emp-kpi-pend').textContent = pendentes;
-    document.getElementById('emp-kpi-late').textContent = atrasadas;
-    document.getElementById('emp-kpi-score').innerHTML = scoreEficiencia + '<span style="font-size:0.8rem; margin-left:2px;">%</span>';
-
-    // Popular a tabela Detalhada
-    const tbody = document.querySelector('#emp-perf-detail-table tbody');
-    tbody.innerHTML = '';
-
-    if (execs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">
-            Selecione outro período. Nenhuma tarefa encontrada.
-        </td></tr>`;
-        return;
-    }
-
-    // Ordenar: primeiro as atrasadas, depois data de prazo
-    execs.sort((a, b) => {
-        if (a.semaforo === 'red' && b.semaforo !== 'red') return -1;
-        if (a.semaforo !== 'red' && b.semaforo === 'red') return 1;
-        return new Date(a.diaPrazo) - new Date(b.diaPrazo);
-    });
-
-    execs.forEach(ex => {
-        const tr = document.createElement('tr');
-        const dataExibicao = ex.feito ? (ex.feitoEm ? formatDate(ex.feitoEm) : '---') : formatDate(ex.diaPrazo);
-
-        let statusBadge = '';
-        if (ex.feito) {
-            statusBadge = '<span class="status-badge noprazo">Concluído</span>';
-        } else {
-            statusBadge = `<span class="status-badge ${ex.semaforo === 'red' ? 'atrasado' : (ex.semaforo === 'yellow' ? 'vencendo' : 'hoje')}">${ex.statusAuto}</span>`;
-        }
-
-        tr.innerHTML = `
-            <td style="color: var(--text-muted); font-size: 0.85rem;">${formatCompetencia(ex.competencia)}</td>
-            <td><strong>${ex.clientName}</strong></td>
-            <td><span class="resp-tag">${ex.rotina}</span></td>
-            <td>${dataExibicao}</td>
-            <td>${statusBadge}</td>
-            <td style="color: var(--text-muted);">---</td>
-        `;
-        tbody.appendChild(tr);
-    });
-
-    // Renderizar Gráficos
-    renderEmployeeStatusChart(execs);
-    renderEmployeeProductionChart(currentEmployeeForPerformance);
-}
-
-function renderEmployeeStatusChart(execs) {
-    const ctx = document.getElementById('empStatusChart');
-    if (!ctx) return;
-    if (empStatusChartInst) empStatusChartInst.destroy();
-
-    const concluidos = execs.filter(e => e.feito).length;
-    const noPrazo = execs.filter(e => !e.feito && e.semaforo === 'blue').length;
-    const hoje = execs.filter(e => !e.feito && e.semaforo === 'yellow').length;
-    const atrasados = execs.filter(e => !e.feito && e.semaforo === 'red').length;
-
-    let data = [concluidos, noPrazo, hoje, atrasados];
-    const empty = data.every(d => d === 0);
-    if (empty) data = [0.1, 0, 0, 0];
-
-    empStatusChartInst = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Concluído', 'No Prazo', 'Vencendo Hoje', 'Atrasado'],
-            datasets: [{
-                data: data,
-                backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
-                borderWidth: 0,
-                hoverOffset: 10
-            }]
-        },
-        options: {
-            cutout: '70%',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 }, usePointStyle: true, padding: 15 } },
-                datalabels: {
-                    color: '#fff',
-                    font: { weight: 'bold', size: 11 },
-                    formatter: (value) => (value >= 1 && !empty) ? value : ''
-                }
-            }
-        }
-    });
-}
-
-function renderEmployeeProductionChart(employeeName) {
-    const ctx = document.getElementById('empProductionChart');
-    if (!ctx) return;
-    if (empProductionChartInst) empProductionChartInst.destroy();
-
-    const allExecs = Store.getExecucoesWithDetails(employeeName);
-    const concluidas = allExecs.filter(e => e.feito);
-
-    // Agrupar por competência (últimos 6 meses)
-    const comps = [...new Set(allExecs.map(e => e.competencia).filter(Boolean))].sort().reverse().slice(0, 6).reverse();
-    const dataPoints = comps.map(c => concluidas.filter(e => e.competencia === c).length);
-    const labels = comps.map(c => formatCompetencia(c));
-
-    empProductionChartInst = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Concluídas',
-                data: dataPoints,
-                backgroundColor: 'rgba(99, 102, 241, 0.6)',
-                borderColor: '#8B5CF6',
-                borderWidth: 1,
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10 } } },
-                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', font: { size: 10 }, stepSize: 1 } }
-            },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'top',
-                    color: '#fff',
-                    font: { size: 10, weight: 'bold' }
-                }
-            }
-        }
-    });
-}
-
-function closeEmployeePerformanceModal() {
-    const modal = document.getElementById('modal-employee-performance');
-    modal.classList.remove('active');
-    setTimeout(() => {
-        modal.style.display = 'none';
-        currentEmployeeForPerformance = null;
-    }, 300);
-}
-window.closeEmployeePerformanceModal = closeEmployeePerformanceModal;
-window.updateEmployeePerformanceModal = updateEmployeePerformanceModal;
-
-
-// ==========================================
 // VIEW: Painel Operacional
 // ==========================================
 function renderOperacional() {
     let tasks = Store.getExecucoesWithDetails(currentOperacionalUser);
 
-    // Filtrar by selected Competencia (History/Auditing)
+    // Filter by selected Competencia (History/Auditing)
     if (currentCompetencia) {
         tasks = tasks.filter(t => t.competencia && t.competencia.startsWith(currentCompetencia));
     }
@@ -1956,7 +1712,7 @@ function renderClientes() {
                 <label class="custom-toggle" title="${isOperacional ? 'Permissão apenas para visualização' : 'Alterar status de ' + c.razaoSocial}" style="${isOperacional ? 'cursor: not-allowed; opacity: 0.6;' : ''}">
                     <input type="checkbox" onchange="toggleClientStatus(${c.id}, this.checked)" ${c.ativo !== false ? 'checked' : ''} ${isOperacional ? 'disabled' : ''}>
                     <span class="toggle-slider"></span>
-                    <span class="toggle-label" style="font-size: 0.7rem;">Status</span>
+                    <span class="toggle-label" style="font-size: 0.7rem;">Ativo</span>
                 </label>
             </div>
         `;
@@ -2004,14 +1760,7 @@ function renderClientes() {
         btn.addEventListener('click', async (e) => {
             const id = parseInt(e.currentTarget.getAttribute('data-id'));
             const c = Store.getData().clientes.find(x => x.id === id);
-
-            const confirmacao = await showConfirm(
-                "Excluir Cliente?",
-                `Atenção: Tem certeza que deseja excluir o cliente '${c.razaoSocial}' e TUDO que estiver atrelado a ele? Esta ação não pode ser desfeita.`,
-                'danger'
-            );
-
-            if (c && confirmacao) {
+            if (c && confirm(`Atenção: Tem certeza que deseja excluir o cliente '${c.razaoSocial}' e TUDO que estiver atrelado a ele?`)) {
                 await Store.deleteClient(id);
                 renderClientes();
                 renderOperacional();
@@ -2051,11 +1800,11 @@ function showSuccessOverlay(title = 'Parabéns!', message = 'Você concluiu a co
     if (overlay && titleEl && msgEl) {
         titleEl.textContent = title;
         msgEl.textContent = message;
-        // A lógica de exibição é flex por padrão, mas oculta com opacidade
+        // The display logic is flex by default, but hidden with opacity
         overlay.style.pointerEvents = 'all';
         overlay.style.opacity = '1';
 
-        // Ocultar automaticamente após 5 segundos
+        // Auto-hide after 5 seconds
         setTimeout(() => {
             hideSuccessOverlay();
         }, 5000);
@@ -2094,11 +1843,11 @@ function setupClientCheckboxes() {
     let deleteBtn = document.getElementById('btn-delete-clients-header');
     const badge = document.getElementById('delete-clients-header-count');
 
-    // Remover listeners antigos clonando
+    // Remove old listeners by cloning
     if (deleteBtn) {
         const newDeleteBtn = deleteBtn.cloneNode(true);
         deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-        deleteBtn = newDeleteBtn; // Atualizar referência para o que está no DOM
+        deleteBtn = newDeleteBtn; // Update reference to the one in DOM
     }
 
     const updateDeleteBtnVisibility = () => {
@@ -2140,23 +1889,17 @@ function setupClientCheckboxes() {
             const selectedIds = selectedChecks.map(cb => parseInt(cb.value));
             if (selectedIds.length === 0) return;
 
-            const confirmacao = await showConfirm(
-                "Excluir Clientes Selecionados?",
-                `Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados de forma definitiva?`,
-                'danger'
-            );
-
-            if (confirmacao) {
+            if (confirm(`Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados?`)) {
                 deleteBtn.disabled = true;
                 deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-                // Fase de animação
+                // Animation phase
                 selectedChecks.forEach(cb => {
                     const row = cb.closest('tr');
                     if (row) row.classList.add('row-fade-out');
                 });
 
-                // Esperar pela animação
+                // Wait for animation
                 await new Promise(r => setTimeout(r, 500));
 
                 for (let id of selectedIds) {
@@ -2174,13 +1917,13 @@ function setupClientCheckboxes() {
 function openClientDetail(id = null) {
     document.getElementById('add-client-form').reset();
 
-    // Alternar painéis
+    // Toggle panels
     document.getElementById('clientes-list-container').style.display = 'none';
     const detailPanel = document.getElementById('clientes-detail-panel');
     detailPanel.style.display = 'block';
     detailPanel.classList.add('active');
 
-    // Resetar abas
+    // Reset tabs
     document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelector('[data-tab="tab-geral"]').classList.add('active');
@@ -2206,7 +1949,7 @@ function openClientDetail(id = null) {
     }
 
 
-    // Carregar Rotinas para checklist
+    // Load Rotinas for checklist
     const rotinasGrid = document.getElementById('rotinas-checkbox-grid');
     if (rotinasGrid) {
         rotinasGrid.innerHTML = '';
@@ -2220,7 +1963,7 @@ function openClientDetail(id = null) {
         });
     }
 
-    // Configuração de Alternância de Status
+    // Status Toggle Setup
     const statusContainer = document.getElementById('client-status-container');
     const statusToggle = document.getElementById('client-ativo');
     const statusLabel = document.getElementById('client-status-label');
@@ -2228,6 +1971,7 @@ function openClientDetail(id = null) {
     if (statusToggle) {
         statusToggle.onchange = () => {
             statusLabel.textContent = statusToggle.checked ? 'Ativo' : 'Inativo';
+            statusLabel.style.color = statusToggle.checked ? '#10B981' : '#EF4444';
         };
     }
 
@@ -2255,7 +1999,7 @@ function openClientDetail(id = null) {
             if (statusContainer) statusContainer.style.display = 'flex';
             if (statusToggle) {
                 statusToggle.checked = cliente.ativo !== false;
-                statusToggle.onchange(); // Disparar atualização de rótulo
+                statusToggle.onchange(); // Trigger label update
             }
 
             // Contato
@@ -2381,7 +2125,7 @@ async function toggleClientStatus(id, newStatus) {
         if (cliente) {
             await Store.editClient(id, { ...cliente, ativo: newStatus, rotinasSelecionadasIds: cliente.rotinasSelecionadas || [] });
             showFeedbackToast(`Status de ${cliente.razaoSocial} alterado para ${newStatus ? 'Ativo' : 'Inativo'}.`, 'success');
-            // Atualizar contagens e dashboard se necessário
+            // Refresh counts and dashboard if needed
             renderDashboard();
         }
     } catch (e) {
@@ -2399,7 +2143,7 @@ function renderEquipe() {
 
     const func = Store.getData().funcionarios;
 
-    // Restringir UI para não gerentes
+    // Restrict UI for non-managers
     const btnNovoMembro = document.getElementById('btn-add-equipe');
     if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() !== 'gerente') {
         btnNovoMembro.style.display = 'none';
@@ -2424,7 +2168,7 @@ function renderEquipe() {
         tr.className = 'fade-in';
 
         const badgeColor = f.permissao === 'Gerente' ? 'var(--primary)' : 'var(--success)';
-        const isAtivo = f.ativo !== false; // padrão verdadeiro
+        const isAtivo = f.ativo !== false; // default true
 
         let statusHtml = '';
         if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'gerente') {
@@ -2434,7 +2178,7 @@ function renderEquipe() {
                         <input type="checkbox" ${isAtivo ? 'checked' : ''} onchange="toggleFuncionarioStatus('${f.id}')">
                         <span class="toggle-slider"></span>
                     </label>
-                    <span style="font-size: 0.8rem; font-weight: 500;">
+                    <span style="font-size: 0.8rem; font-weight: 500; color: ${isAtivo ? 'var(--success)' : 'var(--danger)'};">
                         ${isAtivo ? 'Ativo' : 'Inativo'}
                     </span>
                 </div>
@@ -2452,14 +2196,9 @@ function renderEquipe() {
             <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${f.permissao}</span></td>
             <td>${statusHtml}</td>
             <td>
-                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                        <i class="fa-solid fa-pen"></i> Editar
-                    </button>
-                    <button class="btn btn-small btn-secondary text-danger" onclick="deleteFuncionarioDirectly('${f.id}', '${f.nome.replace(/'/g, "\\'")}')" title="Excluir" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
+                <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                    <i class="fa-solid fa-pen"></i> Editar
+                </button>
             </td>
         `;
 
@@ -2471,45 +2210,17 @@ function openEquipeModal() {
     document.getElementById('add-equipe-form').reset();
     document.getElementById('equipe-id').value = '';
     document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Novo Funcionário';
-    document.getElementById('btn-save-equipe').textContent = 'Cadastrar';
-
-    // Resetar erro visual
-    const errorDiv = document.getElementById('equipe-error');
-    errorDiv.style.display = 'none';
-    errorDiv.textContent = '';
-
-    // Esconder botão de excluir no novo cadastro
-    document.getElementById('btn-delete-equipe').style.display = 'none';
-
-    document.getElementById('equipe-status-container').style.display = 'block';
-    document.getElementById('equipe-ativo').checked = true;
-    const badgeDefault = document.getElementById('equipe-status-badge');
-    badgeDefault.className = 'table-badge success';
-    badgeDefault.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
-
+    document.getElementById('equipe-status-container').style.display = 'none';
     document.getElementById('add-equipe-modal').classList.add('active');
 }
 
 function openEditEquipeModal(id) {
-    // Uso de == para permitir comparação entre string (do HTML) e número (do Store)
-    const f = Store.getData().funcionarios.find(x => x.id == id);
-    if (!f) {
-        console.error("Funcionário não encontrado para ID:", id);
-        return;
-    }
+    const f = Store.getData().funcionarios.find(x => x.id === id);
+    if (!f) return;
 
     document.getElementById('add-equipe-form').reset();
     document.getElementById('equipe-id').value = f.id;
     document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Editar Funcionário';
-    document.getElementById('btn-save-equipe').textContent = 'Salvar Alterações';
-
-    // Esconder erro prévio
-    const errorDiv = document.getElementById('equipe-error');
-    errorDiv.style.display = 'none';
-    errorDiv.textContent = '';
-
-    // Mostrar botão de excluir apenas na edição
-    document.getElementById('btn-delete-equipe').style.display = 'block';
 
     document.getElementById('equipe-nome').value = f.nome;
     document.getElementById('equipe-setor').value = f.setor;
@@ -2517,14 +2228,6 @@ function openEditEquipeModal(id) {
     document.getElementById('equipe-senha').value = f.senha;
 
     document.getElementById('equipe-ativo').checked = f.ativo !== false;
-    const badgeEdit = document.getElementById('equipe-status-badge');
-    if (f.ativo !== false) {
-        badgeEdit.className = 'table-badge success';
-        badgeEdit.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
-    } else {
-        badgeEdit.className = 'table-badge danger';
-        badgeEdit.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Inativo';
-    }
     document.getElementById('equipe-status-container').style.display = 'block';
 
     document.getElementById('add-equipe-modal').classList.add('active');
@@ -2542,27 +2245,9 @@ async function handleAddFuncionario(e) {
     const permissao = document.getElementById('equipe-permissao').value;
     const senha = document.getElementById('equipe-senha').value;
 
-    // O status só é usado se estiver editando, ou por padrão é verdadeiro para novos
+    // Status is only used if editing, or defaults to true for new ones
     const isEditing = !!id;
     const ativo = isEditing ? document.getElementById('equipe-ativo').checked : true;
-
-    // Resetar erro visual
-    const errorDiv = document.getElementById('equipe-error');
-    errorDiv.style.display = 'none';
-    errorDiv.textContent = '';
-
-    // Verificação de nome duplicado (trava solicitada pelo usuário)
-    const todosFuncionarios = Store.getData().funcionarios;
-    const nomeJaExiste = todosFuncionarios.some(f =>
-        f.nome.trim().toLowerCase() === nome.trim().toLowerCase() &&
-        (isEditing ? f.id != id : true)
-    );
-
-    if (nomeJaExiste) {
-        errorDiv.textContent = `Já existe um funcionário cadastrado com o nome "${nome}".`;
-        errorDiv.style.display = 'block';
-        return;
-    }
 
     if (isEditing) {
         await Store.editFuncionario(id, nome, setor, permissao, senha, ativo);
@@ -2575,141 +2260,6 @@ async function handleAddFuncionario(e) {
     populateDashboardSelects();
 }
 
-/**
- * Modal de Confirmação (Retorna uma Promise true/false)
- */
-function showConfirm(title, message, type = 'warning') {
-    return new Promise((resolve) => {
-        const modal = document.getElementById('modal-confirm-premium');
-        const titleEl = document.getElementById('confirm-title');
-        const messageEl = document.getElementById('confirm-message');
-        const btnOk = document.getElementById('confirm-ok');
-        const btnCancel = document.getElementById('confirm-cancel');
-        const iconEl = document.getElementById('confirm-icon');
-
-        if (!modal || !titleEl || !messageEl || !btnOk || !btnCancel || !iconEl) {
-            console.error("Elementos do modal de confirmação não encontrados.");
-            resolve(window.confirm(message));
-            return;
-        }
-
-        titleEl.textContent = title;
-        messageEl.innerHTML = message;
-
-        // Ajustar ícone e cor conforme o tipo
-        if (type === 'danger') {
-            iconEl.style.color = 'var(--danger)';
-            iconEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
-            btnOk.style.background = 'var(--danger)';
-            btnOk.style.borderColor = 'var(--danger)';
-        } else {
-            iconEl.style.color = 'var(--warning)';
-            iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
-            btnOk.style.background = 'var(--primary)';
-            btnOk.style.borderColor = 'var(--primary)';
-        }
-
-        modal.classList.add('active');
-
-        const handleOk = () => {
-            modal.classList.remove('active');
-            cleanup();
-            resolve(true);
-        };
-
-        const handleCancel = () => {
-            modal.classList.remove('active');
-            cleanup();
-            resolve(false);
-        };
-
-        const cleanup = () => {
-            btnOk.removeEventListener('click', handleOk);
-            btnCancel.removeEventListener('click', handleCancel);
-        };
-
-        btnOk.addEventListener('click', handleOk, { once: true });
-        btnCancel.addEventListener('click', handleCancel, { once: true });
-    });
-}
-
-async function handleDeleteFuncionario() {
-    const id = document.getElementById('equipe-id').value;
-    const nome = document.getElementById('equipe-nome').value;
-
-    if (!id) return;
-
-    // Confirmação Premium
-    const confirmacao = await showConfirm(
-        "Excluir Funcionário?",
-        `Tem certeza que deseja remover permanentemente a conta de "${nome}"? Esta ação não pode ser desfeita.`,
-        'danger'
-    );
-
-    if (!confirmacao) return;
-
-    showLoading("Processando", "Excluindo funcionário...");
-    const success = await Store.deleteFuncionario(id);
-    hideLoading();
-
-    if (success) {
-        showFeedbackToast("Conta excluída com sucesso!", "success");
-        closeEquipeModal();
-        renderEquipe();
-        populateDashboardSelects();
-    } else {
-        showFeedbackToast("Erro ao excluir conta. Verifique a conexão.", "error");
-    }
-}
-
-async function deleteFuncionarioDirectly(id, nome) {
-    if (!id) return;
-
-    // Confirmação Premium
-    const confirmacao = await showConfirm(
-        "Excluir Funcionário?",
-        `Tem certeza que deseja remover permanentemente a conta de "${nome}"? Esta ação não pode ser desfeita.`,
-        'danger'
-    );
-
-    if (!confirmacao) return;
-
-    showLoading("Processando", "Excluindo funcionário...");
-    const success = await Store.deleteFuncionario(id);
-    hideLoading();
-
-    if (success) {
-        showFeedbackToast("Conta excluída com sucesso!", "success");
-        renderEquipe();
-        populateDashboardSelects();
-    } else {
-        showFeedbackToast("Erro ao excluir conta. Verifique a conexão.", "error");
-    }
-}
-
-async function deleteCargo(id) {
-    if (!id) return;
-
-    const confirmacao = await showConfirm(
-        "Excluir Cargo?",
-        "Tem certeza que deseja excluir esse Cargo e suas Permissões de Acesso de forma definitiva?",
-        'danger'
-    );
-
-    if (confirmacao) {
-        showLoading("Processando", "Excluindo cargo do sistema...");
-        const success = await Store.deleteCargo(id);
-        hideLoading();
-
-        if (success) {
-            showFeedbackToast("Cargo excluído com sucesso!", "success");
-            renderCargos();
-            populateDashboardSelects();
-        } else {
-            showNotify("Atenção", "Cargo em uso ou erro na requisição.", "error");
-        }
-    }
-}
 async function toggleFuncionarioStatus(id) {
     const stringId = id.toString();
     const f = Store.getData().funcionarios.find(x => x.id.toString() === stringId);
@@ -2717,11 +2267,11 @@ async function toggleFuncionarioStatus(id) {
 
     const novoStatus = f.ativo === false ? true : false;
 
-    // Atualização Otimista da UI
+    // Optimistic UI update
     f.ativo = novoStatus;
     renderEquipe();
 
-    // Enviar mudança para o backend
+    // Push backend change
     await Store.editFuncionario(f.id, f.nome, f.setor, f.permissao, f.senha, novoStatus);
 }
 
@@ -2742,7 +2292,7 @@ function renderRotinas() {
     rotinas.forEach(r => {
         let badgeClass = "noprazo";
         if (r.frequencia === 'Anual') badgeClass = 'hoje';
-        else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Usando vermelho para destacar
+        else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Using red to highlight
 
         const diaText = r.frequencia === 'Mensal' ? `Dia ${r.diaPrazoPadrao}` :
             (r.frequencia === 'Anual' ? `${r.diaPrazoPadrao}` : `${r.diaPrazoPadrao} d.c.`);
@@ -2773,11 +2323,11 @@ function renderRotinas() {
             <td>
                 <div class="btn-action-container">
                     ${isOperacional ? '' : `
-                    <button class="btn btn-small btn-secondary btn-edit" onclick="openRotinaModal(${r.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                    <button class="btn btn-small btn-secondary btn-edit" onclick="openRotinaModal(${r.id})">
                         <i class="fa-solid fa-pen"></i> Editar
                     </button>
-                    <button class="btn btn-small btn-secondary text-danger" onclick="handleDeleteRotina(${r.id}, this)" title="Excluir Rotina" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem; margin-left: 0.5rem;">
-                        <i class="fa-solid fa-trash"></i>
+                    <button class="btn btn-small btn-secondary btn-delete" onclick="handleDeleteRotina(${r.id}, this)" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);">
+                        <i class="fa-solid fa-trash"></i> Excluir
                     </button>
                     `}
                 </div>
@@ -2811,10 +2361,10 @@ function openRotinaModal(id = null) {
     }
 
     form.reset();
-    currentChecklistBuilder = []; // Resetar construtor
+    currentChecklistBuilder = []; // Reset builder
     document.getElementById('new-checklist-item').value = '';
 
-    // Resetar Busca
+    // Reset Search
     const filterInput = document.getElementById('filter-clientes-rotina');
     if (filterInput) {
         filterInput.value = '';
@@ -2839,7 +2389,7 @@ function openRotinaModal(id = null) {
 
     selectFreq.onchange = (e) => updateUIForFreq(e.target.value);
 
-    // Carregamento dinâmico de checkboxes de Clientes com ordenação
+    // Dynamic loading of Clientes checkboxes with sorting
     const sortMode = document.getElementById('sort-clientes-rotina')?.value || 'az';
     renderRoutineClientsGrid(sortMode, id);
 
@@ -2858,7 +2408,7 @@ function openRotinaModal(id = null) {
             document.getElementById('rotina-setor').value = rotina.setor || '';
             document.getElementById('rotina-prazo').value = rotina.diaPrazoPadrao;
 
-            // Verificar os funcionários responsáveis
+            // Check the responsible employees
             const reps = (rotina.responsavel || "").split(",").map(s => s.trim());
             document.querySelectorAll('.resp-checkbox').forEach(cb => {
                 if (reps.includes(cb.value)) cb.checked = true;
@@ -3098,27 +2648,21 @@ async function handleDeleteRotina(id, btnElement = null) {
     const rotina = Store.getData().rotinasBase.find(r => r.id === id);
     if (!rotina) return;
 
-    const confirmacao = await showConfirm(
-        "Excluir Rotina Base?",
-        `Atenção: Tem certeza que deseja EXCLUIR a rotina '${rotina.nome}' permanentemente? Isso a removerá da base de rotinas e afetará as vinculações existentes.`,
-        'danger'
-    );
-
-    if (confirmacao) {
+    if (confirm(`Atenção: Tem certeza que deseja EXCLUIR a rotina '${rotina.nome}'? Isso a removerá da base de rotinas disponíveis.`)) {
         // Efeito visual no ícone antes de sumir
         if (btnElement) {
             const icon = btnElement.querySelector('i');
             if (icon) icon.classList.add('delete-pop');
         }
 
-        showLoading('Excluindo Rotina', `Removendo '${rotina.nome}' e todas as vinculações...`);
+        showLoading('Excluindo Rotina', `Removendo '${rotina.nome}' e todas as tarefas vinculadas...`);
 
         try {
             // Pequeno delay para a animação aparecer antes da remoção
             await new Promise(resolve => setTimeout(resolve, 500));
             await Store.deleteRotinaBase(id);
             renderRotinas();
-            showFeedbackToast(`Rotina '${rotina.nome}' excluída com sucesso!`, 'success');
+            // alert(`Rotina '${rotina.nome}' excluída com sucesso!`); // Alert opcional, UI já some
         } catch (error) {
             console.error(error);
             showNotify("Erro", "Ocorreu um erro ao excluir a rotina. Verifique o console.", "error");
@@ -3154,7 +2698,7 @@ function renderCompetenciasAdmin() {
         return;
     }
 
-    // Ordenar decrescente por ID (AAAA-MM)
+    // Sort descending by ID (YYYY-MM)
     const sortedMeses = [...meses].sort((a, b) => b.id.localeCompare(a.id));
 
     sortedMeses.forEach(m => {
@@ -3175,44 +2719,28 @@ function renderCompetenciasAdmin() {
                 </div>
             </td>
             <td style="text-align: right;">
-                <button class="btn btn-small btn-secondary text-danger btn-delete-comp" data-id="${m.id}" title="Apagar Competência" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;" ${m.ativo ? 'disabled title="Não é possível apagar o mês atual"' : ''}>
-                    <i class="fa-solid fa-trash"></i>
+                <button class="btn btn-outline btn-delete-comp" data-id="${m.id}" style="border-color:var(--danger); color:var(--danger); padding:0.4rem 0.8rem;" ${m.ativo ? 'disabled title="Não é possível apagar o mês atual"' : ''}>
+                    <i class="fa-solid fa-trash"></i> Apagar
                 </button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 
-    // Anexar Eventos de Exclusão
+    // Attach Delete Events
     document.querySelectorAll('.btn-delete-comp').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
             const id = e.currentTarget.getAttribute('data-id');
-            if (!id) return;
+            const modal = document.getElementById('modal-delete-competencia');
+            const hiddenId = document.getElementById('delete-comp-id');
+            const msgEl = document.getElementById('delete-comp-msg');
 
-            const confirmacao = await showConfirm(
-                "Excluir Competência?",
-                `Você está prestes a apagar a competência <strong>${id}</strong> inteira, junto com todas as tarefas vinculadas a ela. Esta é uma ação destrutiva irreversível.
-                <br><br>Tem 100% de certeza absoluta?`,
-                'danger'
-            );
-
-            if (confirmacao) {
-                const icon = e.currentTarget.querySelector('i');
-                if (icon) icon.className = "fa-solid fa-spinner fa-spin";
-                e.currentTarget.disabled = true;
-
-                showLoading('Processando', `Apagando ${id}...`);
-                const success = await Store.deleteCompetencia(id);
-                hideLoading();
-
-                if (success) {
-                    showFeedbackToast(`Competência ${id} removida.`, 'success');
-                    renderCompetenciasAdmin();
-                } else {
-                    showNotify("Erro", "Houve um erro na exclusão. Tente novamente.", "error");
-                    if (icon) icon.className = "fa-solid fa-trash";
-                    e.currentTarget.disabled = false;
-                }
+            if (modal && hiddenId && msgEl) {
+                hiddenId.value = id;
+                msgEl.innerHTML = `Você está prestes a apagar a competência <strong>${id}</strong> inteira, junto com todas as tarefas vinculadas a ela. Esta é uma ação destrutiva irreversível.`;
+                modal.style.display = 'flex';
+                // Trigger CSS transitions
+                setTimeout(() => modal.classList.add('active'), 10);
             }
         });
     });
@@ -3225,7 +2753,7 @@ function closeDeleteCompetenciaModal() {
         setTimeout(() => modal.style.display = 'none', 300);
         document.getElementById('delete-comp-id').value = '';
 
-        // Resetar estado do botão
+        // Reset button state
         const submitBtn = document.getElementById('btn-confirm-delete-comp');
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -3264,7 +2792,7 @@ function renderMenuReorderList() {
             <i class="fa-solid fa-grip-vertical drag-handle"></i>
         `;
 
-        // Eventos de arrastar
+        // Drag events
         div.addEventListener('dragstart', () => div.classList.add('dragging'));
         div.addEventListener('dragend', () => div.classList.remove('dragging'));
 
@@ -3302,7 +2830,7 @@ async function saveMenuOrder() {
     const items = listContainer.querySelectorAll('.reorder-item');
     const newOrder = Array.from(items).map(i => i.getAttribute('data-view'));
 
-    // Sempre manter as configurações no final
+    // Always keep settings at the end
     newOrder.push('settings');
 
     showLoading('Salvando Ordem', 'Atualizando layout do menu lateral...');
@@ -3321,7 +2849,7 @@ async function saveMenuOrder() {
     if (saveBtn) saveBtn.disabled = false;
 
     if (success) {
-        // Reaplicar imediatamente
+        // Re-apply immediately
         applyUserPermissions(LOGGED_USER);
         showNotify("Sucesso", "Ordem do menu salva com sucesso!", "success");
     } else {
@@ -3341,7 +2869,7 @@ function loadSetoresSelects() {
 
 
 
-    // Atualizar Seleção de Setor no Modal de Equipe
+    // Update Equipe Modal Sector Select
 
     const eqSetor = document.getElementById('equipe-setor');
 
@@ -3359,7 +2887,7 @@ function loadSetoresSelects() {
 
 
 
-    // Atualizar Seleção de Setor no Modal de Rotina
+    // Update Rotina Modal Sector Select
 
     const rotSetor = document.getElementById('rotina-setor');
 
@@ -3465,7 +2993,7 @@ function handleAddSetor() {
 
         renderSetoresListPreview();
 
-        loadSetoresSelects(); // Atualizar todos os selects globalmente
+        loadSetoresSelects(); // Update all selects globally
 
     }
 
@@ -3474,24 +3002,17 @@ function handleAddSetor() {
 
 
 async function handleDeleteSetor(nome) {
-    const confirmacao = await showConfirm(
-        "Excluir Setor?",
-        `Atenção: Tem certeza que deseja excluir o setor '${nome}' de forma definitiva? Isso não altera as rotinas e funcionários que já estão nomeados para ele, mas ele deixará de aparecer nas opções futuras.`,
-        'danger'
-    );
 
-    if (confirmacao) {
-        showLoading('Processando', `Excluindo setor '${nome}'...`);
-        const success = await Store.deleteSetor(nome);
-        hideLoading();
-        if (success) {
-            showFeedbackToast(`Setor '${nome}' excluído com sucesso.`, 'success');
-            renderSetoresListPreview(); // Alterado para corresponder à função existente() to renderSetoresListPreview() to match existing function
-            loadSetoresSelects();
-        } else {
-            showNotify("Erro", "Erro ao excluir setor. Verifique a conexão.", "error");
-        }
+    if (confirm(`Atenção: Tem certeza que deseja excluir o setor '${nome}'? Isso não altera as rotinas e funcionários que já estão nomeados para ele, mas ele deixará de aparecer nas opções.`)) {
+
+        await Store.deleteSetor(nome);
+
+        renderSetoresListPreview();
+
+        loadSetoresSelects();
+
     }
+
 }
 
 
@@ -3514,10 +3035,10 @@ function updateMensagensBadges() {
     const unreadInbox = Store.getUnreadInboxCount(LOGGED_USER.nome);
     const unreadSystem = Store.getUnreadSystemCount(LOGGED_USER.nome);
 
-    // Badge Global da Barra Superior
+    // Global Topbar Badge
     const badges = document.querySelectorAll('.badge');
     badges.forEach(b => {
-        // Apenas atualizar o badge global de notificação da barra superior aqui
+        // Only update the global topbar notification badge here
         if (b.parentElement.id === 'btn-notification') {
             if (unreadTotal > 0) {
                 b.textContent = unreadTotal;
@@ -3528,7 +3049,7 @@ function updateMensagensBadges() {
         }
     });
 
-    // Badge da Caixa de Entrada na Barra Lateral
+    // Sidebar Inbox Badge (Caixa de Entrada)
     const inboxBadge = document.getElementById('inbox-unread-badge');
     if (inboxBadge) {
         if (unreadInbox > 0) {
@@ -3539,7 +3060,7 @@ function updateMensagensBadges() {
         }
     }
 
-    // Badge do Sistema na Barra Lateral
+    // Sidebar System Badge (Alertas do Sistema)
     const systemBadge = document.getElementById('system-unread-badge');
     if (systemBadge) {
         if (unreadSystem > 0) {
@@ -3634,34 +3155,22 @@ function initInboxTabs() {
         });
 
         // === Exclusão em Massa ===
-        const btnDeleteMass = document.getElementById('btn-bulk-delete-msgs');
-        if (btnDeleteMass) {
-            btnDeleteMass.addEventListener('click', async () => {
-                const selected = Array.from(document.querySelectorAll('.msg-check:checked')).map(cb => cb.closest('.msg-item-refined').getAttribute('data-msg-id'));
-                if (selected.length === 0) return;
-
-                const confirmacao = await showConfirm(
-                    "Excluir Mensagens?",
-                    `Deseja realmente excluir as ${selected.length} mensagens selecionadas?`,
-                    'danger'
-                );
-
-                if (confirmacao) {
-                    // Animação primeiro
-                    document.querySelectorAll('.msg-check:checked').forEach(cb => {
-                        const row = cb.closest('.msg-item-refined');
-                        if (row) row.classList.add('fade-out-item');
-                    });
-
-                    await new Promise(r => setTimeout(r, 400));
-                    for (let id of selected) {
+        document.addEventListener('click', async (e) => {
+            if (!e.target.closest('#btn-bulk-delete-msgs')) return;
+            const selected = document.querySelectorAll('.msg-check:checked');
+            if (selected.length === 0) return;
+            if (confirm(`Excluir ${selected.length} mensagens selecionadas?`)) {
+                for (let check of selected) {
+                    const item = check.closest('.msg-item-refined');
+                    if (item) {
+                        const id = item.getAttribute('data-msg-id');
                         await Store.deleteMensagem(id, LOGGED_USER.nome);
                     }
-                    showFeedbackToast(`${selected.length} mensagens excluídas.`, 'success');
-                    renderMensagens(); // Renderizar novamente a lista
                 }
-            });
-        }
+                renderMensagens();
+            }
+        });
+
         // === Marcar como Lidas em Massa ===
         document.addEventListener('click', async (e) => {
             if (!e.target.closest('#btn-bulk-read-msgs')) return;
@@ -3697,7 +3206,7 @@ function updateBulkActionsVisibility() {
 }
 
 function renderMensagens() {
-    // Resetar visibilidade das ações em massa
+    // Reset bulk actions visibility
     updateBulkActionsVisibility();
     const selectAllCheck = document.getElementById('select-all-msgs');
     if (selectAllCheck) selectAllCheck.checked = false;
@@ -3789,7 +3298,7 @@ function renderMensagens() {
         container.appendChild(div);
     });
 
-    // Atualizar informações de paginação se necessário
+    // Update pagination info if needed
     const countInfo = document.getElementById('msgs-count-info');
     if (countInfo) countInfo.textContent = msgs.length > 0 ? `1 - ${msgs.length} de ${msgs.length}` : '0 - 0 de 0';
 
@@ -3830,7 +3339,7 @@ function loadMessageIntoReader(id) {
     const reader = document.querySelector('.reader-content-refined');
     reader.style.display = 'flex';
 
-    // Atualizar animação
+    // Refresh animation
     reader.classList.remove('fade-in');
     void reader.offsetWidth;
     reader.classList.add('fade-in');
@@ -3838,7 +3347,7 @@ function loadMessageIntoReader(id) {
     const subjectStr = msg.assunto || 'Sem Assunto';
     document.getElementById('reader-subject').textContent = subjectStr;
 
-    // Texto do Avatar (iniciais)
+    // Avatar text (iniciais)
     const senderName = msg.remetente || 'S';
     document.getElementById('reader-avatar-text').textContent = senderName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     document.getElementById('reader-email-text').textContent = `${senderName.toLowerCase().replace(/ /g, '.')}@fiscal.app`;
@@ -3866,13 +3375,7 @@ function loadMessageIntoReader(id) {
 
     btnDelete.style.display = currentInboxFolder === 'trash' ? 'none' : 'flex';
     btnDelete.onclick = async () => {
-        const confirmacao = await showConfirm(
-            "Arquivar Mensagem?",
-            "Deseja mesmo arquivar esta mensagem? Ela ficará disponível na Lixeira para auditoria e restauração.",
-            'warning'
-        );
-
-        if (confirmacao) {
+        if (confirm("Deseja mesmo arquivar esta mensagem? (Ela ficará disponível na Lixeira para auditoria)")) {
             btnDelete.disabled = true;
             btnDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             const success = await Store.deleteMensagem(id, LOGGED_USER.nome);
@@ -3996,13 +3499,13 @@ function triggerPaperPlaneAnimation() {
     plane.className = 'paper-plane';
     plane.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
 
-    // Posição inicial (aproximadamente centro-direita onde o modal geralmente fica)
+    // Start position (roughly center-right where modal usually is)
     plane.style.left = '50%';
     plane.style.top = '50%';
 
     container.appendChild(plane);
 
-    // Remover elemento após animação
+    // Remove element after animation
     setTimeout(() => {
         plane.remove();
     }, 2000);
@@ -4012,11 +3515,11 @@ function triggerPaperPlaneAnimation() {
 
 // ==========================================
 
-// CONTROLADORES DE MODAL E CHECKLISTS
+// MODAL CONTROLLERS & CHECKLISTS
 
 // ==========================================
 
-// CONTROLADORES DE MODAL E CHECKLISTS
+// MODAL CONTROLLERS & CHECKLISTS
 
 // ==========================================
 
@@ -4046,7 +3549,7 @@ function openTaskModal(taskId) {
 
 
 
-    // Preencher conteúdos do Cabeçalho
+    // Fill Header contents
 
     document.getElementById('modal-rotina-name').textContent = task.rotina;
 
@@ -4078,7 +3581,7 @@ function openTaskModal(taskId) {
 
 
 
-    // Renderizar Subitens
+    // Render Subitems
 
     renderChecklist();
 
@@ -4090,7 +3593,7 @@ function openTaskModal(taskId) {
 
 
 
-    // Vinculando o Toggle principal dentro do modal
+    // Binding the main Toggle inside modal
 
     const mainToggle = document.getElementById('modal-done-toggle');
 
@@ -4103,7 +3606,7 @@ function openTaskModal(taskId) {
     newToggle.checked = task.feito;
     const isAdmin = LOGGED_USER && ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(LOGGED_USER.permissao);
 
-    // Bloquear toggle global se concluído e NÃO for admin/supervisor
+    // Lock global toggle if done and NOT admin/supervisor
     if (task.feito && !isAdmin) {
         newToggle.disabled = true;
         document.getElementById('modal-status').innerHTML += ' <i class="fa-solid fa-lock" title="Bloqueado para edição"></i>';
@@ -4123,7 +3626,7 @@ function openTaskModal(taskId) {
         }
         task.feito = checked;
 
-        // Atualizar visualizações nativamente
+        // Refresh views natively
 
         renderChecklist();
 
@@ -4133,7 +3636,7 @@ function openTaskModal(taskId) {
 
 
 
-        // Atualizar cabeçalho automaticamente
+        // Auto update header
 
         document.getElementById('modal-status').innerHTML = checked
 
@@ -4183,7 +3686,7 @@ function renderChecklist() {
 
         div.className = 'checklist-item fade-in';
 
-        div.style.animationDelay = `${index * 0.04}s`; // Entrada micro-escalonada
+        div.style.animationDelay = `${index * 0.04}s`; // Micro-staggered entry
 
 
 
@@ -4197,7 +3700,7 @@ function renderChecklist() {
 
 
 
-        // Único item de checklist alterado
+        // Single checklist item changed
 
         const chk = div.querySelector('input');
 
@@ -4209,7 +3712,7 @@ function renderChecklist() {
 
 
 
-            // Renderizar novamente checklist e atualizar listas subjacentes
+            // Re-render checklist and update underlaying lists
 
             renderChecklist();
 
@@ -4219,7 +3722,7 @@ function renderChecklist() {
 
 
 
-            // Re-sincronizar cabeçalho se o estado mudou devido a todos os checks
+            // Re-sync header if state changed due to all checks
 
             const refreshedTask = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
 
@@ -4243,7 +3746,7 @@ function renderChecklist() {
 
 
 
-    // Atualizar UI de Progresso
+    // Update Progress UI
 
     const total = task.subitems.length;
 
@@ -4257,7 +3760,7 @@ function renderChecklist() {
 
 
 
-    // Sincronizar Toggle Principal visualmente
+    // Sync Main Toggle visually
 
     const toggle = document.getElementById('modal-done-toggle');
 
@@ -4437,7 +3940,7 @@ async function handleSaveDemandaEventual() {
 
 
 
-// Auxiliares
+// Helpers
 
 function formatDate(dateStr) {
 
@@ -4455,7 +3958,7 @@ function formatDate(dateStr) {
 
 
 
-// Animação de Suavização para Números
+// Easing Animation for Numbers
 
 function animateValue(id, start, end, duration) {
 
@@ -4469,7 +3972,7 @@ function animateValue(id, start, end, duration) {
 
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
 
-        // Suavização exponencial para fora
+        // Exponential easeout
 
         const easeAmount = 1 - Math.pow(1 - progress, 4);
 
@@ -4481,7 +3984,7 @@ function animateValue(id, start, end, duration) {
 
         } else {
 
-            // Garantir estado final
+            // Guarantee end state
 
             obj.innerHTML = end;
 
@@ -4533,7 +4036,7 @@ function renderAuditoria() {
 
 
 
-        // Formatar data BR
+        // Format date BR
 
         const d = new Date(log.timestamp);
 
@@ -4577,7 +4080,7 @@ function downloadAuditoriaCSV() {
 
 
 
-    // Cabeçalho CSV
+    // CSV Header
 
     let csvContent = "Data/Hora,Usuário,Permissão,Ação,Detalhes\n";
 
@@ -4591,7 +4094,7 @@ function downloadAuditoriaCSV() {
 
 
 
-        // Escapar aspas e vírgulas
+        // Escape quotes and commas
 
         const escUser = (l.user_name || "").replace(/"/g, '""');
 
@@ -4609,7 +4112,7 @@ function downloadAuditoriaCSV() {
 
 
 
-    // Criar URL Blob e disparar download
+    // Create Blob URL and trigger download
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 
@@ -4631,6 +4134,329 @@ function downloadAuditoriaCSV() {
 
     document.body.removeChild(link);
 
+}
+
+
+
+// ==========================================
+
+// VIEW: Painel de Administração (RBAC)
+
+// ==========================================
+
+function renderAdminPanel() {
+
+    const tbody = document.querySelector('#admin-cargos-table tbody');
+
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+
+
+    const cargos = Store.getData().cargos || [];
+
+
+
+    if (cargos.length === 0) {
+
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 3rem;">Nenhum cargo de segurança configurado ainda.</td></tr>`;
+
+        return;
+
+    }
+
+
+
+    cargos.forEach(cargo => {
+
+        const tr = document.createElement('tr');
+
+        tr.className = 'fade-in';
+
+
+
+        let tagsHtml = '';
+
+        if (cargo.telas_permitidas && cargo.telas_permitidas.length > 0) {
+
+            cargo.telas_permitidas.forEach(tela => {
+
+                let badgeClass = 'table-badge ';
+
+                if (tela === 'settings') {
+
+                    badgeClass += 'danger';
+
+                } else if (tela === 'dashboard' || tela === 'operacional') {
+
+                    badgeClass += 'primary';
+
+                } else {
+
+                    badgeClass += 'info';
+
+                }
+
+                tagsHtml += `<span class="${badgeClass}" style="margin-right: 4px; margin-bottom: 4px; display: inline-block;">${tela}</span>`;
+
+            });
+
+        } else {
+
+            tagsHtml = '<span class="text-muted">Nenhum acesso definido</span>';
+
+        }
+
+
+
+        tr.innerHTML = `
+
+            <td>#${cargo.id}</td>
+
+            <td><strong>${cargo.nome_cargo}</strong></td>
+
+            <td style="max-width: 400px; line-height: 1.8;">${tagsHtml}</td>
+
+            <td style="text-align: right;">
+
+                <button class="action-btn text-primary" onclick="openCargoModal(${cargo.id})" title="Editar Permissões"><i class="fa-solid fa-pen-to-square"></i></button>
+
+                <button class="action-btn text-danger" onclick="deleteCargo(${cargo.id})" title="Excluir Cargo"><i class="fa-solid fa-trash"></i></button>
+
+            </td>
+
+        `;
+
+        tbody.appendChild(tr);
+
+    });
+
+}
+
+
+
+function openCargoModal(cargoId = null) {
+
+    const modal = document.getElementById('admin-cargo-modal');
+
+    modal.style.display = 'flex';
+
+    // trigger animation
+
+    setTimeout(() => modal.classList.add('active'), 10);
+
+
+
+    const form = document.getElementById('admin-cargo-form');
+
+    form.reset();
+
+    document.getElementById('cargo-id').value = '';
+
+
+
+    if (cargoId) {
+
+        const cargo = Store.getData().cargos.find(c => c.id === cargoId);
+
+        if (cargo) {
+
+            document.getElementById('cargo-id').value = cargo.id;
+
+            document.getElementById('cargo-nome').value = cargo.nome_cargo;
+
+
+
+            const checks = document.querySelectorAll('.cargo-perm-check');
+
+            checks.forEach(chk => {
+
+                chk.checked = cargo.telas_permitidas && cargo.telas_permitidas.includes(chk.value);
+
+            });
+
+        }
+
+    }
+
+}
+
+
+
+function closeCargoModal(e) {
+
+    if (e) e.preventDefault();
+
+    const modal = document.getElementById('admin-cargo-modal');
+
+    modal.classList.remove('active');
+
+    setTimeout(() => modal.style.display = 'none', 300);
+
+}
+
+
+
+async function handleSaveCargo(e) {
+
+    e.preventDefault();
+
+    const id = document.getElementById('cargo-id').value;
+
+    const nome = document.getElementById('cargo-nome').value.trim();
+
+
+
+    const checkboxes = document.querySelectorAll('.cargo-perm-check:checked');
+
+    const permitidas = Array.from(checkboxes).map(chk => chk.value);
+
+
+
+    // Disable button to prevent double submit
+    const submitBtn = document.getElementById('btn-save-cargo') || e.target.querySelector('button[type="submit"]') || document.querySelector('#admin-cargo-modal button[type="submit"]');
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+    }
+
+
+
+    let success = false;
+
+    if (id) {
+
+        success = await Store.updateCargo(parseInt(id), nome, permitidas);
+
+    } else {
+
+        success = await Store.addCargo(nome, permitidas);
+
+    }
+
+
+
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Salvar Permissões';
+    }
+
+
+
+    if (success) {
+
+        closeCargoModal();
+
+        renderAdminPanel();
+
+        showFeedbackToast(`Permissões do cargo ${nome} salvas!`, 'success');
+
+        // Se o usuário logado tiver esse permissão editada, seria ideal um recarregamento, 
+
+        // mas assumimos que o Admin Master está gerenciando outras.
+
+    } else {
+
+        showFeedbackToast('Erro ao salvar cargo. Verifique a API.', 'danger');
+
+    }
+
+}
+
+
+
+async function deleteCargo(id) {
+
+    if (confirm("Tem certeza que deseja excluir esse Cargo e suas Permissões de Acesso?")) {
+
+        const success = await Store.deleteCargo(id);
+
+        if (success) {
+
+            renderAdminPanel();
+
+            showFeedbackToast('Cargo excluído com sucesso.', 'success');
+
+        } else {
+
+            showFeedbackToast('Erro ao excluir cargo.', 'danger');
+
+        }
+
+    }
+
+}
+
+
+
+// ==========================================
+
+// VIEW: Backup e Segurança
+
+// ==========================================
+
+function renderBackupView() {
+
+    const config = Store.getData().config;
+
+    const toggle = document.getElementById('toggle-auto-backup');
+
+    if (toggle) toggle.checked = config && config.autoBackup;
+
+
+
+    const lastBackupText = document.getElementById('last-backup-text');
+
+    if (lastBackupText) {
+
+        if (config && config.lastBackupData) {
+
+            const d = new Date(config.lastBackupData);
+
+            lastBackupText.innerHTML = `Último backup automático: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
+
+        } else {
+
+            lastBackupText.innerHTML = `Último backup: Nunca`;
+
+        }
+
+    }
+
+}
+
+
+
+function downloadBackupFile() {
+
+    const dataStr = JSON.stringify(Store.getData(), null, 2);
+
+    const blob = new Blob([dataStr], { type: 'application/json' });
+
+    const url = URL.createObjectURL(blob);
+
+
+
+    const d = new Date();
+
+    const dateString = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}${d.getDate().toString().padStart(2, '0')}`;
+
+
+
+    const link = document.createElement('a');
+
+    link.setAttribute('href', url);
+
+    link.setAttribute('download', `fiscalapp_backup_${dateString}.json`);
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
 
 
     Store.registerLog("Backup de Segurança", "Realizou o download manual da base de dados");
@@ -4641,29 +4467,44 @@ function downloadAuditoriaCSV() {
 
 
 
-function handleRestoreBackup(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+function restoreBackupFile() {
+
+    const fileInput = document.getElementById('backup-file-input');
+
+    const file = fileInput.files[0];
+
+    if (!file) {
+
+        showNotify("Atenção", "Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.", "warning");
+
+        return;
+
+    }
+
+
+
+    if (!confirm("⚠️ ATENÇÃO EXTREMA ⚠️\n\nIsso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execuções, mensagens, clientes novos feitos DEPOIS desse backup vão SUMIR para sempre.\n\nVocê tem 100% de certeza absoluta?")) {
+
+        return;
+
+    }
+
+
 
     const reader = new FileReader();
-    reader.onload = async function (event) {
+
+    reader.onload = function (e) {
+
         try {
-            const uploadedData = JSON.parse(event.target.result);
 
-            const confirmacao = await showConfirm(
-                "⚠️ ATENÇÃO EXTREMA ⚠️",
-                `Isso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execuções, mensagens, e clientes novos feitos DEPOIS desse backup vão <strong>SUMIR para sempre</strong>.
-                <br><br>Você tem 100% de certeza absoluta?`,
-                'danger'
-            );
+            const rawData = e.target.result;
 
-            if (!confirmacao) {
-                e.target.value = '';
-                return;
-            }
+            const parsedData = JSON.parse(rawData);
 
-            // Validar a estrutura uploadedData antes de prosseguir
-            if (!uploadedData.clientes || !uploadedData.funcionarios || !uploadedData.config || !uploadedData.version) {
+
+
+            if (!parsedData.clientes || !parsedData.funcionarios || !parsedData.config || !parsedData.version) {
+
                 throw new Error("O arquivo selecionado não parece ser um backup válido do FiscalApp.");
 
             }
@@ -4766,30 +4607,30 @@ function renderAuditoriaCompetencia() {
     const userSelect = document.getElementById('audit-comp-user');
     const btnRun = document.getElementById('btn-run-audit-comp');
 
-    // Povoar Meses
+    // Populate Meses
     mesSelect.innerHTML = '<option value="">Todos os Meses</option>';
     const mesesObj = Store.getData().meses || [];
     [...mesesObj].sort((a, b) => b.id.localeCompare(a.id)).forEach(m => {
         mesSelect.innerHTML += `<option value="${m.id}">${m.mes}</option>`;
     });
 
-    // Povoar Usuários
+    // Populate Users
     userSelect.innerHTML = '<option value="">Todos os Funcionários</option>';
     const usersObj = Store.getData().funcionarios || [];
     usersObj.forEach(u => {
         userSelect.innerHTML += `<option value="${u.nome}">${u.nome}</option>`;
     });
 
-    // Resetar Tabela
+    // Reset Table
     document.getElementById('audit-comp-results').style.display = 'none';
 
-    // Remover listeners antigos para evitar bubbling
+    // Remove old listeners to prevent bubbling
     const cloneBtn = btnRun.cloneNode(true);
     btnRun.parentNode.replaceChild(cloneBtn, btnRun);
 
     cloneBtn.addEventListener('click', runAuditoriaCompetencia);
 
-    // Listener do Botão Imprimir
+    // Print Button Listener
     const btnPrint = document.getElementById('btn-print-audit-comp');
     if (btnPrint) {
         btnPrint.addEventListener('click', () => {
@@ -4811,10 +4652,10 @@ function runAuditoriaCompetencia() {
     const tbody = document.querySelector('#audit-comp-table tbody');
     tbody.innerHTML = '';
 
-    // Ler todas as rotinas
+    // Ler all rotinas
     const allExecs = Store.getData().execucoes || [];
 
-    // Filtrar
+    // Filter
     let filtered = allExecs;
     if (mesId) {
         filtered = filtered.filter(e => e.competencia === mesId);
@@ -4823,7 +4664,7 @@ function runAuditoriaCompetencia() {
         filtered = filtered.filter(e => e.responsavel === userName);
     }
 
-    // Estatísticas
+    // Stats
     let noPrazo = 0;
     let atrasado = 0;
     let pendente = 0;
@@ -4883,7 +4724,7 @@ function runAuditoriaCompetencia() {
         });
     }
 
-    // Atualizar KPIs
+    // Update KPIs
     document.getElementById('audit-comp-noprazo').textContent = noPrazo;
     document.getElementById('audit-comp-atrasado').textContent = atrasado;
     document.getElementById('audit-comp-pendente').textContent = pendente;
@@ -4895,31 +4736,22 @@ function runAuditoriaCompetencia() {
     resultsDiv.style.display = 'block';
 }
 
+// ==========================================
+// Settings Hub Tabs Initialization
+// ==========================================
+// ==========================================
+
 // VIEW: Painel de Administração (RBAC)
-
-
 
 // ==========================================
 
-
-
 function renderAdminPanel() {
-
-
 
     const tbody = document.querySelector('#admin-cargos-table tbody');
 
-
-
     if (!tbody) return;
 
-
-
     tbody.innerHTML = '';
-
-
-
-
 
 
 
@@ -4927,543 +4759,440 @@ function renderAdminPanel() {
 
 
 
-
-
-
-
     if (cargos.length === 0) {
 
-
-
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 3rem;">Nenhum cargo de seguran├ºa configurado ainda.</td></tr>`;
-
-
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 3rem;">Nenhum cargo de segurança configurado ainda.</td></tr>`;
 
         return;
 
-
-
     }
-
-
-
-
 
 
 
     cargos.forEach(cargo => {
 
-
-
         const tr = document.createElement('tr');
-
-
 
         tr.className = 'fade-in';
 
 
 
-
-
-
-
         let tagsHtml = '';
-
-
 
         if (cargo.telas_permitidas && cargo.telas_permitidas.length > 0) {
 
-
-
             cargo.telas_permitidas.forEach(tela => {
-
-
 
                 let badgeClass = 'table-badge ';
 
-
-
                 if (tela === 'settings') {
-
-
 
                     badgeClass += 'danger';
 
-
-
                 } else if (tela === 'dashboard' || tela === 'operacional') {
-
-
 
                     badgeClass += 'primary';
 
-
-
                 } else {
-
-
 
                     badgeClass += 'info';
 
-
-
                 }
-
-
 
                 tagsHtml += `<span class="${badgeClass}" style="margin-right: 4px; margin-bottom: 4px; display: inline-block;">${tela}</span>`;
 
-
-
             });
-
-
 
         } else {
 
-
-
             tagsHtml = '<span class="text-muted">Nenhum acesso definido</span>';
 
-
-
         }
-
-
-
-
 
 
 
         tr.innerHTML = `
 
-
-
             <td>#${cargo.id}</td>
-
-
 
             <td><strong>${cargo.nome_cargo}</strong></td>
 
-
-
             <td style="max-width: 400px; line-height: 1.8;">${tagsHtml}</td>
-
-
 
             <td style="text-align: right;">
 
-
-
                 <button class="action-btn text-primary" onclick="openCargoModal(${cargo.id})" title="Editar Permissões"><i class="fa-solid fa-pen-to-square"></i></button>
-
-
 
                 <button class="action-btn text-danger" onclick="deleteCargo(${cargo.id})" title="Excluir Cargo"><i class="fa-solid fa-trash"></i></button>
 
-
-
             </td>
-
-
 
         `;
 
-
-
         tbody.appendChild(tr);
-
-
 
     });
 
-
-
 }
-
-
-
-
 
 
 
 function openCargoModal(cargoId = null) {
 
-
-
     const modal = document.getElementById('admin-cargo-modal');
-
-
 
     modal.style.display = 'flex';
 
-
-
     // trigger animation
-
-
 
     setTimeout(() => modal.classList.add('active'), 10);
 
 
 
-
-
-
-
     const form = document.getElementById('admin-cargo-form');
 
-
-
     form.reset();
-
-
 
     document.getElementById('cargo-id').value = '';
 
 
 
-
-
-
-
     if (cargoId) {
-
-
 
         const cargo = Store.getData().cargos.find(c => c.id === cargoId);
 
-
-
         if (cargo) {
 
-
-
             document.getElementById('cargo-id').value = cargo.id;
-
-
 
             document.getElementById('cargo-nome').value = cargo.nome_cargo;
 
 
 
-
-
-
-
             const checks = document.querySelectorAll('.cargo-perm-check');
-
-
 
             checks.forEach(chk => {
 
-
-
                 chk.checked = cargo.telas_permitidas && cargo.telas_permitidas.includes(chk.value);
-
-
 
             });
 
-
-
         }
-
-
 
     }
 
-
-
 }
-
-
-
-
 
 
 
 function closeCargoModal(e) {
 
-
-
     if (e) e.preventDefault();
-
-
 
     const modal = document.getElementById('admin-cargo-modal');
 
-
-
     modal.classList.remove('active');
-
-
 
     setTimeout(() => modal.style.display = 'none', 300);
 
-
-
 }
-
-
-
-
 
 
 
 async function handleSaveCargo(e) {
 
-
-
     e.preventDefault();
 
-
-
     const id = document.getElementById('cargo-id').value;
-
-
 
     const nome = document.getElementById('cargo-nome').value.trim();
 
 
 
-
-
-
-
     const checkboxes = document.querySelectorAll('.cargo-perm-check:checked');
-
-
 
     const permitidas = Array.from(checkboxes).map(chk => chk.value);
 
 
 
-
-
-
-
     // Disable button to prevent double submit
-
     const submitBtn = document.getElementById('btn-save-cargo') || e.target.querySelector('button[type="submit"]') || document.querySelector('#admin-cargo-modal button[type="submit"]');
 
-
-
     if (submitBtn) {
-
         submitBtn.disabled = true;
-
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
-
     }
-
-
-
-
 
 
 
     let success = false;
 
-
-
     if (id) {
-
-
 
         success = await Store.updateCargo(parseInt(id), nome, permitidas);
 
-
-
     } else {
-
-
 
         success = await Store.addCargo(nome, permitidas);
 
-
-
     }
-
-
-
-
 
 
 
     if (submitBtn) {
-
         submitBtn.disabled = false;
-
         submitBtn.innerHTML = 'Salvar Permissões';
-
     }
-
-
-
-
 
 
 
     if (success) {
 
-
-
         closeCargoModal();
-
-
 
         renderAdminPanel();
 
-
-
         showFeedbackToast(`Permissões do cargo ${nome} salvas!`, 'success');
 
-
-
-        // Se o usuário logado tiver esse permiss├úo editada, seria ideal um recarregamento, 
-
-
+        // Se o usuário logado tiver esse permissão editada, seria ideal um recarregamento, 
 
         // mas assumimos que o Admin Master está gerenciando outras.
 
-
-
     } else {
-
-
 
         showFeedbackToast('Erro ao salvar cargo. Verifique a API.', 'danger');
 
-
-
     }
 
-
-
 }
-
-
-
-
 
 
 
 async function deleteCargo(id) {
 
-
-
     if (confirm("Tem certeza que deseja excluir esse Cargo e suas Permissões de Acesso?")) {
-
-
 
         const success = await Store.deleteCargo(id);
 
-
-
         if (success) {
-
-
 
             renderAdminPanel();
 
-
-
             showFeedbackToast('Cargo excluído com sucesso.', 'success');
-
-
 
         } else {
 
-
-
             showFeedbackToast('Erro ao excluir cargo.', 'danger');
-
-
 
         }
 
-
-
     }
-
-
 
 }
 
 
 
-
-
-
-
 // ==========================================
 
-
-
-// VIEW: Backup e Seguran├ºa
-
-
+// VIEW: Backup e Segurança
 
 // ==========================================
-
-
 
 function renderBackupView() {
 
-
-
     const config = Store.getData().config;
 
-
-
     const toggle = document.getElementById('toggle-auto-backup');
-
-
 
     if (toggle) toggle.checked = config && config.autoBackup;
 
 
 
-
-
-
-
     const lastBackupText = document.getElementById('last-backup-text');
-
-
 
     if (lastBackupText) {
 
-
-
         if (config && config.lastBackupData) {
-
-
 
             const d = new Date(config.lastBackupData);
 
-
-
-            lastBackupText.innerHTML = `├Ültimo backup automático: ${d.toLocaleDateString('pt-BR')} ├ás ${d.toLocaleTimeString('pt-BR')}`;
-
-
+            lastBackupText.innerHTML = `Último backup automático: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
 
         } else {
 
-
-
-            lastBackupText.innerHTML = `├Ültimo backup: Nunca`;
-
-
+            lastBackupText.innerHTML = `Último backup: Nunca`;
 
         }
 
+    }
 
+}
+
+
+
+function downloadBackupFile() {
+
+    const dataStr = JSON.stringify(Store.getData(), null, 2);
+
+    const blob = new Blob([dataStr], { type: 'application/json' });
+
+    const url = URL.createObjectURL(blob);
+
+
+
+    const d = new Date();
+
+    const dateString = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}${d.getDate().toString().padStart(2, '0')}`;
+
+
+
+    const link = document.createElement('a');
+
+    link.setAttribute('href', url);
+
+    link.setAttribute('download', `fiscalapp_backup_${dateString}.json`);
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+
+
+    Store.registerLog("Backup de Segurança", "Realizou o download manual da base de dados");
+
+    Store.saveToStorage();
+
+}
+
+
+
+function restoreBackupFile() {
+
+    const fileInput = document.getElementById('backup-file-input');
+
+    const file = fileInput.files[0];
+
+    if (!file) {
+
+        alert("Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.");
+
+        return;
 
     }
 
 
+
+    if (!confirm("⚠️ ATENÇÃO EXTREMA ⚠️\n\nIsso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execuções, mensagens, clientes novos feitos DEPOIS desse backup vão SUMIR para sempre.\n\nVocê tem 100% de certeza absoluta?")) {
+
+        return;
+
+    }
+
+
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+
+        try {
+
+            const rawData = e.target.result;
+
+            const parsedData = JSON.parse(rawData);
+
+
+
+            if (!parsedData.clientes || !parsedData.funcionarios || !parsedData.config || !parsedData.version) {
+
+                throw new Error("O arquivo selecionado não parece ser um backup válido do FiscalApp.");
+
+            }
+
+
+
+            Store.setInitialData(parsedData);
+
+            alert("✅ SISTEMA RESTAURADO COM SUCESSO!\n\nSeus dados foram alterados. O sistema será recarregado agora para aplicar todas as configurações visuais.");
+
+            window.location.reload();
+
+
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Erro fatal ao tentar ler o arquivo: " + err.message);
+
+            Store.registerLog("Aviso/Alerta", `Tentativa falha de restauração de backup.`);
+
+        }
+
+    };
+
+    reader.readAsText(file);
+
+}
+
+
+
+function checkAndRunAutoBackup() {
+
+    const config = Store.getData().config;
+
+    if (!config || !config.autoBackup) return;
+
+
+
+    const now = new Date();
+
+    const lastBackup = config.lastBackupData ? new Date(config.lastBackupData) : null;
+
+
+
+    // Se nunca fez backup ou se passaram mais de 7 dias
+
+    if (!lastBackup || (now - lastBackup) > (7 * 24 * 60 * 60 * 1000)) {
+
+        console.log("Executando Auto-Backup semanal...");
+
+        const dataStr = JSON.stringify(Store.getData(), null, 2);
+
+        const blob = new Blob([dataStr], { type: 'application/json' });
+
+        const url = URL.createObjectURL(blob);
+
+
+
+        const dateString = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+
+
+
+        const link = document.createElement('a');
+
+        link.setAttribute('href', url);
+
+        link.setAttribute('download', `fiscalapp_autobackup_${dateString}.json`);
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+
+
+        Store.updateConfig('lastBackupData', now.toISOString());
+
+        Store.registerLog("Backup Automático", "O sistema realizou o download automático agendado.");
+
+        Store.saveToStorage();
+
+        renderBackupView();
+
+    }
 
 }
 
@@ -5471,114 +5200,145 @@ function renderBackupView() {
 
 
 
+// ==========================================
+// VIEW: Auditoria de Competência
+// ==========================================
+function renderAuditoriaCompetencia() {
+    const mesSelect = document.getElementById('audit-comp-mes');
+    const userSelect = document.getElementById('audit-comp-user');
+    const btnRun = document.getElementById('btn-run-audit-comp');
 
+    // Populate Meses
+    mesSelect.innerHTML = '<option value="">Todos os Meses</option>';
+    const mesesObj = Store.getData().meses || [];
+    [...mesesObj].sort((a, b) => b.id.localeCompare(a.id)).forEach(m => {
+        mesSelect.innerHTML += `<option value="${m.id}">${m.mes}</option>`;
+    });
 
-function downloadBackupFile() {
+    // Populate Users
+    userSelect.innerHTML = '<option value="">Todos os Funcionários</option>';
+    const usersObj = Store.getData().funcionarios || [];
+    usersObj.forEach(u => {
+        userSelect.innerHTML += `<option value="${u.nome}">${u.nome}</option>`;
+    });
 
+    // Reset Table
+    document.getElementById('audit-comp-results').style.display = 'none';
 
+    // Remove old listeners to prevent bubbling
+    const cloneBtn = btnRun.cloneNode(true);
+    btnRun.parentNode.replaceChild(cloneBtn, btnRun);
 
-    const dataStr = JSON.stringify(Store.getData(), null, 2);
+    cloneBtn.addEventListener('click', runAuditoriaCompetencia);
 
+    // Print Button Listener
+    const btnPrint = document.getElementById('btn-print-audit-comp');
+    if (btnPrint) {
+        btnPrint.addEventListener('click', () => {
+            window.print();
+        });
+    }
+}
 
+function runAuditoriaCompetencia() {
+    const mesId = document.getElementById('audit-comp-mes').value;
+    const userName = document.getElementById('audit-comp-user').value;
 
-    const blob = new Blob([dataStr], { type: 'application/json' });
-
-
-
-    const url = URL.createObjectURL(blob);
-
-
-
-
-
-
-
-    const d = new Date();
-
-
-
-    const dateString = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}${d.getDate().toString().padStart(2, '0')}`;
-
-
-
-
-
-
-
-    const link = document.createElement('a');
-
-
-
-    link.setAttribute('href', url);
-
-
-
-    link.setAttribute('download', `fiscalapp_backup_${dateString}.json`);
-
-
-
-    document.body.appendChild(link);
-
-
-
-    link.click();
-
-
-
-    document.body.removeChild(link);
-
-
-
-function restoreBackupFile() {
-
-
-
-    const fileInput = document.getElementById('backup-file-input');
-
-
-
-    const file = fileInput.files[0];
-
-
-
-    if (!file) {
-
-
-
-        showNotify("Atenção", "Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.", "warning");
-
-
-
+    if (!mesId && !userName) {
+        alert("Selecione pelo menos um Mês ou um Funcionário para filtrar.");
         return;
-
-
-
     }
 
+    const resultsDiv = document.getElementById('audit-comp-results');
+    const tbody = document.querySelector('#audit-comp-table tbody');
+    tbody.innerHTML = '';
 
+    // Ler all rotinas
+    const allExecs = Store.getData().execucoes || [];
 
-
-
-
-
-    if (!confirm("⚠️ ATENÇÃO EXTREMA ⚠️\n\nIsso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execu├ºões, mensagens, clientes novos feitos DEPOIS desse backup v├úo SUMIR para sempre.\n\nVocê tem 100% de certeza absoluta?")) {
-
-
-
-        return;
-
-
-
+    // Filter
+    let filtered = allExecs;
+    if (mesId) {
+        filtered = filtered.filter(e => e.competencia === mesId);
+    }
+    if (userName) {
+        filtered = filtered.filter(e => e.responsavel === userName);
     }
 
+    // Stats
+    let noPrazo = 0;
+    let atrasado = 0;
+    let pendente = 0;
 
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem;">Nenhuma rotina encontrada para os filtros selecionados.</td></tr>`;
+    } else {
+        const tToday = new Date().setHours(0, 0, 0, 0);
 
+        filtered.forEach(ex => {
+            const client = Store.getData().clientes.find(c => c.id === ex.clienteId);
+            const clientName = client ? client.razaoSocial : `#${ex.clienteId}`;
 
+            const dPrazo = ex.diaPrazo ? new Date(ex.diaPrazo + "T00:00:00") : null;
+            const dFeito = ex.feitoEm ? new Date(ex.feitoEm + "T00:00:00") : null;
 
+            let statusTag = '';
+            let veredito = '';
+            let dataRealBaixa = ex.feitoEm ? formatDate(ex.feitoEm) : 'Pendente';
 
+            if (ex.feito) {
+                if (dPrazo && dFeito && dFeito > dPrazo) {
+                    statusTag = '<span class="status-badge atrasado"><i class="fa-solid fa-clock"></i> Com Atraso</span>';
+                    vereditoHTML = `<div class="audit-veredito-card"><span style="color:var(--danger); font-weight:600;">Entregue em ${dataRealBaixa}</span><br><small style="color:var(--text-muted)">(Fora do Prazo)</small></div>`;
+                    atrasado++;
+                } else {
+                    statusTag = '<span class="status-badge concluido"><i class="fa-solid fa-check"></i> No Prazo</span>';
+                    vereditoHTML = `<div class="audit-veredito-card"><span style="color:var(--success); font-weight:600;">Entregue em ${dataRealBaixa}</span><br><small style="color:var(--text-muted)">(No Prazo)</small></div>`;
+                    noPrazo++;
+                }
+                if (ex.baixadoPor) {
+                    vereditoHTML += `<div style="margin-top:4px; padding-left:10px;"><small style="color:var(--text-muted); font-style:italic;">Baixado por: ${ex.baixadoPor}</small></div>`;
+                }
+            } else {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                if (dPrazo && dPrazo < now) {
+                    statusTag = '<span class="status-badge atrasado"><i class="fa-solid fa-triangle-exclamation"></i> Atrasado</span>';
+                    vereditoHTML = '<div class="audit-veredito-card"><span style="color:var(--danger); font-weight:600;">Pendente e Atrasado</span></div>';
+                    atrasado++;
+                } else {
+                    statusTag = '<span class="status-badge pendente"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
+                    vereditoHTML = '<div class="audit-veredito-card"><span style="color:var(--text-muted);">Aguardando Execução</span></div>';
+                    pendente++;
+                }
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${clientName}</strong></td>
+                <td>${ex.rotina}</td>
+                <td style="color:var(--text-muted)">${formatDate(ex.diaPrazo)}</td>
+                <td><span style="font-weight:500;">${dataRealBaixa}</span></td>
+                <td>${vereditoHTML}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Update KPIs
+    document.getElementById('audit-comp-noprazo').textContent = noPrazo;
+    document.getElementById('audit-comp-atrasado').textContent = atrasado;
+    document.getElementById('audit-comp-pendente').textContent = pendente;
+
+    const lblMes = mesId ? Store.getData().meses.find(m => m.id === mesId)?.mes || mesId : 'Todo o Período';
+    const lblUser = userName ? userName : 'Toda a Equipe';
+    document.getElementById('audit-comp-subtitle').textContent = `Resultados para ${lblUser} em ${lblMes}`;
+
+    resultsDiv.style.display = 'block';
+}
 
 // ==========================================
-// Inicialização das Abas de Configurações
+// Settings Hub Tabs Initialization
 // ==========================================
 let settingsInitDone = false;
 function initSettingsTabs() {
@@ -5587,7 +5347,80 @@ function initSettingsTabs() {
 
     tabs.forEach(tab => {
         tab.addEventListener("click", () => {
-            // Remover classes ativas
+            // Remove active classes
+            tabs.forEach(t => {
+                t.classList.remove("active");
+                t.style.background = "transparent";
+                t.style.color = "var(--text-muted)";
+            });
+            document.querySelectorAll(".settings-pane").forEach(pane => {
+                pane.style.display = "none";
+                pane.classList.remove("active");
+            });
+
+            // Set active class to clicked tab
+            tab.classList.add("active");
+            tab.style.background = "rgba(99, 102, 241, 0.2)";
+            tab.style.color = "var(--text-main)";
+
+            const targetId = tab.getAttribute("data-target");
+            const targetPane = document.getElementById(targetId);
+            if (targetPane) {
+                targetPane.style.display = "block";
+                setTimeout(() => targetPane.classList.add("active"), 10);
+            }
+
+            // Fire Specific Tab Renders
+            if (targetId === "set-rbac") {
+                renderAdminPanel();
+            } else if (targetId === "set-setores") {
+                renderSetoresSettings();
+            } else if (targetId === "set-backup") {
+                renderBackupView();
+            } else if (targetId === "set-auditoria") {
+                renderAuditoria();
+            } else if (targetId === "set-auditoria-comp") {
+                renderAuditoriaCompetencia();
+            } else if (targetId === "set-equipe") {
+                renderEquipe();
+            }
+        });
+    });
+
+    settingsInitDone = true;
+}
+
+function setupPasswordToggles() {
+    document.querySelectorAll('.btn-toggle-password').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const wrapper = this.closest('.password-wrapper');
+            if (!wrapper) return;
+            const input = wrapper.querySelector('input');
+            const icon = this.querySelector('i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    });
+}
+
+
+
+
+
+let settingsInitDone = false;
+function initSettingsTabs() {
+    if (settingsInitDone) return;
+    const tabs = document.querySelectorAll(".settings-tab-btn");
+
+    tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            // Remove active classes
             tabs.forEach(t => {
                 t.classList.remove("active");
             });
@@ -5596,21 +5429,17 @@ function initSettingsTabs() {
                 pane.classList.remove("active");
             });
 
-            // Definir classe ativa na aba clicada
+            // Set active class to clicked tab
             tab.classList.add("active");
 
             const targetId = tab.getAttribute("data-target");
-
-            // Persistir o estado da aba
-            sessionStorage.setItem("fiscalapp_settings_tab", targetId);
-
             const targetPane = document.getElementById(targetId);
             if (targetPane) {
                 targetPane.style.display = "block";
                 setTimeout(() => targetPane.classList.add("active"), 10);
             }
 
-            // Disparar Renderizações Específicas de Abas
+            // Fire Specific Tab Renders
             if (targetId === "set-rbac") {
                 renderAdminPanel();
             } else if (targetId === "set-setores") {

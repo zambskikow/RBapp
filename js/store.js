@@ -1,4 +1,4 @@
-// js/store.js - Configurado para buscar da API Python / Vercel
+// js/store.js - Configured to fetch from Python API / Vercel
 
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://127.0.0.1:8000/api' // URL do servidor local FastAPI para testes
@@ -11,7 +11,7 @@ const addDays = (date, days) => {
     return d;
 };
 
-// Cache do estado inicial - começa vazio e é preenchido pela API
+// Initial state cache - starts empty and gets populated by the API
 let db = {
     setores: [],
     funcionarios: [],
@@ -40,7 +40,7 @@ let db = {
 
 window.Store = {
     // -----------------------------------------------------------------
-    // HIDRATAÇÃO DA API
+    // API HYDRATION
     // -----------------------------------------------------------------
     async fetchAllData() {
         try {
@@ -86,7 +86,7 @@ window.Store = {
             })) || [];
             db.logs = await logsRes.json() || [];
 
-            // Tentar definir os cargos (pode falhar se a tabela não existir, fallback para array vazio)
+            // Try to set cargos (can fail if table doesn't exist yet, fallback to empty array)
             try {
                 const cargosData = await cargosRes.json();
                 db.cargos = Array.isArray(cargosData) ? cargosData : [];
@@ -137,7 +137,7 @@ window.Store = {
                 }
             } catch (e) { }
 
-            // Mapear rotinasBase do python para camelCase esperado por compatibilidade de frontend legado
+            // Map python rotinasBase to expected camelCase names for legacy frontend compatibility
             db.rotinasBase = db.rotinasBase.map(r => ({
                 id: r.id,
                 nome: r.nome,
@@ -198,7 +198,7 @@ window.Store = {
             return true;
         } catch (error) {
             console.error("Erro ao puxar dados do banco:", error);
-            // Fallback para testes offline visuais se necessário, ou notificar o usuário
+            // Fallback for visual offline testing if needed, or notify user
             if (typeof window.showNotify === 'function') {
                 window.showNotify("Erro de Conexão", "Erro de conexão com o banco de dados. Tente atualizar a página.", "error");
             } else {
@@ -208,7 +208,7 @@ window.Store = {
         }
     },
 
-    // Como no storage local, mas agora espera o fetch
+    // As in local storage, but now wait for fetch
     async loadFromStorage() {
         const loaded = await this.fetchAllData();
         if (loaded) {
@@ -229,13 +229,13 @@ window.Store = {
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         const currentExt = `${monthNames[now.getMonth()]} ${year}`;
 
-        // Checar se o mês real atual existe no Banco de Dados
+        // Check if current real-world month exists in DB
         const exists = db.meses.find(m => m.id === currentCompId);
 
         if (!exists) {
             console.log(`[Rollover] Mês ${currentCompId} não existe. Iniciando virada de competência...`);
 
-            // Desativar meses ativos antigos
+            // Deactivate old active months
             const oldActives = db.meses.filter(m => m.ativo);
             for (let m of oldActives) {
                 m.ativo = false;
@@ -250,7 +250,7 @@ window.Store = {
                 }
             }
 
-            // Criar novo mês
+            // Create new month
             const newMonth = {
                 id: currentCompId,
                 mes: currentExt,
@@ -270,14 +270,14 @@ window.Store = {
                 });
 
                 if (res.ok) {
-                    // Ele retorna um array, mapeando de volta
+                    // It returns array, map back
                     const data = await res.json();
                     db.meses.push(data[0]);
                     this.registerLog("Sistema", `Competência virada para ${currentExt}`);
 
-                    // Bootstrapping da engine: Disparar criação de tarefas para todos os clientes
+                    // Bootstrapping engine: Trigger creation of tasks for all clients
                     console.log(`[Rollover] Gerando tarefas para ${db.clientes.length} clientes...`);
-                    // Devemos esperar um pouco para garantir que o mês foi inserido localmente
+                    // We must wait a tiny bit to assure month was pushed locally
                     for (let cliente of db.clientes) {
                         this.engineRotinas(cliente);
                     }
@@ -286,7 +286,7 @@ window.Store = {
                 console.error("Erro ao criar nova competência:", e);
             }
         } else if (!exists.ativo) {
-            // Corrigir caso extremo onde o mês existe, mas não está marcado como ativo
+            // Fix edge case where month exists but is not marked active
             exists.ativo = true;
             await fetch(`${API_BASE}/meses/${exists.id}`, {
                 method: 'PUT',
@@ -302,7 +302,7 @@ window.Store = {
         // você vai notar que os métodos individuais abaixo estão sendo adaptados para fazer POST imediatamente.
     },
 
-    // ... resto das estruturas da função original
+    // ... rest of the original function structures
     async registerLog(action, details) {
         const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
         const permissao = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.permissao : "Automático";
@@ -318,7 +318,7 @@ window.Store = {
                     details: details
                 })
             });
-            // Também adicionar localmente para atualização instantânea da UI
+            // Also add locally for instant UI update
             const now = new Date();
             const timestamp = now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
             db.logs.push({ timestamp, user_name: username, permissao, action, details });
@@ -331,7 +331,7 @@ window.Store = {
         return db;
     },
 
-    // A engine da UI é filtrada a partir do Cache local (que foi preenchido via mapeamento loadFromStorage)
+    // UI Engine gets filtered from the local Cache (which was populated via loadFromStorage mapping)
     getExecucoesWithDetails(userFilter = 'All') {
         const tToday = new Date().setHours(0, 0, 0, 0);
         // Filtra execuções órfãs ou de clientes que perderam o vínculo com a rotina
@@ -456,8 +456,8 @@ window.Store = {
             .sort((a, b) => new Date(a.diaPrazo || new Date()) - new Date(b.diaPrazo || new Date()));
     },
 
-    // Disparadores de Ação - MOCK DA API
-    // Em uma restruturação profunda real, teríamos um app.put('/api/execucoes/{id}') no Python
+    // Action Disparators - API MOCK
+    // In a real deep restructuring we would have an app.put('/api/execucoes/{id}') on Python
     async toggleExecucaoFeito(id, isFeito) {
         const ex = db.execucoes.find(e => e.id === id);
         const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
@@ -784,41 +784,26 @@ window.Store = {
     },
 
     async deleteCompetencia(compId) {
-        const compIdStr = String(compId).trim();
-        let deletedLocally = false;
-
         // Remover Mês
-        const idx = db.meses.findIndex(m => String(m.id).trim() === compIdStr);
+        const idx = db.meses.findIndex(m => m.id === compId);
         if (idx !== -1) {
+            const isAtivo = db.meses[idx].ativo;
             db.meses.splice(idx, 1);
-            deletedLocally = true;
-        } else {
-            console.warn("Mês não encontrado no cache local:", compIdStr);
-        }
-
-        try {
-            const res = await fetch(`${API_BASE}/meses/${compIdStr}`, { method: 'DELETE' });
-            if (!res.ok) {
-                console.error("Erro na API ao deletar mês:", res.status);
-            } else {
-                this.registerLog("Gestão de Competências", `Excluiu inteiramente a competência: ${compIdStr} (e suas execuções vinculadas)`);
-            }
-        } catch (e) {
-            console.error("Erro deletar mes", e);
+            try {
+                await fetch(`${API_BASE}/meses/${compId}`, { method: 'DELETE' });
+                this.registerLog("Gestão de Competências", `Excluiu inteiramente a competência: ${compId} (e suas execuções vinculadas)`);
+            } catch (e) { console.error("Erro deletar mes", e); }
         }
 
         // Remover todas as execucoes sob essa competência
-        if (db.execucoes) {
-            const toDeleteIds = db.execucoes.filter(e => String(e.competencia) === compIdStr).map(e => e.id);
-            db.execucoes = db.execucoes.filter(e => String(e.competencia) !== compIdStr);
+        const toDeleteIds = db.execucoes.filter(e => e.competencia === compId).map(e => e.id);
+        db.execucoes = db.execucoes.filter(e => e.competencia !== compId);
 
-            for (const tid of toDeleteIds) {
-                try { await fetch(`${API_BASE}/execucoes/${tid}`, { method: 'DELETE' }); }
-                catch (err) { console.log(err); }
-            }
+        for (const tid of toDeleteIds) {
+            try { await fetch(`${API_BASE}/execucoes/${tid}`, { method: 'DELETE' }); }
+            catch (err) { console.log(err); }
         }
-
-        return deletedLocally || true; // Por enquanto sempre retorne verdadeiro para atualizar a UI, mas localmente será removido
+        return true;
     },
 
     async addClient(clientData) {
@@ -888,12 +873,6 @@ window.Store = {
     },
 
     async addFuncionario(nome, setor, permissao, senha, ativo = true) {
-        const todos = db.funcionarios;
-        if (todos.some(f => f.nome.trim().toLowerCase() === nome.trim().toLowerCase())) {
-            console.error("Erro Store: Nome de funcionário duplicado.");
-            return false;
-        }
-
         const res = await fetch(`${API_BASE}/funcionarios`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -903,46 +882,22 @@ window.Store = {
             const data = await res.json();
             db.funcionarios.push({ id: data[0].id, nome, setor, permissao, senha, ativo });
             this.registerLog("Gestão de Equipe", `Novo membro cadastrado: ${nome}`);
-            return true;
         }
-        return false;
     },
 
     async editFuncionario(id, nome, setor, permissao, senha, ativo) {
-        const todos = db.funcionarios;
-        if (todos.some(f => f.id != id && f.nome.trim().toLowerCase() === nome.trim().toLowerCase())) {
-            console.error("Erro Store: Nome de funcionário duplicado na edição.");
-            return false;
-        }
-
         const res = await fetch(`${API_BASE}/funcionarios/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome, setor, permissao, senha, ativo })
         });
         if (res.ok) {
-            const index = db.funcionarios.findIndex(f => f.id == id);
+            const index = db.funcionarios.findIndex(f => f.id === parseInt(id));
             if (index !== -1) {
                 db.funcionarios[index] = { ...db.funcionarios[index], nome, setor, permissao, senha, ativo };
                 this.registerLog("Gestão de Equipe", `Membro editado: ${nome} (Ativo: ${ativo})`);
-                return true;
             }
         }
-        return false;
-    },
-
-    async deleteFuncionario(id) {
-        try {
-            const res = await fetch(`${API_BASE}/funcionarios/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                db.funcionarios = db.funcionarios.filter(f => f.id == id ? false : true);
-                this.registerLog("Gestão de Equipe", `Conta de funcionário removida (ID: ${id})`);
-                return true;
-            }
-        } catch (e) {
-            console.error("Erro Store deleteFuncionario:", e);
-        }
-        return false;
     },
 
     async addSetor(nome) {
@@ -1051,7 +1006,7 @@ window.Store = {
         }
     },
 
-    // Mocks para edição - em uma refatoração completa, estes seriam requisições PUT
+    // Mocks for edit - in a full refactor these would be PUT requests
     async editClient(id, clientData) {
         const {
             razaoSocial, cnpj, regime, responsavelFiscal, driveLink,
@@ -1064,12 +1019,12 @@ window.Store = {
 
         const c = db.clientes.find(x => x.id === parseInt(id));
         if (c) {
-            // Determinar rotinas adicionadas e removidas
+            // Determine added and removed routines
             const oldRotinas = c.rotinasSelecionadas || [];
             const newRotinasIds = finalRotinasIds.filter(rId => !oldRotinas.includes(rId));
             const removedRotinasIds = oldRotinas.filter(rId => !finalRotinasIds.includes(rId));
 
-            // Atualizar objeto local
+            // Update local object
             Object.assign(c, {
                 razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadas: finalRotinasIds, driveLink,
                 codigo, ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
@@ -1077,7 +1032,7 @@ window.Store = {
                 ativo: clientData.ativo
             });
 
-            // Lidar com remoções
+            // Handle Removals
             if (removedRotinasIds.length > 0) {
                 const month = db.meses.find(m => m.ativo);
                 if (month) {
@@ -1102,7 +1057,7 @@ window.Store = {
                 }
             }
 
-            // Persistir alterações do cliente
+            // Persist Client Changes
             try {
                 const res = await fetch(`${API_BASE}/clientes/${id}`, {
                     method: 'PUT',
@@ -1145,7 +1100,7 @@ window.Store = {
 
             this.registerLog("Editou Cliente", razaoSocial);
 
-            // Lidar com adições
+            // Handle Additions
             if (newRotinasIds.length > 0) {
                 const tempClient = { ...c, rotinasSelecionadas: newRotinasIds };
                 await this.engineRotinas(tempClient);
@@ -1588,14 +1543,14 @@ window.Store = {
 
     async engineRotinas(cliente) {
 
-        // Construir rotinas para o mês ativo
+        // Build routines for the active month
         const month = db.meses.find(m => m.ativo);
         if (!month) {
             console.warn("Rotinas Engine abortado: Nenhum mês ativo definido no sistema.");
             return;
         }
 
-        const currentComp = month.id; // p. ex. "2026-02"
+        const currentComp = month.id; // e.g. "2026-02"
         const routinesToProcess = cliente.rotinasSelecionadas || [];
         if (routinesToProcess.length === 0) return;
 
@@ -1635,7 +1590,7 @@ window.Store = {
                 dateStr = `${execY}-${execM}-${dia}`;
             }
 
-            // Checklists podem ser arrays de strings ou objetos. Normalizar para objetos em "execuções".
+            // Checklists might be arrays of strings or objects. Normalize to objects for 'execucoes'.
             const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
                 const text = typeof item === 'string' ? item : item.texto;
                 return {
@@ -1645,7 +1600,7 @@ window.Store = {
                 };
             });
 
-            // Verificar se a tarefa já existe para evitar duplicação
+            // Verify if task already exists to avoid duplication
             const exists = db.execucoes.find(e =>
                 e.clienteId === cliente.id &&
                 e.rotina === rotina.nome &&
@@ -1657,7 +1612,7 @@ window.Store = {
                 continue;
             }
 
-            // Enviar tarefa para a API
+            // Dispatch task to API
             try {
                 const res = await fetch(`${API_BASE}/execucoes`, {
                     method: 'POST',
@@ -1706,7 +1661,7 @@ window.Store = {
     },
 
     // -----------------------------------------------------------------
-    // MÉTODOS DE MARKETING
+    // MARKETING METHODS
     // -----------------------------------------------------------------
     async saveMarketingPost(postData) {
         const isEdit = !!postData.id;
@@ -1793,20 +1748,6 @@ window.Store = {
             }
         } catch (e) { console.error(e); }
         return null;
-    },
-
-    async deleteMarketingEquipeMember(id) {
-        try {
-            const res = await fetch(`${API_BASE}/marketing_equipe/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                // Remover do cache local
-                db.marketing_equipe = db.marketing_equipe.filter(m => m.id !== id);
-                return true;
-            }
-        } catch (e) {
-            console.error("Erro Store deleteMarketingEquipeMember:", e);
-        }
-        return false;
     },
 
     async updateBranding(configData) {

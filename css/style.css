@@ -5,7 +5,7 @@
     --accent: #8B5CF6;
     --accent-glow: rgba(139, 92, 246, 0.4);
 
-    /* Cores de Status (Globais) */
+    /* Status Colors (Globais) */
     --success: #10B981;
     --success-bg: rgba(16, 185, 129, 0.15);
     --warning: #F59E0B;
@@ -96,7 +96,7 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Utilitários Glassmorphism */
+/* Glassmorphism Utilities */
 .glass-panel {
     background: var(--bg-panel);
     backdrop-filter: blur(20px);
@@ -104,7 +104,7 @@ body {
     border-right: 1px solid var(--border-glass);
 }
 
-/* SCROLLBAR ELEGANTE GLOBAL */
+/* GLOBAL ELEGANT SCROLLBAR */
 *::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -145,7 +145,7 @@ body {
     border-color: var(--border-glass-light);
 }
 
-/* Sistema de Grid de Layout */
+/* Layout Grid System */
 .login-fullscreen {
     position: fixed;
     top: 0;
@@ -153,7 +153,7 @@ body {
     width: 100vw;
     height: 100vh;
     background: var(--bg-base);
-    /* cobre tudo */
+    /* covers everything */
     background-image:
         radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
         radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
@@ -171,7 +171,7 @@ body {
     pointer-events: auto;
 }
 
-/* Camada de Carregamento Global */
+/* Global Loading Overlay */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -305,7 +305,7 @@ body {
     overflow: hidden;
 }
 
-/* Navegação da Barra Lateral */
+/* Sidebar Navigation */
 .sidebar {
     width: var(--sidebar-width);
     display: flex;
@@ -459,7 +459,7 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Sino de Notificação na Barra Lateral */
+/* Notification Bell in Sidebar */
 .sidebar-notification {
     margin-left: auto;
     background: rgba(255, 255, 255, 0.05);
@@ -471,10 +471,10 @@ body {
 
 .sidebar.collapsed .sidebar-notification {
     display: none;
-    /* Esconder quando colapsado para evitar quebra de layout */
+    /* Hide when collapsed to avoid layout break */
 }
 
-/* Animação de Tremor */
+/* Shake Animation */
 @keyframes bell-shake {
     0% {
         transform: rotate(0);
@@ -514,7 +514,7 @@ body {
     color: var(--warning) !important;
 }
 
-/* Animação do Ícone da Barra Lateral - Efeito Pop */
+/* Sidebar Icon Animation - Pop effect */
 @keyframes icon-pop {
     0% {
         transform: scale(1);
@@ -533,7 +533,7 @@ body {
     animation: icon-pop 0.3s ease-out;
 }
 
-/* Animação do Ícone de Salvar */
+/* Save Icon Animation */
 @keyframes save-pulse {
     0% {
         transform: scale(1);
@@ -553,7 +553,7 @@ body {
     color: var(--success) !important;
 }
 
-/* Área de Conteúdo Principal */
+/* Main Content Area */
 .main-content {
     flex: 1;
     display: flex;
@@ -565,7 +565,7 @@ body {
     width: 100%;
 }
 
-/* Barra de Cabeçalho Superior */
+/* Top Header Bar */
 .topbar {
     height: var(--topbar-height);
     flex-shrink: 0;
@@ -701,7 +701,7 @@ body {
     display: inline-block;
 }
 
-/* Estilos Gerais de Visualizações */
+/* Views General Styles */
 .view-section {
     padding: 1.5rem;
     /* Ajustado para ser mais flexível */
@@ -749,7 +749,7 @@ body {
     max-width: 400px;
 }
 
-/* Entradas e Controles */
+/* Inputs and Controls */
 .glass-select {
     appearance: none;
     -webkit-appearance: none;
@@ -776,7 +776,7 @@ body {
     color: var(--text-main);
 }
 
-/* Elementos da Grade KPI */
+/* KPI Grid elements */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -851,7 +851,7 @@ body {
     box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
 }
 
-/* Layouts de Gráficos e Dashboards */
+/* Charts & Dashboard layouts */
 .charts-grid {
     display: grid;
     grid-template-columns: minmax(300px, 1fr) 2fr;
@@ -879,7 +879,7 @@ body {
     align-items: center;
 }
 
-/* Estilização de Tabelas */
+/* Tables Styling */
 .table-header-action {
     display: flex;
     justify-content: space-between;
@@ -982,7 +982,7 @@ body {
     width: 60px;
 }
 
-/* Orbes e Marcadores */
+/* Orbs and Markers */
 .status-indicator {
     display: flex;
     align-items: center;
@@ -1016,7 +1016,7 @@ body {
     box-shadow: 0 0 10px #3B82F6;
 }
 
-/* Tags e Emblemas */
+/* Badges Tags */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -1065,7 +1065,7 @@ body {
     font-size: 0.8rem;
 }
 
-/* Modais */
+/* Modals */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -1097,7 +1097,7 @@ body {
     display: flex;
     flex-direction: column;
     max-height: 90vh;
-    /* Restrição responsiva */
+    /* Responsive constraint */
 }
 
 .modal-overlay.active .modal-content {
@@ -1276,7 +1276,7 @@ body {
     color: var(--text-muted);
 }
 
-/* Controle Deslizante (Toggle) */
+/* Toggle Slider */
 .actions-section {
     margin-top: 2rem;
     padding-top: 2rem;
@@ -1298,12 +1298,12 @@ body {
 
 .toggle-slider {
     position: relative;
-    width: 42px;
-    height: 22px;
-    background: var(--danger);
-    border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 40px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    border: 1px solid var(--border-glass);
+    transition: 0.3s;
 }
 
 .toggle-slider::before {
@@ -1311,33 +1311,32 @@ body {
     position: absolute;
     left: 3px;
     top: 3px;
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    background: #FFFFFF;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: #94A3B8;
     transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .custom-toggle input:checked+.toggle-slider {
-    background: var(--success);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
 }
 
 .custom-toggle input:checked+.toggle-slider::before {
     transform: translateX(20px);
-    background: #FFFFFF;
+    background: var(--success);
 }
 
 .toggle-label {
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-muted);
     transition: color 0.3s;
 }
 
 .custom-toggle input:checked~.toggle-label {
-    color: var(--text-main);
+    color: var(--success);
 }
 
 .modal-footer {
@@ -1349,7 +1348,7 @@ body {
     background: rgba(0, 0, 0, 0.2);
 }
 
-/* Botões Base */
+/* Base Buttons */
 .btn {
     padding: 0.65rem 1.25rem;
     border-radius: var(--radius-sm);
@@ -1421,7 +1420,7 @@ body {
     border-radius: 6px;
 }
 
-/* UX dos Botões de Ação da Rotina */
+/* Routine Action Buttons UX */
 .btn-action-container {
     display: flex;
     gap: 12px;
@@ -1483,7 +1482,7 @@ body {
     animation: delete-pop 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Agrupamento de Rotinas no Operacional */
+/* Routine Grouping in Operacional */
 .routine-group {
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid var(--border-glass);
@@ -1524,7 +1523,7 @@ body {
     background: transparent;
 }
 
-/* Formulários e Entradas */
+/* Forms & Inputs */
 .form-group {
     margin-bottom: 1.2rem;
 }
@@ -1574,7 +1573,7 @@ body {
 @media (max-width: 900px) {
     .settings-layout {
         grid-template-columns: 1fr;
-        /* Empilhar em telas menores */
+        /* Stack on smaller screens */
     }
 }
 
@@ -1625,12 +1624,12 @@ body {
     display: block;
 }
 
-/* Animações gerais */
+/* General animations */
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
 }
 
-/* Animação de Exclusão */
+/* Deletion Animation */
 .row-fade-out {
     animation: rowFadeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
     pointer-events: none;
@@ -2375,7 +2374,7 @@ body {
     text-decoration: underline;
 }
 
-/* Animação de Estado Vazio refinada */
+/* Empty State Animation refined */
 .bottle-animation {
     width: 120px;
     height: 120px;
@@ -2594,19 +2593,6 @@ body {
 #clientes-detail-panel {
     display: none;
     animation: slideInRight 0.4s ease-out;
-}
-
-#emp-perf-detail-table tbody tr {
-    cursor: default;
-}
-
-#team-performance-table tbody tr {
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-#team-performance-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.05);
 }
 
 #clientes-detail-panel.active {
@@ -2852,7 +2838,7 @@ body {
     padding: 0.6rem 0.8rem;
 }
 
-/* Alternador de Visibilidade de Senha */
+/* Password Visibility Toggle */
 .password-wrapper {
     position: relative;
     width: 100%;
@@ -2884,7 +2870,7 @@ body {
     padding-right: 40px !important;
 }
 
-/* Estilos da Lista de Alternância Operacional */
+/* Operational Toggle List Styles */
 .routine-group-content {
     max-height: 2000px;
     overflow: hidden;
@@ -3215,7 +3201,7 @@ body {
     /* Firefox */
 }
 
-/* Scroll horizontal customizado ultra-fino e moderno para o menu de configurações */
+/* Custom Scroll horizontal ultra-fino e moderno para o settings menu */
 .settings-menu::-webkit-scrollbar {
     height: 4px;
     /* Barra fina */
@@ -3256,28 +3242,6 @@ body {
 .settings-tab-btn:hover {
     background: var(--bg-hover);
     color: var(--text-main);
-}
-
-.settings-ta.btn-outline:active {
-    background-color: var(--primary-light);
-    color: white;
-}
-
-/* Animação Premium Global de Lixeira */
-@keyframes trash-bounce {
-    0% { transform: translateY(0) rotate(0deg); }
-    30% { transform: translateY(-3px) rotate(-8deg); }
-    50% { transform: translateY(-5px) rotate(-12deg); }
-    70% { transform: translateY(-3px) rotate(-8deg); }
-    100% { transform: translateY(0) rotate(0deg); }
-}
-
-button:hover i.fa-trash,
-.btn-delete:hover i.fa-trash,
-.btn-delete-comp:hover i.fa-trash,
-.text-danger:hover i.fa-trash {
-    animation: trash-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    display: inline-block; /* Garantir que a transformação se aplique */
 }
 
 .settings-tab-btn.active {
@@ -3474,7 +3438,7 @@ button:hover i.fa-trash,
     }
 }
 
-/* Animação de Desligar / Encerrar */
+/* Power Off / Shutdown Animation */
 .shutdown-overlay {
     position: fixed;
     top: 0;
@@ -3557,7 +3521,7 @@ button:hover i.fa-trash,
     }
 }
 
-/* Reordenação de Menu Arrastar e Soltar */
+/* Menu Reordering Drag & Drop */
 .reorder-list {
     display: flex;
     flex-direction: column;
@@ -3689,7 +3653,7 @@ button:hover i.fa-trash,
 .settings-content-area {
     flex: 1;
     min-width: 0;
-    /* Previne vazamento */
+    /* Prevents overflow */
 }
 
 @media (max-width: 1024px) {
@@ -3718,7 +3682,7 @@ button:hover i.fa-trash,
     }
 }
 
-/* Notificações Toast Globais - Glassmorphism Premium */
+/* Global Toast Notifications - Premium Glassmorphism */
 .toast-container {
     position: fixed;
     top: 2rem;
@@ -3735,7 +3699,7 @@ button:hover i.fa-trash,
     min-width: 320px;
     max-width: 450px;
     background: rgba(15, 23, 42, 0.85);
-    /* Slate ultra escuro */
+    /* Slate ultra dark */
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -3899,7 +3863,7 @@ button:hover i.fa-trash,
     /* Garante que a tabela não esmague em mobile */
 }
 
-/* Correção para altura e alinhamento dos itens da lista de reordenação */
+/* Fix for reorder list items height and alignment */
 .reorder-item {
     display: flex;
     align-items: center;

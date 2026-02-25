@@ -386,12 +386,8 @@ const Marketing = {
                 <td>12 tarefas</td>
                 <td>95%</td>
                 <td>
-                    <button class="btn btn-small btn-secondary" onclick="Marketing.editEquipeMember(${m.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                        <i class="fa-solid fa-pen"></i> Editar
-                    </button>
-                    <button class="btn btn-small btn-secondary text-danger" onclick="Marketing.deleteEquipeMember(${m.id}, '${func ? func.nome.replace(/'/g, "\\'") : 'Desconhecido'}')" title="Excluir" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem; margin-left: 0.5rem;">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
+                    <button class="action-btn-mini"><i class="fa-solid fa-pen"></i></button>
+                    <button class="action-btn-mini" style="color:var(--danger);"><i class="fa-solid fa-trash"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -532,34 +528,6 @@ const Marketing = {
 
     editPost(id) { this.openPostModal(id); },
     editCampanha(id) { this.openCampanhaModal(id); },
-
-    editEquipeMember(id) {
-        showNotify("Em Breve", "Edição de membro da equipe de marketing em desenvolvimento.", "info");
-    },
-
-    async deleteEquipeMember(id, nome) {
-        if (!id) return;
-
-        // Confirmação Premium
-        const confirmacao = await window.showConfirm(
-            "Remover da Equipe?",
-            `Tem certeza que deseja remover "${nome}" da equipe de marketing?`,
-            'danger'
-        );
-
-        if (!confirmacao) return;
-
-        if (window.showLoading) window.showLoading("Processando", "Removendo membro...");
-        const success = await Store.deleteMarketingEquipeMember(id);
-        if (window.hideLoading) window.hideLoading();
-
-        if (success) {
-            if (window.showFeedbackToast) window.showFeedbackToast("Membro removido com sucesso!", "success");
-            this.renderEquipe(); // Recarrega a tabela de marketing
-        } else {
-            if (window.showFeedbackToast) window.showFeedbackToast("Erro ao remover membro da equipe.", "error");
-        }
-    },
 
     getBadgeColor(platform) {
         if (!platform) return 'var(--primary)';

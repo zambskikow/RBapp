@@ -6,7 +6,7 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
-# Permitir CORS para testes locais e Vercel
+# Allow CORS for local testing and Vercel
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,7 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inicializar Cliente Supabase
+# Initialize Supabase Client
 url: str = os.getenv("SUPABASE_URL", "https://khbdbuoryxqiprlkdcpz.supabase.co")
 key: str = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYmRidW9yeXhxaXBybGtkY3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODU4ODcsImV4cCI6MjA4NzI2MTg4N30.1rr3_-LVO6b2PR96lJl8d7vVfHseWwUeAQDY4tdJR-M")
 
@@ -27,7 +27,7 @@ except Exception as e:
     import traceback
     supabase_error = str(e) + " | " + traceback.format_exc()
 
-# --- Modelos Pydantic para solicitações POST/PUT recebidas ---
+# --- Pydantic Models for incoming POST/PUT requests ---
 class ClienteCreate(BaseModel):
     razao_social: str
     cnpj: str
@@ -250,7 +250,7 @@ class GlobalConfigUpdate(BaseModel):
     theme: str | None = None
     menu_order: list | None = None
 
-# --- Endpoints da API ---
+# --- API Endpoints ---
 
 @app.get("/api/status")
 def read_root():
@@ -315,13 +315,6 @@ def update_mes(mes_id: str, updates: MesUpdate):
 
 @app.delete("/api/meses/{mes_id}")
 def delete_mes(mes_id: str):
-    # Deletar execuções vinculadas primeiro para evitar erro de Constraint de Foreign Key
-    try:
-        supabase.table("execucoes").delete().eq("competencia", mes_id).execute()
-    except Exception as e:
-        print(f"Aviso ao deletar execucoes do mes {mes_id}: {e}")
-
-    # Deletar o mes em si
     response = supabase.table("meses").delete().eq("id", mes_id).execute()
     return response.data
 
@@ -357,18 +350,6 @@ def update_funcionario(funcionario_id: int, updates: FuncionarioUpdate):
     response = supabase.table("funcionarios").update(updates.model_dump(exclude_unset=True)).eq("id", funcionario_id).execute()
     return response.data
 
-@app.delete("/api/funcionarios/{funcionario_id}")
-def delete_funcionario(funcionario_id: int):
-    # Deletar dependências para evitar erro de Foreign Key (Constraint 409)
-    try:
-        supabase.table("marketing_equipe").delete().eq("funcionario_id", funcionario_id).execute()
-    except Exception as e:
-        print(f"Aviso ao deletar dependências do funcionário {funcionario_id}: {e}")
-
-    # Deletar o funcionário em si
-    response = supabase.table("funcionarios").delete().eq("id", funcionario_id).execute()
-    return response.data
-
 # --- Rotinas Base ---
 @app.get("/api/rotinas_base")
 def get_rotinas_base():
@@ -387,16 +368,6 @@ def update_rotina_put(rotina_id: int, updates: RotinaBaseUpdate):
 
 @app.delete("/api/rotinas_base/{rotina_id}")
 def delete_rotina(rotina_id: int):
-    # Buscar nome da rotina para apagar execuções
-    try:
-        rotina_res = supabase.table("rotinas_base").select("nome").eq("id", rotina_id).execute()
-        if rotina_res.data and len(rotina_res.data) > 0:
-            rotina_nome = rotina_res.data[0]["nome"]
-            supabase.table("execucoes").delete().eq("rotina", rotina_nome).execute()
-    except Exception as e:
-        print(f"Aviso ao deletar execucoes da rotina {rotina_id}: {e}")
-
-    # Deletar a rotina base em si
     response = supabase.table("rotinas_base").delete().eq("id", rotina_id).execute()
     return response.data
 
@@ -480,7 +451,7 @@ def delete_cargo(cargo_id: int):
     response = supabase.table("cargos_permissoes").delete().eq("id", cargo_id).execute()
     return response.data
 
-# --- Posts de Marketing ---
+# --- Marketing Posts ---
 @app.get("/api/marketing_posts")
 def get_marketing_posts():
     response = supabase.table("marketing_posts").select("*").execute()
@@ -501,7 +472,7 @@ def delete_marketing_post(post_id: int):
     response = supabase.table("marketing_posts").delete().eq("id", post_id).execute()
     return response.data
 
-# --- Campanhas de Marketing ---
+# --- Marketing Campanhas ---
 @app.get("/api/marketing_campanhas")
 def get_marketing_campanhas():
     response = supabase.table("marketing_campanhas").select("*").execute()
@@ -522,7 +493,7 @@ def delete_marketing_campanha(campanha_id: int):
     response = supabase.table("marketing_campanhas").delete().eq("id", campanha_id).execute()
     return response.data
 
-# --- Equipe de Marketing ---
+# --- Marketing Equipe ---
 @app.get("/api/marketing_equipe")
 def get_marketing_equipe():
     response = supabase.table("marketing_equipe").select("*").execute()
@@ -543,7 +514,7 @@ def delete_marketing_equipe(id: int):
     response = supabase.table("marketing_equipe").delete().eq("id", id).execute()
     return response.data
 
-# --- Métricas de Marketing ---
+# --- Marketing Metricas ---
 @app.get("/api/marketing_metricas")
 def get_marketing_metricas():
     response = supabase.table("marketing_metricas").select("*").order("data_referencia", desc=True).limit(100).execute()
@@ -554,7 +525,7 @@ def create_marketing_metrica(metrica: MarketingMetricaCreate):
     response = supabase.table("marketing_metricas").insert(metrica.model_dump()).execute()
     return response.data
 
-# --- Configuração Global ---
+# --- Global Config ---
 @app.get("/api/global_config")
 def get_global_config():
     response = supabase.table("global_config").select("*").execute()
