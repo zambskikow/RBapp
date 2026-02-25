@@ -452,6 +452,19 @@ async function initApp() {
     if (btnDeleteEquipe) {
         btnDeleteEquipe.addEventListener('click', handleDeleteFuncionario);
     }
+    const toggleEquipeAtivo = document.getElementById('equipe-ativo');
+    if (toggleEquipeAtivo) {
+        toggleEquipeAtivo.addEventListener('change', (e) => {
+            const badge = document.getElementById('equipe-status-badge');
+            if (e.target.checked) {
+                badge.className = 'table-badge success';
+                badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
+            } else {
+                badge.className = 'table-badge danger';
+                badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Inativo';
+            }
+        });
+    }
 
     // 8. Rotinas Base View Events
     document.getElementById('btn-add-rotina').addEventListener('click', () => openRotinaModal());
@@ -2446,6 +2459,9 @@ function openEquipeModal() {
 
     document.getElementById('equipe-status-container').style.display = 'block';
     document.getElementById('equipe-ativo').checked = true;
+    const badgeDefault = document.getElementById('equipe-status-badge');
+    badgeDefault.className = 'table-badge success';
+    badgeDefault.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
 
     document.getElementById('add-equipe-modal').classList.add('active');
 }
@@ -2477,6 +2493,14 @@ function openEditEquipeModal(id) {
     document.getElementById('equipe-senha').value = f.senha;
 
     document.getElementById('equipe-ativo').checked = f.ativo !== false;
+    const badgeEdit = document.getElementById('equipe-status-badge');
+    if (f.ativo !== false) {
+        badgeEdit.className = 'table-badge success';
+        badgeEdit.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
+    } else {
+        badgeEdit.className = 'table-badge danger';
+        badgeEdit.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Inativo';
+    }
     document.getElementById('equipe-status-container').style.display = 'block';
 
     document.getElementById('add-equipe-modal').classList.add('active');

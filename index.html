@@ -1993,10 +1993,13 @@
                 <form id="add-equipe-form">
                     <input type="hidden" id="equipe-id" value="">
                     <div class="form-group" id="equipe-status-container" style="margin-bottom: 1rem;">
-                        <label class="custom-toggle" style="justify-content: flex-start; gap: 0.5rem;">
+                        <label class="custom-toggle">
                             <input type="checkbox" id="equipe-ativo" checked>
                             <span class="toggle-slider"></span>
-                            <span class="toggle-label" style="font-weight: 500;">Conta Ativa</span>
+                            <span class="toggle-label" style="display: flex; align-items: center; gap: 8px;">
+                                Status: <span id="equipe-status-badge" class="table-badge success"><i
+                                        class="fa-solid fa-circle-check"></i> Ativo</span>
+                            </span>
                         </label>
                     </div>
                     <div id="equipe-error"
