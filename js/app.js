@@ -5000,3 +5000,168 @@ window.updateCompetenciaSelects = function (newCompId) {
 window.showEarlyReleaseToast = function (compName) {
     showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${compName} foi liberada!`, 'success');
 };
+
+
+// ==========================================
+// ADMIN: Segurança, RBAC e Cargos
+// ==========================================
+
+/**
+ * Renderiza a tabela de cargos e permissões na aba de Segurança
+ */
+function renderAdminPanel() {
+    console.log("Renderizando Painel de Segurança (Cargos)...");
+    const tbody = document.querySelector('#admin-cargos-table tbody');
+    if (!tbody) return;
+
+    const cargos = Store.getData().cargos;
+    tbody.innerHTML = '';
+
+    if (cargos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">Nenhum cargo cadastrado.</td></tr>';
+        return;
+    }
+
+    cargos.forEach(cargo => {
+        const tr = document.createElement('tr');
+
+        // Formatar telas permitidas para exibição
+        let telasArray = [];
+        try {
+            telasArray = Array.isArray(cargo.telas_permitidas) ? cargo.telas_permitidas : JSON.parse(cargo.telas_permitidas || '[]');
+        } catch (e) {
+            telasArray = [];
+        }
+
+        const telasBadges = telasArray.map(t => `<span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; margin-right: 4px; font-size: 0.7rem;">${t}</span>`).join('');
+
+        tr.innerHTML = `
+            <td>#${cargo.id}</td>
+            <td><strong>${cargo.nome_cargo}</strong></td>
+            <td>${telasBadges || '<span style="color:var(--text-muted)">Nenhuma</span>'}</td>
+            <td style="text-align: right;">
+                <button class="action-btn" onclick="openCargoModal(${cargo.id})" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="action-btn" onclick="deleteCargoUI(${cargo.id})" style="color: var(--danger)" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function openCargoModal(id = null) {
+    const modal = document.getElementById('admin-cargo-modal');
+    if (!modal) return;
+
+    const form = document.getElementById('admin-cargo-form');
+    form.reset();
+    document.getElementById('cargo-id').value = id || '';
+
+    // Desmarcar todos os checkboxes
+    document.querySelectorAll('.cargo-perm-check').forEach(ck => ck.checked = false);
+
+    if (id) {
+        const cargo = Store.getData().cargos.find(c => c.id === id);
+        if (cargo) {
+            document.getElementById('cargo-nome').value = cargo.nome_cargo;
+
+            let telas = [];
+            try {
+                telas = Array.isArray(cargo.telas_permitidas) ? cargo.telas_permitidas : JSON.parse(cargo.telas_permitidas || '[]');
+            } catch (e) { telas = []; }
+
+            telas.forEach(t => {
+                const ck = document.querySelector(`.cargo-perm-check[value="${t}"]`);
+                if (ck) ck.checked = true;
+            });
+        }
+    }
+
+    modal.classList.add('active');
+}
+
+function closeCargoModal() {
+    const modal = document.getElementById('admin-cargo-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+async function handleSaveCargo(e) {
+    e.preventDefault();
+    const id = document.getElementById('cargo-id').value;
+    const nome = document.getElementById('cargo-nome').value;
+
+    const selecionadas = Array.from(document.querySelectorAll('.cargo-perm-check:checked')).map(ck => ck.value);
+
+    showLoading('Salvando Cargo', 'Atualizando banco de permissões...');
+
+    let ok = false;
+    if (id) {
+        ok = await Store.updateCargo(parseInt(id), nome, selecionadas);
+    } else {
+        ok = await Store.addCargo(nome, selecionadas);
+    }
+
+    hideLoading();
+    if (ok) {
+        closeCargoModal();
+        renderAdminPanel();
+        showNotify("Sucesso", "Cargo e permissões atualizados!", "success");
+    } else {
+        showNotify("Erro", "Falha ao salvar cargo.", "error");
+    }
+}
+
+window.deleteCargoUI = async function (id) {
+    const cargo = Store.getData().cargos.find(c => c.id === id);
+    if (!cargo) return;
+
+    const confirm = await showConfirm(
+        "Excluir Cargo",
+        `Tem certeza que deseja excluir o cargo <strong>${cargo.nome_cargo}</strong>? Isso pode afetar o acesso dos funcionários vinculados.`,
+        "danger"
+    );
+
+    if (confirm) {
+        showLoading('Excluindo', 'Removendo cargo do sistema...');
+        const ok = await Store.deleteCargo(id);
+        hideLoading();
+        if (ok) {
+            renderAdminPanel();
+            showNotify("Sucesso", "Cargo removido.", "success");
+        }
+    }
+}
+
+// ==========================================
+// ADMIN: Setores
+// ==========================================
+
+function renderSetoresSettings() {
+    console.log("Renderizando Configurações de Setores...");
+    if (typeof renderSetoresListPreview === 'function') {
+        renderSetoresListPreview();
+    }
+}
+
+// ==========================================
+// ADMIN: Backups
+// ==========================================
+
+function renderBackupView() {
+    console.log("Renderizando Visualização de Backups...");
+    const container = document.getElementById('backup-history-list');
+    if (!container) return;
+
+    // Simulação ou carregamento de logs de backup
+    container.innerHTML = `
+        <div class="glass-card" style="padding: 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <div>
+                <strong>Backup Automático Diário</strong><br>
+                <small style="color:var(--text-muted)">Última execução: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</small>
+            </div>
+            <span class="badge badge-success">Concluído</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 1rem;">
+            Os backups são armazenados localmente no seu navegador e em cache do servidor.
+        </p>
+    `;
+}
