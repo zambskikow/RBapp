@@ -126,6 +126,8 @@ async function initApp() {
                 if (typeof initInboxTabs === 'function') initInboxTabs();
                 updateMensagensBadges();
 
+                initUserAccountMenu(); // Inicializa o Dropdown do Usuário após carregar o DOM
+
                 // Restaurar a view correta imediatamente após os renders (sem delay perceptível)
                 setTimeout(() => {
                     const navLink = document.querySelector(`.nav-item[data-view="${savedView}"]`);
@@ -839,6 +841,9 @@ function handleLogin(e) {
 
             // Aplicar Branding após Login
             applyBranding();
+
+            // Inicializa Menu da Conta na Sidebar
+            initUserAccountMenu();
 
             // Re-route user to their first available view if they don't have access to Dashboard
             if (!auth.telas_permitidas.includes('dashboard') && auth.telas_permitidas.length > 0) {
@@ -5638,6 +5643,72 @@ function renderBackupView() {
             Os backups são armazenados localmente no seu navegador e em cache do servidor.
         </p>
     `;
+}
+
+// ==========================================
+// MENU DA CONTA (DROPDOWN DO USUÁRIO)
+// ==========================================
+function initUserAccountMenu() {
+    const trigger = document.getElementById('user-profile-trigger');
+    const menu = document.getElementById('user-account-menu');
+    const btnLogout = document.getElementById('uac-btn-logout');
+    const btnPersonalizacao = document.getElementById('uac-btn-personalizacao');
+
+    if (!trigger || !menu) return;
+
+    // Atualiza as infos do menu baseado no usuário logado
+    if (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) {
+        document.getElementById('uac-display-name').textContent = LOGGED_USER.nome;
+        document.getElementById('uac-display-role').textContent = LOGGED_USER.permissao;
+    }
+
+    // Toggle Menu
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evita que o click fora feche imediatamente
+        menu.classList.toggle('active');
+    });
+
+    // Fechar ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (menu.classList.contains('active') && !menu.contains(e.target) && !trigger.contains(e.target)) {
+            menu.classList.remove('active');
+        }
+    });
+
+    // Ação: Sair (Reaproveitando a lógica de logout existente se possível, ou recriando para o botão do menu)
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            menu.classList.remove('active');
+            // Procura o botão global de logout e simula clique
+            const globalLogout = document.getElementById('btn-logout');
+            if (globalLogout) {
+                globalLogout.click();
+            } else {
+                // Caso não encontre, executa logout padrão
+                localStorage.removeItem('fiscalapp_session');
+                window.location.reload();
+            }
+        });
+    }
+
+    // Ação: Personalização (Navega para Settings -> set-branding)
+    if (btnPersonalizacao) {
+        btnPersonalizacao.addEventListener('click', () => {
+            menu.classList.remove('active');
+            // Clica no link do painel de controle da Sidebar (mesmo oculto se tiver permissão via trigger local)
+            const navSettings = document.querySelector('.nav-item[data-view="settings"]');
+            if (navSettings) {
+                navSettings.click();
+                // Espera um micro-tick e clica na aba de branding
+                setTimeout(() => {
+                    const tabBranding = document.querySelector('.settings-tab-btn[data-target="set-branding"]');
+                    if (tabBranding) tabBranding.click();
+                }, 50);
+            } else {
+                showNotify("Acesso Restrito", "Apenas administradores podem acessar esta área no momento.", "warning");
+            }
+        });
+    }
 }
 
 // Vinculação Global (Scoping Fix)

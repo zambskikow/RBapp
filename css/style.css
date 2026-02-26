@@ -459,6 +459,206 @@ body {
     letter-spacing: 0.5px;
 }
 
+/* Interação do Perfil (Clicável) */
+.user-profile {
+    cursor: pointer;
+    transition: background 0.3s ease, padding 0.3s ease;
+    border-radius: var(--radius-md);
+    position: relative;
+}
+
+.user-profile:hover {
+    background: var(--bg-hover);
+}
+
+.user-profile-menu-icon {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+    padding: 4px;
+}
+
+.user-profile:hover .user-profile-menu-icon {
+    color: var(--text-main);
+}
+
+.sidebar.collapsed .user-profile-menu-icon {
+    display: none;
+}
+
+/* User Account Dropdown (Configurações da Conta) */
+.user-account-dropdown {
+    position: absolute;
+    bottom: 80px;
+    /* Acima do perfil */
+    left: 1rem;
+    width: 260px;
+    background: var(--bg-surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5);
+    padding: 0.5rem;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.95);
+    transform-origin: bottom left;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.user-account-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.sidebar.collapsed .user-account-dropdown {
+    left: 60px;
+    /* Deslocado para a direita quando sidebar colapsada */
+    bottom: 20px;
+}
+
+.uac-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.75rem;
+}
+
+.uac-header-icon {
+    font-size: 2rem;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.uac-header-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.uac-header-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.uac-header-role {
+    font-size: 0.75rem;
+    color: var(--primary-light);
+    font-weight: 500;
+}
+
+.uac-divider {
+    height: 1px;
+    background: var(--border-glass-light);
+    margin: 0.5rem 0;
+}
+
+.uac-section-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    padding: 0 0.75rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.7;
+}
+
+.uac-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.6rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.uac-item:hover:not(.uac-item-disabled) {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.uac-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.uac-item:hover:not(.uac-item-disabled) .uac-item-icon {
+    transform: scale(1.1);
+}
+
+.uac-item-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.uac-item-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.uac-item-desc {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.uac-item-arrow {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transform: translateX(-5px);
+    transition: all 0.2s ease;
+}
+
+.uac-item:hover:not(.uac-item-disabled) .uac-item-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.uac-item-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.uac-badge-soon {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    border-radius: 10px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.uac-item-logout:hover {
+    background: rgba(239, 68, 68, 0.05) !important;
+}
+
+.uac-item-logout:hover .uac-item-label {
+    color: #ef4444;
+}
+
 /* Sino de Notificação na Barra Lateral */
 .sidebar-notification {
     margin-left: auto;

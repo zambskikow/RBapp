@@ -132,13 +132,72 @@
                     <span>Painel de Controle</span>
                 </a>
             </nav>
-            <div class="user-profile">
+            <!-- Menu Dropdown de Configurações da Conta -->
+            <div id="user-account-menu" class="user-account-dropdown">
+                <div class="uac-header">
+                    <i class="fa-solid fa-circle-user uac-header-icon"></i>
+                    <div class="uac-header-info">
+                        <span class="uac-header-name" id="uac-display-name">Manager</span>
+                        <span class="uac-header-role" id="uac-display-role">Setor Fiscal</span>
+                    </div>
+                </div>
+                <div class="uac-divider"></div>
+                <div class="uac-section-label">Configurações</div>
+                <!-- Item: Personalização -->
+                <button class="uac-item" id="uac-btn-personalizacao">
+                    <div class="uac-item-icon" style="background: rgba(139,92,246,0.15); color: #a78bfa;">
+                        <i class="fa-solid fa-palette"></i>
+                    </div>
+                    <div class="uac-item-text">
+                        <span class="uac-item-label">Personalização</span>
+                        <span class="uac-item-desc">Tema, cores e menu</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right uac-item-arrow"></i>
+                </button>
+                <!-- Item: Editar Perfil (Em breve) -->
+                <button class="uac-item uac-item-disabled">
+                    <div class="uac-item-icon" style="background: rgba(99,102,241,0.1); color: #6366f1;">
+                        <i class="fa-solid fa-user-pen"></i>
+                    </div>
+                    <div class="uac-item-text">
+                        <span class="uac-item-label">Editar Perfil</span>
+                        <span class="uac-item-desc">Nome, foto e informações</span>
+                    </div>
+                    <span class="uac-badge-soon">Em breve</span>
+                </button>
+                <!-- Item: Alterar Senha (Em breve) -->
+                <button class="uac-item uac-item-disabled">
+                    <div class="uac-item-icon" style="background: rgba(245,158,11,0.1); color: #f59e0b;">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div class="uac-item-text">
+                        <span class="uac-item-label">Alterar Senha</span>
+                        <span class="uac-item-desc">Segurança da conta</span>
+                    </div>
+                    <span class="uac-badge-soon">Em breve</span>
+                </button>
+                <div class="uac-divider"></div>
+                <!-- Item: Sair -->
+                <button class="uac-item uac-item-logout" id="uac-btn-logout">
+                    <div class="uac-item-icon" style="background: rgba(239,68,68,0.1); color: #ef4444;">
+                        <i class="fa-solid fa-power-off"></i>
+                    </div>
+                    <div class="uac-item-text">
+                        <span class="uac-item-label">Sair do Sistema</span>
+                        <span class="uac-item-desc">Encerrar sessão atual</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Área do Perfil do Usuário (clicável para abrir menu) -->
+            <div class="user-profile" id="user-profile-trigger" title="Configurações da Conta">
                 <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Avatar"
-                    class="avatar">
+                    class="avatar" id="sidebar-avatar">
                 <div class="user-info">
                     <span class="user-name">Manager</span>
                     <span class="user-role">Setor Fiscal</span>
                 </div>
+                <i class="fa-solid fa-ellipsis-vertical user-profile-menu-icon"></i>
             </div>
         </aside>
 
