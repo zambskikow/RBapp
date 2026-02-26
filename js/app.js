@@ -86,6 +86,12 @@ async function initApp() {
                     } catch (e) { }
                 }
 
+                // Ocultar todas as views ANTES de renderizar para evitar o flash do conteúdo padrão
+                document.querySelectorAll('.view-section').forEach(v => {
+                    v.style.display = 'none';
+                    v.classList.remove('active');
+                });
+
                 console.log("%c INICIANDO RENDERIZAÇÃO BLINDADA...", "color: #6366f1; font-weight: bold;");
                 // Renderizações isoladas para evitar que erro em um quebre o app
                 const renders = [
@@ -109,6 +115,7 @@ async function initApp() {
                 if (typeof initInboxTabs === 'function') initInboxTabs();
                 updateMensagensBadges();
 
+                // Restaurar a view correta imediatamente após os renders (sem delay perceptível)
                 setTimeout(() => {
                     const navLink = document.querySelector(`.nav-item[data-view="${savedView}"]`);
                     if (navLink) {
@@ -118,7 +125,7 @@ async function initApp() {
                         const dashLink = document.querySelector(`.nav-item[data-view="dashboard"]`);
                         if (dashLink) dashLink.click();
                     }
-                }, 150);
+                }, 0);
             } catch (e) {
                 console.error("%c ERRO CRÍTICO NA INICIALIZAÇÃO PÓS-LOGIN:", "color: #ef4444; font-weight: bold;", e);
             }
