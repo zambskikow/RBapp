@@ -4466,15 +4466,15 @@ async function handleSaveDemandaEventual() {
     const result = await Store.criarExecucaoEventual(rotinaId, clienteId);
 
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Demanda';
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Rotina';
 
     if (result.ok) {
         closeDemandaEventualModal();
         renderOperacional();
         renderDashboard();
-        showFeedbackToast('Demanda eventual criada com sucesso!', 'success');
+        showFeedbackToast('Rotina eventual criada com sucesso!', 'success');
     } else {
-        showNotify("Aviso", result.msg || 'Erro ao criar demanda eventual.', "warning");
+        showNotify("Aviso", result.msg || 'Erro ao criar rotina eventual.', "warning");
     }
 }
 

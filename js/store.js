@@ -358,7 +358,9 @@ window.Store = {
 
             if (!isHistorico) {
                 const rotinasDoCliente = client.rotinasSelecionadas || [];
-                if (!rotinasDoCliente.includes(rotinaObj.id)) {
+                const isEventual = rotinaObj.frequencia && rotinaObj.frequencia.toLowerCase() === 'eventual';
+
+                if (!isEventual && !rotinasDoCliente.includes(rotinaObj.id)) {
                     return false; // A rotina não pertence mais ao cliente. Omitir.
                 }
             }
