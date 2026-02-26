@@ -1,4 +1,12 @@
 import os
+import sys
+
+# Hack para o Vercel Serverless: Garante que o Python reconheça a pasta 'backend' 
+# como raiz para permitir os imports usando 'from src.alguma_coisa import ...'
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -75,7 +83,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5500",
     ],
-    allow_origin_regex="https://.*\.vercel\.app.*",
+    allow_origin_regex=r"https://.*\.vercel\.app.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
