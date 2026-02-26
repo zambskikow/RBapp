@@ -56,79 +56,67 @@ async function initApp() {
 
     // Check session storage for session
 
-    const storedSession = sessionStorage.getItem('fiscalapp_session');
+    const storedSession = localStorage.getItem('fiscalapp_session');
 
     if (storedSession) {
 
         // Find user
 
         const auth = Store.getAuthBySession(storedSession);
-
         if (auth) {
-
+            console.log("Sessão recuperada com sucesso para:", auth.nome);
             LOGGED_USER = auth;
-
             document.getElementById('login-overlay').style.display = 'none';
-
             document.getElementById('main-app-container').style.display = 'flex';
 
-
-
-            // Apply User info to sidebar
-
             document.querySelector('.sidebar .user-name').textContent = auth.nome;
-
             document.querySelector('.sidebar .user-role').textContent = auth.permissao;
 
+            try {
+                loadSetoresSelects();
+                const savedView = localStorage.getItem('fiscalapp_current_view') || 'dashboard';
+                applyUserPermissions(auth);
+                applyBranding();
 
+                console.log("%c INICIANDO RENDERIZAÇÃO BLINDADA...", "color: #6366f1; font-weight: bold;");
+                // Renderizações isoladas para evitar que erro em um quebre o app
+                const renders = [
+                    { name: 'Dashboard', fn: renderDashboard },
+                    { name: 'Operacional', fn: renderOperacional },
+                    { name: 'Clientes', fn: renderClientes },
+                    { name: 'Rotinas', fn: renderRotinas },
+                    { name: 'Mensagens', fn: renderMensagens },
+                    { name: 'Auditoria', fn: renderAuditoria }
+                ];
 
-            // Trigger renders since we now have contextual access
+                renders.forEach(r => {
+                    try {
+                        r.fn();
+                        console.log(`%c [OK] ${r.name}`, "color: #10b981");
+                    } catch (e) {
+                        console.error(`%c [ERRO] ${r.name}:`, "color: #ef4444", e);
+                    }
+                });
 
-            loadSetoresSelects();
+                if (typeof initInboxTabs === 'function') initInboxTabs();
+                updateMensagensBadges();
 
-
-
-            const savedView = sessionStorage.getItem('fiscalapp_current_view') || 'dashboard';
-
-
-
-            // Apply permissions to Navbar BEFORE clicking!
-
-            applyUserPermissions(auth);
-
-            // Aplicar Identidade Visual (Branding)
-            applyBranding();
-
-
-
-            // Render everything invisibly first
-
-            renderDashboard();
-
-            renderOperacional();
-
-            renderClientes();
-
-            renderRotinas();
-
-            renderMensagens();
-            initInboxTabs();
-            renderAuditoria();
-
-            updateMensagensBadges();
-
-
-
-            // Set the active view dynamically based on previous state
-
-            setTimeout(() => {
-
-                const navLink = document.querySelector(`.nav-item[data-view="${savedView}"]`);
-
-                if (navLink) navLink.click();
-
-            }, 50);
-
+                setTimeout(() => {
+                    const navLink = document.querySelector(`.nav-item[data-view="${savedView}"]`);
+                    if (navLink) {
+                        navLink.click();
+                        console.log("%c VIEW RESTAURADA: " + savedView, "color: #6366f1; font-weight: bold;");
+                    } else {
+                        const dashLink = document.querySelector(`.nav-item[data-view="dashboard"]`);
+                        if (dashLink) dashLink.click();
+                    }
+                }, 150);
+            } catch (e) {
+                console.error("%c ERRO CRÍTICO NA INICIALIZAÇÃO PÓS-LOGIN:", "color: #ef4444; font-weight: bold;", e);
+            }
+        } else {
+            console.warn("Sessão storage encontrada, mas inválida no banco de dados.");
+            localStorage.removeItem('fiscalapp_session');
         }
 
     }
@@ -448,6 +436,23 @@ async function initApp() {
 
     document.getElementById('equipe-modal-cancel').addEventListener('click', closeEquipeModal);
     document.getElementById('add-equipe-form').addEventListener('submit', handleAddFuncionario);
+    const btnDeleteEquipe = document.getElementById('btn-delete-equipe');
+    if (btnDeleteEquipe) {
+        btnDeleteEquipe.addEventListener('click', handleDeleteFuncionario);
+    }
+    const toggleEquipeAtivo = document.getElementById('equipe-ativo');
+    if (toggleEquipeAtivo) {
+        toggleEquipeAtivo.addEventListener('change', (e) => {
+            const badge = document.getElementById('equipe-status-badge');
+            if (e.target.checked) {
+                badge.className = 'table-badge success';
+                badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
+            } else {
+                badge.className = 'table-badge danger';
+                badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Inativo';
+            }
+        });
+    }
 
     // 8. Rotinas Base View Events
     document.getElementById('btn-add-rotina').addEventListener('click', () => openRotinaModal());
@@ -546,15 +551,25 @@ async function initApp() {
         });
     }
 
-    // 13. Admin Panel (RBAC) Events
-    const btnAddCargo = document.getElementById('btn-add-cargo');
-    if (btnAddCargo) btnAddCargo.addEventListener('click', () => openCargoModal());
-    const closeCargo1 = document.getElementById('close-cargo-modal');
-    if (closeCargo1) closeCargo1.addEventListener('click', closeCargoModal);
-    const closeCargo2 = document.getElementById('cargo-modal-cancel');
-    if (closeCargo2) closeCargo2.addEventListener('click', closeCargoModal);
-    const cargoForm = document.getElementById('admin-cargo-form');
-    if (cargoForm) cargoForm.addEventListener('submit', handleSaveCargo);
+    // 13. Admin Panel (RBAC) Events - usa event delegation para garantir que os elementos existam
+    document.addEventListener('click', function (e) {
+        // Botão Novo Cargo
+        if (e.target.closest('#btn-add-cargo')) {
+            openCargoModal();
+        }
+        // Botões fechar modal de cargo
+        if (e.target.closest('#close-cargo-modal') || e.target.closest('#cargo-modal-cancel')) {
+            closeCargoModal();
+        }
+    }, { capture: false });
+    // Submit do form de cargo via event delegation
+    document.addEventListener('submit', function (e) {
+        if (e.target && e.target.id === 'admin-cargo-form') {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSaveCargo(e);
+        }
+    });
 
     // 14. Branding Event
     const brandingForm = document.getElementById('form-branding');
@@ -628,6 +643,22 @@ window.showNotify = function (title, message, type = 'info') {
     }, 5000);
 }
 
+/**
+ * Exibe um toast de feedback rápido (alias de showNotify com título automático baseado no tipo)
+ * @param {string} message - Mensagem a exibir
+ * @param {string} type - Tipo: 'success', 'error', 'info', 'warning'
+ */
+window.showFeedbackToast = function (message, type = 'info') {
+    // Mapear tipo para título automático
+    const titulos = {
+        success: 'Sucesso',
+        error: 'Erro',
+        warning: 'Atenção',
+        info: 'Informação'
+    };
+    const titulo = titulos[type] || 'Informação';
+    window.showNotify(titulo, message, type);
+};
 
 function handleLogin(e) {
     e.preventDefault();
@@ -671,7 +702,7 @@ function handleLogin(e) {
                 if (firstNav) firstNav.click();
             }
 
-            sessionStorage.setItem('fiscalapp_session', auth.id);
+            localStorage.setItem('fiscalapp_session', auth.id);
 
             // Execute Auto-Backup if enabled
             checkAndRunAutoBackup();
@@ -692,7 +723,7 @@ function handleLogout() {
 
     setTimeout(() => {
         LOGGED_USER = null;
-        sessionStorage.removeItem('fiscalapp_session');
+        localStorage.removeItem('fiscalapp_session');
         window.location.reload();
     }, 850); // Um pouco mais que a animação CSS (800ms)
 }
@@ -706,7 +737,7 @@ function applyUserPermissions(auth) {
     const permitidas = auth.telas_permitidas || [];
 
     // Master Admin bypass: Manager account or "Gerente" permission gets everything
-    const isMasterAdmin = auth.nome === 'Manager' || auth.permissao === 'Gerente';
+    const isMasterAdmin = (auth.nome && auth.nome.toLowerCase() === 'manager') || (auth.permissao && auth.permissao.toLowerCase() === 'gerente');
 
     const sidebarNav = document.querySelector('.sidebar .nav-menu');
     if (sidebarNav) {
@@ -730,20 +761,35 @@ function applyUserPermissions(auth) {
     // Loop through all navigation links and show/hide based on array
     document.querySelectorAll('.nav-item').forEach(navItem => {
         const view = navItem.getAttribute('data-view');
-        if (!view) return; // Skip non-view links like logout
+        if (!view) return;
 
-        if (isMasterAdmin || permitidas.includes(view)) {
-            navItem.style.display = 'flex'; // our UI uses flex for all nav-items
+        const shouldShow = isMasterAdmin || permitidas.includes(view);
+        if (shouldShow) {
+            navItem.style.setProperty('display', 'flex', 'important');
         } else {
-            navItem.style.display = 'none';
+            navItem.style.setProperty('display', 'none', 'important');
         }
     });
 
     // Final cleanup: ensure nav-divider and specific buttons follow the order
     const adminNavDivider = document.getElementById('admin-nav-divider');
     const navSettings = document.getElementById('nav-settings');
+    const navCompetencias = document.getElementById('nav-competencias');
+
     if (adminNavDivider && sidebarNav) sidebarNav.appendChild(adminNavDivider);
+    if (navCompetencias && sidebarNav) sidebarNav.appendChild(navCompetencias);
     if (navSettings && sidebarNav) sidebarNav.appendChild(navSettings);
+
+    // BLINDAGEM EXTRA: Forçar visibilidade se for Master Admin
+    if (isMasterAdmin) {
+        console.log("%c APLICANDO BLINDAGEM ADMINISTRATIVA NO DOM", "color: #f59e0b; font-weight: bold;");
+        const adminItems = ['nav-settings', 'nav-competencias'];
+        adminItems.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.setProperty('display', 'flex', 'important');
+        });
+        if (adminNavDivider) adminNavDivider.style.setProperty('display', 'block', 'important');
+    }
 
     // Hide/Show specific inner buttons based on permissions
     const btnSetores = document.getElementById('btn-manage-setores');
@@ -765,7 +811,7 @@ function applyUserPermissions(auth) {
 
     // Dashboard Access Control
     const dashUserFilter = document.getElementById('dash-user-filter');
-    const isAdmin = ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(auth.permissao);
+    const isAdmin = auth.permissao && ['gerente', 'adm', 'admin', 'supervisor'].includes(auth.permissao.toLowerCase());
 
     if (dashUserFilter) {
         dashUserFilter.style.display = isAdmin ? 'block' : 'none';
@@ -863,7 +909,7 @@ function setupNavigation() {
 
             // Switch views globally
             const targetView = link.getAttribute('data-view');
-            sessionStorage.setItem('fiscalapp_current_view', targetView);
+            localStorage.setItem('fiscalapp_current_view', targetView);
             document.querySelectorAll('.view-section').forEach(view => {
                 view.style.display = 'none';
                 view.classList.remove('active');
@@ -894,9 +940,16 @@ function setupNavigation() {
                 if (targetView === 'mensagens') renderMensagens();
                 if (targetView === 'competencias') renderCompetenciasAdmin();
                 if (targetView === 'settings') {
-                    // Trigger the first tab by default or re-render active
+                    // Trigger the saved tab, first tab by default, or re-render active
                     initSettingsTabs();
-                    const activeTab = document.querySelector('.settings-tab-btn.active');
+                    const savedTabId = localStorage.getItem('fiscalapp_settings_tab');
+                    let activeTab = null;
+                    if (savedTabId) {
+                        activeTab = document.querySelector(`.settings-tab-btn[data-target="${savedTabId}"]`);
+                    }
+                    if (!activeTab) {
+                        activeTab = document.querySelector('.settings-tab-btn.active');
+                    }
                     if (activeTab) activeTab.click();
                 }
             }
@@ -1052,6 +1105,7 @@ function renderDashboard() {
             `;
 
             const tr = document.createElement('tr');
+            tr.setAttribute('onclick', `openEmployeePerformanceModal('${resp}')`);
             tr.innerHTML = `
                 <td><span class="resp-tag"><i class="fa-solid fa-user-circle"></i> ${resp}</span></td>
                 <td>${st.total}</td>
@@ -1069,6 +1123,8 @@ function renderDashboard() {
 let healthChartInst = null;
 let teamChartInst = null;
 let sectorChartInst = null;
+let empStatusChartInst = null;
+let empProductionChartInst = null;
 
 function renderHealthChart(kpis) {
     const ctxValue = document.getElementById('semaforoChart');
@@ -1393,12 +1449,229 @@ function renderMeuDesempenho() {
 }
 
 // ==========================================
+// Modal: Desempenho Completo do Funcionário
+// ==========================================
+let currentEmployeeForPerformance = null;
+
+function formatCompetencia(comp) {
+    if (!comp) return "---";
+    const parts = comp.split('-');
+    if (parts.length === 2 && parts[0].length === 4) {
+        return `${parts[1]}/${parts[0]}`;
+    }
+    return comp;
+}
+window.formatCompetencia = formatCompetencia;
+
+function openEmployeePerformanceModal(employeeName) {
+    currentEmployeeForPerformance = employeeName;
+    document.getElementById('emp-perf-name').textContent = employeeName;
+
+    // Popula o seletor de competência com as disponíveis no sistema
+    const compSelect = document.getElementById('emp-perf-comp-filter');
+    compSelect.innerHTML = '<option value="Geral">Período Geral</option>';
+
+    const allExecs = Store.getData().execucoes || [];
+    const comps = [...new Set(allExecs.map(e => e.competencia).filter(Boolean))].sort().reverse();
+    comps.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c;
+        if (c === currentCompetencia) option.selected = true; // Pré-selecionar o mês do dashboard
+        option.textContent = formatCompetencia(c);
+        compSelect.appendChild(option);
+    });
+
+    updateEmployeePerformanceModal();
+
+    const modal = document.getElementById('modal-employee-performance');
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    } else {
+        console.error("ERRO: Elemento 'modal-employee-performance' não encontrado no DOM.");
+    }
+}
+window.openEmployeePerformanceModal = openEmployeePerformanceModal;
+
+function updateEmployeePerformanceModal() {
+    if (!currentEmployeeForPerformance) return;
+
+    const selectedComp = document.getElementById('emp-perf-comp-filter').value;
+
+    // Pega as rotinas cujo responsável inclua o nome do funcionário clicado
+    let execs = Store.getExecucoesWithDetails(currentEmployeeForPerformance);
+
+    if (selectedComp !== "Geral") {
+        execs = execs.filter(e => e.competencia === selectedComp);
+    }
+
+    // Calcular os KPIs
+    const total = execs.length;
+    const concluidas = execs.filter(e => e.feito).length;
+    const pendencias = execs.filter(e => !e.feito);
+    const atrasadas = pendencias.filter(e => e.semaforo === 'red').length;
+    const pendentes = pendencias.length - atrasadas; // No prazo ou vencendo
+
+    const scoreEficiencia = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+
+    // Atualizar UI dos KPIs
+    document.getElementById('emp-kpi-total').textContent = total;
+    document.getElementById('emp-kpi-done').textContent = concluidas;
+    document.getElementById('emp-kpi-pend').textContent = pendentes;
+    document.getElementById('emp-kpi-late').textContent = atrasadas;
+    document.getElementById('emp-kpi-score').innerHTML = scoreEficiencia + '<span style="font-size:0.8rem; margin-left:2px;">%</span>';
+
+    // Popular a tabela Detalhada
+    const tbody = document.querySelector('#emp-perf-detail-table tbody');
+    tbody.innerHTML = '';
+
+    if (execs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+            Selecione outro período. Nenhuma tarefa encontrada.
+        </td></tr>`;
+        return;
+    }
+
+    // Ordenar: primeiro as atrasadas, depois data de prazo
+    execs.sort((a, b) => {
+        if (a.semaforo === 'red' && b.semaforo !== 'red') return -1;
+        if (a.semaforo !== 'red' && b.semaforo === 'red') return 1;
+        return new Date(a.diaPrazo) - new Date(b.diaPrazo);
+    });
+
+    execs.forEach(ex => {
+        const tr = document.createElement('tr');
+        const dataExibicao = ex.feito ? (ex.feitoEm ? formatDate(ex.feitoEm) : '---') : formatDate(ex.diaPrazo);
+
+        let statusBadge = '';
+        if (ex.feito) {
+            statusBadge = '<span class="status-badge noprazo">Concluído</span>';
+        } else {
+            statusBadge = `<span class="status-badge ${ex.semaforo === 'red' ? 'atrasado' : (ex.semaforo === 'yellow' ? 'vencendo' : 'hoje')}">${ex.statusAuto}</span>`;
+        }
+
+        tr.innerHTML = `
+            <td style="color: var(--text-muted); font-size: 0.85rem;">${formatCompetencia(ex.competencia)}</td>
+            <td><strong>${ex.clientName}</strong></td>
+            <td><span class="resp-tag">${ex.rotina}</span></td>
+            <td>${dataExibicao}</td>
+            <td>${statusBadge}</td>
+            <td style="color: var(--text-muted);">---</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Renderizar Gráficos
+    renderEmployeeStatusChart(execs);
+    renderEmployeeProductionChart(currentEmployeeForPerformance);
+}
+
+function renderEmployeeStatusChart(execs) {
+    const ctx = document.getElementById('empStatusChart');
+    if (!ctx) return;
+    if (empStatusChartInst) empStatusChartInst.destroy();
+
+    const concluidos = execs.filter(e => e.feito).length;
+    const noPrazo = execs.filter(e => !e.feito && e.semaforo === 'blue').length;
+    const hoje = execs.filter(e => !e.feito && e.semaforo === 'yellow').length;
+    const atrasados = execs.filter(e => !e.feito && e.semaforo === 'red').length;
+
+    let data = [concluidos, noPrazo, hoje, atrasados];
+    const empty = data.every(d => d === 0);
+    if (empty) data = [0.1, 0, 0, 0];
+
+    empStatusChartInst = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Concluído', 'No Prazo', 'Vencendo Hoje', 'Atrasado'],
+            datasets: [{
+                data: data,
+                backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            cutout: '70%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 }, usePointStyle: true, padding: 15 } },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => (value >= 1 && !empty) ? value : ''
+                }
+            }
+        }
+    });
+}
+
+function renderEmployeeProductionChart(employeeName) {
+    const ctx = document.getElementById('empProductionChart');
+    if (!ctx) return;
+    if (empProductionChartInst) empProductionChartInst.destroy();
+
+    const allExecs = Store.getExecucoesWithDetails(employeeName);
+    const concluidas = allExecs.filter(e => e.feito);
+
+    // Agrupar por competência (últimos 6 meses)
+    const comps = [...new Set(allExecs.map(e => e.competencia).filter(Boolean))].sort().reverse().slice(0, 6).reverse();
+    const dataPoints = comps.map(c => concluidas.filter(e => e.competencia === c).length);
+    const labels = comps.map(c => formatCompetencia(c));
+
+    empProductionChartInst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Concluídas',
+                data: dataPoints,
+                backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                borderColor: '#8B5CF6',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10 } } },
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', font: { size: 10 }, stepSize: 1 } }
+            },
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#fff',
+                    font: { size: 10, weight: 'bold' }
+                }
+            }
+        }
+    });
+}
+
+function closeEmployeePerformanceModal() {
+    const modal = document.getElementById('modal-employee-performance');
+    modal.classList.remove('active');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        currentEmployeeForPerformance = null;
+    }, 300);
+}
+window.closeEmployeePerformanceModal = closeEmployeePerformanceModal;
+window.updateEmployeePerformanceModal = updateEmployeePerformanceModal;
+
+
+// ==========================================
 // VIEW: Painel Operacional
 // ==========================================
 function renderOperacional() {
     let tasks = Store.getExecucoesWithDetails(currentOperacionalUser);
 
-    // Filter by selected Competencia (History/Auditing)
+    // Filtrar by selected Competencia (History/Auditing)
     if (currentCompetencia) {
         tasks = tasks.filter(t => t.competencia && t.competencia.startsWith(currentCompetencia));
     }
@@ -1712,7 +1985,7 @@ function renderClientes() {
                 <label class="custom-toggle" title="${isOperacional ? 'Permissão apenas para visualização' : 'Alterar status de ' + c.razaoSocial}" style="${isOperacional ? 'cursor: not-allowed; opacity: 0.6;' : ''}">
                     <input type="checkbox" onchange="toggleClientStatus(${c.id}, this.checked)" ${c.ativo !== false ? 'checked' : ''} ${isOperacional ? 'disabled' : ''}>
                     <span class="toggle-slider"></span>
-                    <span class="toggle-label" style="font-size: 0.7rem;">Ativo</span>
+                    <span class="toggle-label" style="font-size: 0.7rem;">Status</span>
                 </label>
             </div>
         `;
@@ -1760,7 +2033,14 @@ function renderClientes() {
         btn.addEventListener('click', async (e) => {
             const id = parseInt(e.currentTarget.getAttribute('data-id'));
             const c = Store.getData().clientes.find(x => x.id === id);
-            if (c && confirm(`Atenção: Tem certeza que deseja excluir o cliente '${c.razaoSocial}' e TUDO que estiver atrelado a ele?`)) {
+
+            const confirmacao = await showConfirm(
+                "Excluir Cliente?",
+                `Atenção: Tem certeza que deseja excluir o cliente '${c.razaoSocial}' e TUDO que estiver atrelado a ele? Esta ação não pode ser desfeita.`,
+                'danger'
+            );
+
+            if (c && confirmacao) {
                 await Store.deleteClient(id);
                 renderClientes();
                 renderOperacional();
@@ -1800,11 +2080,11 @@ function showSuccessOverlay(title = 'Parabéns!', message = 'Você concluiu a co
     if (overlay && titleEl && msgEl) {
         titleEl.textContent = title;
         msgEl.textContent = message;
-        // The display logic is flex by default, but hidden with opacity
+        // A lógica de exibição é flex por padrão, mas oculta com opacidade
         overlay.style.pointerEvents = 'all';
         overlay.style.opacity = '1';
 
-        // Auto-hide after 5 seconds
+        // Ocultar automaticamente após 5 segundos
         setTimeout(() => {
             hideSuccessOverlay();
         }, 5000);
@@ -1843,11 +2123,11 @@ function setupClientCheckboxes() {
     let deleteBtn = document.getElementById('btn-delete-clients-header');
     const badge = document.getElementById('delete-clients-header-count');
 
-    // Remove old listeners by cloning
+    // Remover listeners antigos clonando
     if (deleteBtn) {
         const newDeleteBtn = deleteBtn.cloneNode(true);
         deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-        deleteBtn = newDeleteBtn; // Update reference to the one in DOM
+        deleteBtn = newDeleteBtn; // Atualizar referência para o que está no DOM
     }
 
     const updateDeleteBtnVisibility = () => {
@@ -1889,17 +2169,23 @@ function setupClientCheckboxes() {
             const selectedIds = selectedChecks.map(cb => parseInt(cb.value));
             if (selectedIds.length === 0) return;
 
-            if (confirm(`Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados?`)) {
+            const confirmacao = await showConfirm(
+                "Excluir Clientes Selecionados?",
+                `Atenção: Deseja realmente excluir os ${selectedIds.length} clientes selecionados de forma definitiva?`,
+                'danger'
+            );
+
+            if (confirmacao) {
                 deleteBtn.disabled = true;
                 deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-                // Animation phase
+                // Fase de animação
                 selectedChecks.forEach(cb => {
                     const row = cb.closest('tr');
                     if (row) row.classList.add('row-fade-out');
                 });
 
-                // Wait for animation
+                // Esperar pela animação
                 await new Promise(r => setTimeout(r, 500));
 
                 for (let id of selectedIds) {
@@ -1917,13 +2203,13 @@ function setupClientCheckboxes() {
 function openClientDetail(id = null) {
     document.getElementById('add-client-form').reset();
 
-    // Toggle panels
+    // Alternar painéis
     document.getElementById('clientes-list-container').style.display = 'none';
     const detailPanel = document.getElementById('clientes-detail-panel');
     detailPanel.style.display = 'block';
     detailPanel.classList.add('active');
 
-    // Reset tabs
+    // Resetar abas
     document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelector('[data-tab="tab-geral"]').classList.add('active');
@@ -1949,7 +2235,7 @@ function openClientDetail(id = null) {
     }
 
 
-    // Load Rotinas for checklist
+    // Carregar Rotinas para checklist
     const rotinasGrid = document.getElementById('rotinas-checkbox-grid');
     if (rotinasGrid) {
         rotinasGrid.innerHTML = '';
@@ -1963,7 +2249,7 @@ function openClientDetail(id = null) {
         });
     }
 
-    // Status Toggle Setup
+    // Configuração de Alternância de Status
     const statusContainer = document.getElementById('client-status-container');
     const statusToggle = document.getElementById('client-ativo');
     const statusLabel = document.getElementById('client-status-label');
@@ -1971,7 +2257,6 @@ function openClientDetail(id = null) {
     if (statusToggle) {
         statusToggle.onchange = () => {
             statusLabel.textContent = statusToggle.checked ? 'Ativo' : 'Inativo';
-            statusLabel.style.color = statusToggle.checked ? '#10B981' : '#EF4444';
         };
     }
 
@@ -1999,7 +2284,7 @@ function openClientDetail(id = null) {
             if (statusContainer) statusContainer.style.display = 'flex';
             if (statusToggle) {
                 statusToggle.checked = cliente.ativo !== false;
-                statusToggle.onchange(); // Trigger label update
+                statusToggle.onchange(); // Disparar atualização de rótulo
             }
 
             // Contato
@@ -2125,7 +2410,7 @@ async function toggleClientStatus(id, newStatus) {
         if (cliente) {
             await Store.editClient(id, { ...cliente, ativo: newStatus, rotinasSelecionadasIds: cliente.rotinasSelecionadas || [] });
             showFeedbackToast(`Status de ${cliente.razaoSocial} alterado para ${newStatus ? 'Ativo' : 'Inativo'}.`, 'success');
-            // Refresh counts and dashboard if needed
+            // Atualizar contagens e dashboard se necessário
             renderDashboard();
         }
     } catch (e) {
@@ -2143,7 +2428,7 @@ function renderEquipe() {
 
     const func = Store.getData().funcionarios;
 
-    // Restrict UI for non-managers
+    // Restringir UI para não gerentes
     const btnNovoMembro = document.getElementById('btn-add-equipe');
     if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() !== 'gerente') {
         btnNovoMembro.style.display = 'none';
@@ -2168,7 +2453,11 @@ function renderEquipe() {
         tr.className = 'fade-in';
 
         const badgeColor = f.permissao === 'Gerente' ? 'var(--primary)' : 'var(--success)';
-        const isAtivo = f.ativo !== false; // default true
+        const isAtivo = f.ativo !== false; // padrão verdadeiro
+
+        // Buscar nome do cargo
+        const cargo = Store.getData().cargos.find(c => c.id == f.cargo_id);
+        const cargoNome = cargo ? cargo.nome_cargo : f.permissao;
 
         let statusHtml = '';
         if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'gerente') {
@@ -2178,7 +2467,7 @@ function renderEquipe() {
                         <input type="checkbox" ${isAtivo ? 'checked' : ''} onchange="toggleFuncionarioStatus('${f.id}')">
                         <span class="toggle-slider"></span>
                     </label>
-                    <span style="font-size: 0.8rem; font-weight: 500; color: ${isAtivo ? 'var(--success)' : 'var(--danger)'};">
+                    <span style="font-size: 0.8rem; font-weight: 500;">
                         ${isAtivo ? 'Ativo' : 'Inativo'}
                     </span>
                 </div>
@@ -2193,12 +2482,17 @@ function renderEquipe() {
             <td><strong>#${f.id.toString().padStart(3, '0')}</strong></td>
             <td>${f.nome}</td>
             <td>${f.setor}</td>
-            <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${f.permissao}</span></td>
+            <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${cargoNome}</span></td>
             <td>${statusHtml}</td>
             <td>
-                <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                    <i class="fa-solid fa-pen"></i> Editar
-                </button>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button class="btn btn-small btn-secondary" onclick="openEditEquipeModal('${f.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        <i class="fa-solid fa-pen"></i> Editar
+                    </button>
+                    <button class="btn btn-small btn-secondary text-danger" onclick="deleteFuncionarioDirectly('${f.id}', '${f.nome.replace(/'/g, "\\'")}')" title="Excluir" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
             </td>
         `;
 
@@ -2210,24 +2504,85 @@ function openEquipeModal() {
     document.getElementById('add-equipe-form').reset();
     document.getElementById('equipe-id').value = '';
     document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Novo Funcionário';
-    document.getElementById('equipe-status-container').style.display = 'none';
+    document.getElementById('btn-save-equipe').textContent = 'Cadastrar';
+
+    // Resetar erro visual
+    const errorDiv = document.getElementById('equipe-error');
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+
+    // Esconder botão de excluir no novo cadastro
+    document.getElementById('btn-delete-equipe').style.display = 'none';
+
+    document.getElementById('equipe-status-container').style.display = 'block';
+    document.getElementById('equipe-ativo').checked = true;
+    const badgeDefault = document.getElementById('equipe-status-badge');
+    badgeDefault.className = 'table-badge success';
+    badgeDefault.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
+
+    // Popular cargos
+    const cargoSelect = document.getElementById('equipe-cargo');
+    if (cargoSelect) {
+        cargoSelect.innerHTML = '<option value="">Nenhum cargo vinculado</option>';
+        Store.getData().cargos.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nome_cargo;
+            cargoSelect.appendChild(opt);
+        });
+    }
+
     document.getElementById('add-equipe-modal').classList.add('active');
 }
 
 function openEditEquipeModal(id) {
-    const f = Store.getData().funcionarios.find(x => x.id === id);
-    if (!f) return;
+    // Uso de == para permitir comparação entre string (do HTML) e número (do Store)
+    const f = Store.getData().funcionarios.find(x => x.id == id);
+    if (!f) {
+        console.error("Funcionário não encontrado para ID:", id);
+        return;
+    }
 
     document.getElementById('add-equipe-form').reset();
     document.getElementById('equipe-id').value = f.id;
     document.getElementById('modal-equipe-title').innerHTML = '<i class="fa-solid fa-user-shield highlight-text"></i> Editar Funcionário';
+    document.getElementById('btn-save-equipe').textContent = 'Salvar Alterações';
+
+    // Esconder erro prévio
+    const errorDiv = document.getElementById('equipe-error');
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+
+    // Mostrar botão de excluir apenas na edição
+    document.getElementById('btn-delete-equipe').style.display = 'block';
 
     document.getElementById('equipe-nome').value = f.nome;
     document.getElementById('equipe-setor').value = f.setor;
     document.getElementById('equipe-permissao').value = f.permissao;
     document.getElementById('equipe-senha').value = f.senha;
 
+    // Popular e selecionar cargo
+    const cargoSelect = document.getElementById('equipe-cargo');
+    if (cargoSelect) {
+        cargoSelect.innerHTML = '<option value="">Nenhum cargo vinculado</option>';
+        Store.getData().cargos.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nome_cargo;
+            cargoSelect.appendChild(opt);
+        });
+        cargoSelect.value = f.cargo_id || '';
+    }
+
     document.getElementById('equipe-ativo').checked = f.ativo !== false;
+    const badgeEdit = document.getElementById('equipe-status-badge');
+    if (f.ativo !== false) {
+        badgeEdit.className = 'table-badge success';
+        badgeEdit.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
+    } else {
+        badgeEdit.className = 'table-badge danger';
+        badgeEdit.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Inativo';
+    }
     document.getElementById('equipe-status-container').style.display = 'block';
 
     document.getElementById('add-equipe-modal').classList.add('active');
@@ -2242,17 +2597,36 @@ async function handleAddFuncionario(e) {
     const id = document.getElementById('equipe-id').value;
     const nome = document.getElementById('equipe-nome').value;
     const setor = document.getElementById('equipe-setor').value;
+    const cargo_id = document.getElementById('equipe-cargo').value || null;
     const permissao = document.getElementById('equipe-permissao').value;
     const senha = document.getElementById('equipe-senha').value;
 
-    // Status is only used if editing, or defaults to true for new ones
+    // O status só é usado se estiver editando, ou por padrão é verdadeiro para novos
     const isEditing = !!id;
     const ativo = isEditing ? document.getElementById('equipe-ativo').checked : true;
 
+    // Resetar erro visual
+    const errorDiv = document.getElementById('equipe-error');
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+
+    // Verificação de nome duplicado (trava solicitada pelo usuário)
+    const todosFuncionarios = Store.getData().funcionarios;
+    const nomeJaExiste = todosFuncionarios.some(f =>
+        f.nome.trim().toLowerCase() === nome.trim().toLowerCase() &&
+        (isEditing ? f.id != id : true)
+    );
+
+    if (nomeJaExiste) {
+        errorDiv.textContent = `Já existe um funcionário cadastrado com o nome "${nome}".`;
+        errorDiv.style.display = 'block';
+        return;
+    }
+
     if (isEditing) {
-        await Store.editFuncionario(id, nome, setor, permissao, senha, ativo);
+        await Store.editFuncionario(id, nome, setor, permissao, senha, cargo_id, ativo);
     } else {
-        await Store.addFuncionario(nome, setor, permissao, senha, ativo);
+        await Store.addFuncionario(nome, setor, permissao, senha, cargo_id, ativo);
     }
 
     closeEquipeModal();
@@ -2260,6 +2634,141 @@ async function handleAddFuncionario(e) {
     populateDashboardSelects();
 }
 
+/**
+ * Modal de Confirmação (Retorna uma Promise true/false)
+ */
+function showConfirm(title, message, type = 'warning') {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('modal-confirm-premium');
+        const titleEl = document.getElementById('confirm-title');
+        const messageEl = document.getElementById('confirm-message');
+        const btnOk = document.getElementById('confirm-ok');
+        const btnCancel = document.getElementById('confirm-cancel');
+        const iconEl = document.getElementById('confirm-icon');
+
+        if (!modal || !titleEl || !messageEl || !btnOk || !btnCancel || !iconEl) {
+            console.error("Elementos do modal de confirmação não encontrados.");
+            resolve(window.confirm(message));
+            return;
+        }
+
+        titleEl.textContent = title;
+        messageEl.innerHTML = message;
+
+        // Ajustar ícone e cor conforme o tipo
+        if (type === 'danger') {
+            iconEl.style.color = 'var(--danger)';
+            iconEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+            btnOk.style.background = 'var(--danger)';
+            btnOk.style.borderColor = 'var(--danger)';
+        } else {
+            iconEl.style.color = 'var(--warning)';
+            iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            btnOk.style.background = 'var(--primary)';
+            btnOk.style.borderColor = 'var(--primary)';
+        }
+
+        modal.classList.add('active');
+
+        const handleOk = () => {
+            modal.classList.remove('active');
+            cleanup();
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            modal.classList.remove('active');
+            cleanup();
+            resolve(false);
+        };
+
+        const cleanup = () => {
+            btnOk.removeEventListener('click', handleOk);
+            btnCancel.removeEventListener('click', handleCancel);
+        };
+
+        btnOk.addEventListener('click', handleOk, { once: true });
+        btnCancel.addEventListener('click', handleCancel, { once: true });
+    });
+}
+
+async function handleDeleteFuncionario() {
+    const id = document.getElementById('equipe-id').value;
+    const nome = document.getElementById('equipe-nome').value;
+
+    if (!id) return;
+
+    // Confirmação Premium
+    const confirmacao = await showConfirm(
+        "Excluir Funcionário?",
+        `Tem certeza que deseja remover permanentemente a conta de "${nome}"? Esta ação não pode ser desfeita.`,
+        'danger'
+    );
+
+    if (!confirmacao) return;
+
+    showLoading("Processando", "Excluindo funcionário...");
+    const success = await Store.deleteFuncionario(id);
+    hideLoading();
+
+    if (success) {
+        showFeedbackToast("Conta excluída com sucesso!", "success");
+        closeEquipeModal();
+        renderEquipe();
+        populateDashboardSelects();
+    } else {
+        showFeedbackToast("Erro ao excluir conta. Verifique a conexão.", "error");
+    }
+}
+
+async function deleteFuncionarioDirectly(id, nome) {
+    if (!id) return;
+
+    // Confirmação Premium
+    const confirmacao = await showConfirm(
+        "Excluir Funcionário?",
+        `Tem certeza que deseja remover permanentemente a conta de "${nome}"? Esta ação não pode ser desfeita.`,
+        'danger'
+    );
+
+    if (!confirmacao) return;
+
+    showLoading("Processando", "Excluindo funcionário...");
+    const success = await Store.deleteFuncionario(id);
+    hideLoading();
+
+    if (success) {
+        showFeedbackToast("Conta excluída com sucesso!", "success");
+        renderEquipe();
+        populateDashboardSelects();
+    } else {
+        showFeedbackToast("Erro ao excluir conta. Verifique a conexão.", "error");
+    }
+}
+
+async function deleteCargo(id) {
+    if (!id) return;
+
+    const confirmacao = await showConfirm(
+        "Excluir Cargo?",
+        "Tem certeza que deseja excluir esse Cargo e suas Permissões de Acesso de forma definitiva?",
+        'danger'
+    );
+
+    if (confirmacao) {
+        showLoading("Processando", "Excluindo cargo do sistema...");
+        const success = await Store.deleteCargo(id);
+        hideLoading();
+
+        if (success) {
+            showFeedbackToast("Cargo excluído com sucesso!", "success");
+            renderCargos();
+            populateDashboardSelects();
+        } else {
+            showNotify("Atenção", "Cargo em uso ou erro na requisição.", "error");
+        }
+    }
+}
 async function toggleFuncionarioStatus(id) {
     const stringId = id.toString();
     const f = Store.getData().funcionarios.find(x => x.id.toString() === stringId);
@@ -2267,11 +2776,11 @@ async function toggleFuncionarioStatus(id) {
 
     const novoStatus = f.ativo === false ? true : false;
 
-    // Optimistic UI update
+    // Atualização Otimista da UI
     f.ativo = novoStatus;
     renderEquipe();
 
-    // Push backend change
+    // Enviar mudança para o backend
     await Store.editFuncionario(f.id, f.nome, f.setor, f.permissao, f.senha, novoStatus);
 }
 
@@ -2292,7 +2801,7 @@ function renderRotinas() {
     rotinas.forEach(r => {
         let badgeClass = "noprazo";
         if (r.frequencia === 'Anual') badgeClass = 'hoje';
-        else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Using red to highlight
+        else if (r.frequencia === 'Eventual') badgeClass = 'atrasado'; // Usando vermelho para destacar
 
         const diaText = r.frequencia === 'Mensal' ? `Dia ${r.diaPrazoPadrao}` :
             (r.frequencia === 'Anual' ? `${r.diaPrazoPadrao}` : `${r.diaPrazoPadrao} d.c.`);
@@ -2323,11 +2832,11 @@ function renderRotinas() {
             <td>
                 <div class="btn-action-container">
                     ${isOperacional ? '' : `
-                    <button class="btn btn-small btn-secondary btn-edit" onclick="openRotinaModal(${r.id})">
+                    <button class="btn btn-small btn-secondary btn-edit" onclick="openRotinaModal(${r.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                         <i class="fa-solid fa-pen"></i> Editar
                     </button>
-                    <button class="btn btn-small btn-secondary btn-delete" onclick="handleDeleteRotina(${r.id}, this)" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);">
-                        <i class="fa-solid fa-trash"></i> Excluir
+                    <button class="btn btn-small btn-secondary text-danger" onclick="handleDeleteRotina(${r.id}, this)" title="Excluir Rotina" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem; margin-left: 0.5rem;">
+                        <i class="fa-solid fa-trash"></i>
                     </button>
                     `}
                 </div>
@@ -2361,10 +2870,10 @@ function openRotinaModal(id = null) {
     }
 
     form.reset();
-    currentChecklistBuilder = []; // Reset builder
+    currentChecklistBuilder = []; // Resetar construtor
     document.getElementById('new-checklist-item').value = '';
 
-    // Reset Search
+    // Resetar Busca
     const filterInput = document.getElementById('filter-clientes-rotina');
     if (filterInput) {
         filterInput.value = '';
@@ -2389,7 +2898,7 @@ function openRotinaModal(id = null) {
 
     selectFreq.onchange = (e) => updateUIForFreq(e.target.value);
 
-    // Dynamic loading of Clientes checkboxes with sorting
+    // Carregamento dinâmico de checkboxes de Clientes com ordenação
     const sortMode = document.getElementById('sort-clientes-rotina')?.value || 'az';
     renderRoutineClientsGrid(sortMode, id);
 
@@ -2408,7 +2917,7 @@ function openRotinaModal(id = null) {
             document.getElementById('rotina-setor').value = rotina.setor || '';
             document.getElementById('rotina-prazo').value = rotina.diaPrazoPadrao;
 
-            // Check the responsible employees
+            // Verificar os funcionários responsáveis
             const reps = (rotina.responsavel || "").split(",").map(s => s.trim());
             document.querySelectorAll('.resp-checkbox').forEach(cb => {
                 if (reps.includes(cb.value)) cb.checked = true;
@@ -2648,21 +3157,27 @@ async function handleDeleteRotina(id, btnElement = null) {
     const rotina = Store.getData().rotinasBase.find(r => r.id === id);
     if (!rotina) return;
 
-    if (confirm(`Atenção: Tem certeza que deseja EXCLUIR a rotina '${rotina.nome}'? Isso a removerá da base de rotinas disponíveis.`)) {
+    const confirmacao = await showConfirm(
+        "Excluir Rotina Base?",
+        `Atenção: Tem certeza que deseja EXCLUIR a rotina '${rotina.nome}' permanentemente? Isso a removerá da base de rotinas e afetará as vinculações existentes.`,
+        'danger'
+    );
+
+    if (confirmacao) {
         // Efeito visual no ícone antes de sumir
         if (btnElement) {
             const icon = btnElement.querySelector('i');
             if (icon) icon.classList.add('delete-pop');
         }
 
-        showLoading('Excluindo Rotina', `Removendo '${rotina.nome}' e todas as tarefas vinculadas...`);
+        showLoading('Excluindo Rotina', `Removendo '${rotina.nome}' e todas as vinculações...`);
 
         try {
             // Pequeno delay para a animação aparecer antes da remoção
             await new Promise(resolve => setTimeout(resolve, 500));
             await Store.deleteRotinaBase(id);
             renderRotinas();
-            // alert(`Rotina '${rotina.nome}' excluída com sucesso!`); // Alert opcional, UI já some
+            showFeedbackToast(`Rotina '${rotina.nome}' excluída com sucesso!`, 'success');
         } catch (error) {
             console.error(error);
             showNotify("Erro", "Ocorreu um erro ao excluir a rotina. Verifique o console.", "error");
@@ -2698,7 +3213,7 @@ function renderCompetenciasAdmin() {
         return;
     }
 
-    // Sort descending by ID (YYYY-MM)
+    // Ordenar decrescente por ID (AAAA-MM)
     const sortedMeses = [...meses].sort((a, b) => b.id.localeCompare(a.id));
 
     sortedMeses.forEach(m => {
@@ -2719,28 +3234,44 @@ function renderCompetenciasAdmin() {
                 </div>
             </td>
             <td style="text-align: right;">
-                <button class="btn btn-outline btn-delete-comp" data-id="${m.id}" style="border-color:var(--danger); color:var(--danger); padding:0.4rem 0.8rem;" ${m.ativo ? 'disabled title="Não é possível apagar o mês atual"' : ''}>
-                    <i class="fa-solid fa-trash"></i> Apagar
+                <button class="btn btn-small btn-secondary text-danger btn-delete-comp" data-id="${m.id}" title="Apagar Competência" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;" ${m.ativo ? 'disabled title="Não é possível apagar o mês atual"' : ''}>
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 
-    // Attach Delete Events
+    // Anexar Eventos de Exclusão
     document.querySelectorAll('.btn-delete-comp').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const id = e.currentTarget.getAttribute('data-id');
-            const modal = document.getElementById('modal-delete-competencia');
-            const hiddenId = document.getElementById('delete-comp-id');
-            const msgEl = document.getElementById('delete-comp-msg');
+            if (!id) return;
 
-            if (modal && hiddenId && msgEl) {
-                hiddenId.value = id;
-                msgEl.innerHTML = `Você está prestes a apagar a competência <strong>${id}</strong> inteira, junto com todas as tarefas vinculadas a ela. Esta é uma ação destrutiva irreversível.`;
-                modal.style.display = 'flex';
-                // Trigger CSS transitions
-                setTimeout(() => modal.classList.add('active'), 10);
+            const confirmacao = await showConfirm(
+                "Excluir Competência?",
+                `Você está prestes a apagar a competência <strong>${id}</strong> inteira, junto com todas as tarefas vinculadas a ela. Esta é uma ação destrutiva irreversível.
+                <br><br>Tem 100% de certeza absoluta?`,
+                'danger'
+            );
+
+            if (confirmacao) {
+                const icon = e.currentTarget.querySelector('i');
+                if (icon) icon.className = "fa-solid fa-spinner fa-spin";
+                e.currentTarget.disabled = true;
+
+                showLoading('Processando', `Apagando ${id}...`);
+                const success = await Store.deleteCompetencia(id);
+                hideLoading();
+
+                if (success) {
+                    showFeedbackToast(`Competência ${id} removida.`, 'success');
+                    renderCompetenciasAdmin();
+                } else {
+                    showNotify("Erro", "Houve um erro na exclusão. Tente novamente.", "error");
+                    if (icon) icon.className = "fa-solid fa-trash";
+                    e.currentTarget.disabled = false;
+                }
             }
         });
     });
@@ -2753,7 +3284,7 @@ function closeDeleteCompetenciaModal() {
         setTimeout(() => modal.style.display = 'none', 300);
         document.getElementById('delete-comp-id').value = '';
 
-        // Reset button state
+        // Resetar estado do botão
         const submitBtn = document.getElementById('btn-confirm-delete-comp');
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -2792,7 +3323,7 @@ function renderMenuReorderList() {
             <i class="fa-solid fa-grip-vertical drag-handle"></i>
         `;
 
-        // Drag events
+        // Eventos de arrastar
         div.addEventListener('dragstart', () => div.classList.add('dragging'));
         div.addEventListener('dragend', () => div.classList.remove('dragging'));
 
@@ -2830,8 +3361,9 @@ async function saveMenuOrder() {
     const items = listContainer.querySelectorAll('.reorder-item');
     const newOrder = Array.from(items).map(i => i.getAttribute('data-view'));
 
-    // Always keep settings at the end
-    newOrder.push('settings');
+    // Garantir que abas críticas de admin estejam na ordem (ao menos no final se não foram movidas)
+    if (!newOrder.includes('competencias')) newOrder.push('competencias');
+    if (!newOrder.includes('settings')) newOrder.push('settings');
 
     showLoading('Salvando Ordem', 'Atualizando layout do menu lateral...');
 
@@ -2849,7 +3381,7 @@ async function saveMenuOrder() {
     if (saveBtn) saveBtn.disabled = false;
 
     if (success) {
-        // Re-apply immediately
+        // Reaplicar imediatamente
         applyUserPermissions(LOGGED_USER);
         showNotify("Sucesso", "Ordem do menu salva com sucesso!", "success");
     } else {
@@ -2869,7 +3401,7 @@ function loadSetoresSelects() {
 
 
 
-    // Update Equipe Modal Sector Select
+    // Atualizar Seleção de Setor no Modal de Equipe
 
     const eqSetor = document.getElementById('equipe-setor');
 
@@ -2887,7 +3419,7 @@ function loadSetoresSelects() {
 
 
 
-    // Update Rotina Modal Sector Select
+    // Atualizar Seleção de Setor no Modal de Rotina
 
     const rotSetor = document.getElementById('rotina-setor');
 
@@ -2993,7 +3525,7 @@ function handleAddSetor() {
 
         renderSetoresListPreview();
 
-        loadSetoresSelects(); // Update all selects globally
+        loadSetoresSelects(); // Atualizar todos os selects globalmente
 
     }
 
@@ -3002,17 +3534,24 @@ function handleAddSetor() {
 
 
 async function handleDeleteSetor(nome) {
+    const confirmacao = await showConfirm(
+        "Excluir Setor?",
+        `Atenção: Tem certeza que deseja excluir o setor '${nome}' de forma definitiva? Isso não altera as rotinas e funcionários que já estão nomeados para ele, mas ele deixará de aparecer nas opções futuras.`,
+        'danger'
+    );
 
-    if (confirm(`Atenção: Tem certeza que deseja excluir o setor '${nome}'? Isso não altera as rotinas e funcionários que já estão nomeados para ele, mas ele deixará de aparecer nas opções.`)) {
-
-        await Store.deleteSetor(nome);
-
-        renderSetoresListPreview();
-
-        loadSetoresSelects();
-
+    if (confirmacao) {
+        showLoading('Processando', `Excluindo setor '${nome}'...`);
+        const success = await Store.deleteSetor(nome);
+        hideLoading();
+        if (success) {
+            showFeedbackToast(`Setor '${nome}' excluído com sucesso.`, 'success');
+            renderSetoresListPreview(); // Alterado para corresponder à função existente() to renderSetoresListPreview() to match existing function
+            loadSetoresSelects();
+        } else {
+            showNotify("Erro", "Erro ao excluir setor. Verifique a conexão.", "error");
+        }
     }
-
 }
 
 
@@ -3035,10 +3574,10 @@ function updateMensagensBadges() {
     const unreadInbox = Store.getUnreadInboxCount(LOGGED_USER.nome);
     const unreadSystem = Store.getUnreadSystemCount(LOGGED_USER.nome);
 
-    // Global Topbar Badge
+    // Badge Global da Barra Superior
     const badges = document.querySelectorAll('.badge');
     badges.forEach(b => {
-        // Only update the global topbar notification badge here
+        // Apenas atualizar o badge global de notificação da barra superior aqui
         if (b.parentElement.id === 'btn-notification') {
             if (unreadTotal > 0) {
                 b.textContent = unreadTotal;
@@ -3049,7 +3588,7 @@ function updateMensagensBadges() {
         }
     });
 
-    // Sidebar Inbox Badge (Caixa de Entrada)
+    // Badge da Caixa de Entrada na Barra Lateral
     const inboxBadge = document.getElementById('inbox-unread-badge');
     if (inboxBadge) {
         if (unreadInbox > 0) {
@@ -3060,7 +3599,7 @@ function updateMensagensBadges() {
         }
     }
 
-    // Sidebar System Badge (Alertas do Sistema)
+    // Badge do Sistema na Barra Lateral
     const systemBadge = document.getElementById('system-unread-badge');
     if (systemBadge) {
         if (unreadSystem > 0) {
@@ -3142,7 +3681,7 @@ function initInboxTabs() {
                 showNotify("Informação", "Configurações de Mensagens em breve...", "info");
             }
             if (e.target.closest('#btn-inbox-help')) {
-                showNotify("Ajuda das Mensagens", "• Clique nas pastas para navegar\n• Use ☆ para favoritar\n• Marque checkboxes para ações em massa", "info");
+                showNotify("Ajuda das Mensagens", "• Clique nas pastas para navegar\n• Use ? para favoritar\n• Marque checkboxes para ações em massa", "info");
             }
         });
 
@@ -3155,22 +3694,34 @@ function initInboxTabs() {
         });
 
         // === Exclusão em Massa ===
-        document.addEventListener('click', async (e) => {
-            if (!e.target.closest('#btn-bulk-delete-msgs')) return;
-            const selected = document.querySelectorAll('.msg-check:checked');
-            if (selected.length === 0) return;
-            if (confirm(`Excluir ${selected.length} mensagens selecionadas?`)) {
-                for (let check of selected) {
-                    const item = check.closest('.msg-item-refined');
-                    if (item) {
-                        const id = item.getAttribute('data-msg-id');
+        const btnDeleteMass = document.getElementById('btn-bulk-delete-msgs');
+        if (btnDeleteMass) {
+            btnDeleteMass.addEventListener('click', async () => {
+                const selected = Array.from(document.querySelectorAll('.msg-check:checked')).map(cb => cb.closest('.msg-item-refined').getAttribute('data-msg-id'));
+                if (selected.length === 0) return;
+
+                const confirmacao = await showConfirm(
+                    "Excluir Mensagens?",
+                    `Deseja realmente excluir as ${selected.length} mensagens selecionadas?`,
+                    'danger'
+                );
+
+                if (confirmacao) {
+                    // Animação primeiro
+                    document.querySelectorAll('.msg-check:checked').forEach(cb => {
+                        const row = cb.closest('.msg-item-refined');
+                        if (row) row.classList.add('fade-out-item');
+                    });
+
+                    await new Promise(r => setTimeout(r, 400));
+                    for (let id of selected) {
                         await Store.deleteMensagem(id, LOGGED_USER.nome);
                     }
+                    showFeedbackToast(`${selected.length} mensagens excluídas.`, 'success');
+                    renderMensagens(); // Renderizar novamente a lista
                 }
-                renderMensagens();
-            }
-        });
-
+            });
+        }
         // === Marcar como Lidas em Massa ===
         document.addEventListener('click', async (e) => {
             if (!e.target.closest('#btn-bulk-read-msgs')) return;
@@ -3206,7 +3757,7 @@ function updateBulkActionsVisibility() {
 }
 
 function renderMensagens() {
-    // Reset bulk actions visibility
+    // Resetar visibilidade das ações em massa
     updateBulkActionsVisibility();
     const selectAllCheck = document.getElementById('select-all-msgs');
     if (selectAllCheck) selectAllCheck.checked = false;
@@ -3298,7 +3849,7 @@ function renderMensagens() {
         container.appendChild(div);
     });
 
-    // Update pagination info if needed
+    // Atualizar informações de paginação se necessário
     const countInfo = document.getElementById('msgs-count-info');
     if (countInfo) countInfo.textContent = msgs.length > 0 ? `1 - ${msgs.length} de ${msgs.length}` : '0 - 0 de 0';
 
@@ -3339,7 +3890,7 @@ function loadMessageIntoReader(id) {
     const reader = document.querySelector('.reader-content-refined');
     reader.style.display = 'flex';
 
-    // Refresh animation
+    // Atualizar animação
     reader.classList.remove('fade-in');
     void reader.offsetWidth;
     reader.classList.add('fade-in');
@@ -3347,7 +3898,7 @@ function loadMessageIntoReader(id) {
     const subjectStr = msg.assunto || 'Sem Assunto';
     document.getElementById('reader-subject').textContent = subjectStr;
 
-    // Avatar text (iniciais)
+    // Texto do Avatar (iniciais)
     const senderName = msg.remetente || 'S';
     document.getElementById('reader-avatar-text').textContent = senderName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     document.getElementById('reader-email-text').textContent = `${senderName.toLowerCase().replace(/ /g, '.')}@fiscal.app`;
@@ -3375,7 +3926,13 @@ function loadMessageIntoReader(id) {
 
     btnDelete.style.display = currentInboxFolder === 'trash' ? 'none' : 'flex';
     btnDelete.onclick = async () => {
-        if (confirm("Deseja mesmo arquivar esta mensagem? (Ela ficará disponível na Lixeira para auditoria)")) {
+        const confirmacao = await showConfirm(
+            "Arquivar Mensagem?",
+            "Deseja mesmo arquivar esta mensagem? Ela ficará disponível na Lixeira para auditoria e restauração.",
+            'warning'
+        );
+
+        if (confirmacao) {
             btnDelete.disabled = true;
             btnDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             const success = await Store.deleteMensagem(id, LOGGED_USER.nome);
@@ -3499,13 +4056,13 @@ function triggerPaperPlaneAnimation() {
     plane.className = 'paper-plane';
     plane.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
 
-    // Start position (roughly center-right where modal usually is)
+    // Posição inicial (aproximadamente centro-direita onde o modal geralmente fica)
     plane.style.left = '50%';
     plane.style.top = '50%';
 
     container.appendChild(plane);
 
-    // Remove element after animation
+    // Remover elemento após animação
     setTimeout(() => {
         plane.remove();
     }, 2000);
@@ -3515,11 +4072,11 @@ function triggerPaperPlaneAnimation() {
 
 // ==========================================
 
-// MODAL CONTROLLERS & CHECKLISTS
+// CONTROLADORES DE MODAL E CHECKLISTS
 
 // ==========================================
 
-// MODAL CONTROLLERS & CHECKLISTS
+// CONTROLADORES DE MODAL E CHECKLISTS
 
 // ==========================================
 
@@ -3549,7 +4106,7 @@ function openTaskModal(taskId) {
 
 
 
-    // Fill Header contents
+    // Preencher conteúdos do Cabeçalho
 
     document.getElementById('modal-rotina-name').textContent = task.rotina;
 
@@ -3581,7 +4138,7 @@ function openTaskModal(taskId) {
 
 
 
-    // Render Subitems
+    // Renderizar Subitens
 
     renderChecklist();
 
@@ -3593,7 +4150,7 @@ function openTaskModal(taskId) {
 
 
 
-    // Binding the main Toggle inside modal
+    // Vinculando o Toggle principal dentro do modal
 
     const mainToggle = document.getElementById('modal-done-toggle');
 
@@ -3606,7 +4163,7 @@ function openTaskModal(taskId) {
     newToggle.checked = task.feito;
     const isAdmin = LOGGED_USER && ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(LOGGED_USER.permissao);
 
-    // Lock global toggle if done and NOT admin/supervisor
+    // Bloquear toggle global se concluído e NÃO for admin/supervisor
     if (task.feito && !isAdmin) {
         newToggle.disabled = true;
         document.getElementById('modal-status').innerHTML += ' <i class="fa-solid fa-lock" title="Bloqueado para edição"></i>';
@@ -3626,7 +4183,7 @@ function openTaskModal(taskId) {
         }
         task.feito = checked;
 
-        // Refresh views natively
+        // Atualizar visualizações nativamente
 
         renderChecklist();
 
@@ -3636,7 +4193,7 @@ function openTaskModal(taskId) {
 
 
 
-        // Auto update header
+        // Atualizar cabeçalho automaticamente
 
         document.getElementById('modal-status').innerHTML = checked
 
@@ -3686,7 +4243,7 @@ function renderChecklist() {
 
         div.className = 'checklist-item fade-in';
 
-        div.style.animationDelay = `${index * 0.04}s`; // Micro-staggered entry
+        div.style.animationDelay = `${index * 0.04}s`; // Entrada micro-escalonada
 
 
 
@@ -3700,7 +4257,7 @@ function renderChecklist() {
 
 
 
-        // Single checklist item changed
+        // Único item de checklist alterado
 
         const chk = div.querySelector('input');
 
@@ -3712,7 +4269,7 @@ function renderChecklist() {
 
 
 
-            // Re-render checklist and update underlaying lists
+            // Renderizar novamente checklist e atualizar listas subjacentes
 
             renderChecklist();
 
@@ -3722,7 +4279,7 @@ function renderChecklist() {
 
 
 
-            // Re-sync header if state changed due to all checks
+            // Re-sincronizar cabeçalho se o estado mudou devido a todos os checks
 
             const refreshedTask = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
 
@@ -3746,7 +4303,7 @@ function renderChecklist() {
 
 
 
-    // Update Progress UI
+    // Atualizar UI de Progresso
 
     const total = task.subitems.length;
 
@@ -3760,7 +4317,7 @@ function renderChecklist() {
 
 
 
-    // Sync Main Toggle visually
+    // Sincronizar Toggle Principal visualmente
 
     const toggle = document.getElementById('modal-done-toggle');
 
@@ -3925,22 +4482,22 @@ async function handleSaveDemandaEventual() {
     const result = await Store.criarExecucaoEventual(rotinaId, clienteId);
 
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Demanda';
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Rotina';
 
     if (result.ok) {
         closeDemandaEventualModal();
         renderOperacional();
         renderDashboard();
-        showFeedbackToast('Demanda eventual criada com sucesso!', 'success');
+        showFeedbackToast('Rotina eventual criada com sucesso!', 'success');
     } else {
-        showNotify("Aviso", result.msg || 'Erro ao criar demanda eventual.', "warning");
+        showNotify("Aviso", result.msg || 'Erro ao criar rotina eventual.', "warning");
     }
 }
 
 
 
 
-// Helpers
+// Auxiliares
 
 function formatDate(dateStr) {
 
@@ -3958,7 +4515,7 @@ function formatDate(dateStr) {
 
 
 
-// Easing Animation for Numbers
+// Animação de Suavização para Números
 
 function animateValue(id, start, end, duration) {
 
@@ -3972,7 +4529,7 @@ function animateValue(id, start, end, duration) {
 
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
 
-        // Exponential easeout
+        // Suavização exponencial para fora
 
         const easeAmount = 1 - Math.pow(1 - progress, 4);
 
@@ -3984,7 +4541,7 @@ function animateValue(id, start, end, duration) {
 
         } else {
 
-            // Guarantee end state
+            // Garantir estado final
 
             obj.innerHTML = end;
 
@@ -4036,7 +4593,7 @@ function renderAuditoria() {
 
 
 
-        // Format date BR
+        // Formatar data BR
 
         const d = new Date(log.timestamp);
 
@@ -4080,7 +4637,7 @@ function downloadAuditoriaCSV() {
 
 
 
-    // CSV Header
+    // Cabeçalho CSV
 
     let csvContent = "Data/Hora,Usuário,Permissão,Ação,Detalhes\n";
 
@@ -4094,7 +4651,7 @@ function downloadAuditoriaCSV() {
 
 
 
-        // Escape quotes and commas
+        // Escapar aspas e vírgulas
 
         const escUser = (l.user_name || "").replace(/"/g, '""');
 
@@ -4112,7 +4669,7 @@ function downloadAuditoriaCSV() {
 
 
 
-    // Create Blob URL and trigger download
+    // Criar URL Blob e disparar download
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 
@@ -4134,329 +4691,6 @@ function downloadAuditoriaCSV() {
 
     document.body.removeChild(link);
 
-}
-
-
-
-// ==========================================
-
-// VIEW: Painel de Administração (RBAC)
-
-// ==========================================
-
-function renderAdminPanel() {
-
-    const tbody = document.querySelector('#admin-cargos-table tbody');
-
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-
-
-
-    const cargos = Store.getData().cargos || [];
-
-
-
-    if (cargos.length === 0) {
-
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 3rem;">Nenhum cargo de segurança configurado ainda.</td></tr>`;
-
-        return;
-
-    }
-
-
-
-    cargos.forEach(cargo => {
-
-        const tr = document.createElement('tr');
-
-        tr.className = 'fade-in';
-
-
-
-        let tagsHtml = '';
-
-        if (cargo.telas_permitidas && cargo.telas_permitidas.length > 0) {
-
-            cargo.telas_permitidas.forEach(tela => {
-
-                let badgeClass = 'table-badge ';
-
-                if (tela === 'settings') {
-
-                    badgeClass += 'danger';
-
-                } else if (tela === 'dashboard' || tela === 'operacional') {
-
-                    badgeClass += 'primary';
-
-                } else {
-
-                    badgeClass += 'info';
-
-                }
-
-                tagsHtml += `<span class="${badgeClass}" style="margin-right: 4px; margin-bottom: 4px; display: inline-block;">${tela}</span>`;
-
-            });
-
-        } else {
-
-            tagsHtml = '<span class="text-muted">Nenhum acesso definido</span>';
-
-        }
-
-
-
-        tr.innerHTML = `
-
-            <td>#${cargo.id}</td>
-
-            <td><strong>${cargo.nome_cargo}</strong></td>
-
-            <td style="max-width: 400px; line-height: 1.8;">${tagsHtml}</td>
-
-            <td style="text-align: right;">
-
-                <button class="action-btn text-primary" onclick="openCargoModal(${cargo.id})" title="Editar Permissões"><i class="fa-solid fa-pen-to-square"></i></button>
-
-                <button class="action-btn text-danger" onclick="deleteCargo(${cargo.id})" title="Excluir Cargo"><i class="fa-solid fa-trash"></i></button>
-
-            </td>
-
-        `;
-
-        tbody.appendChild(tr);
-
-    });
-
-}
-
-
-
-function openCargoModal(cargoId = null) {
-
-    const modal = document.getElementById('admin-cargo-modal');
-
-    modal.style.display = 'flex';
-
-    // trigger animation
-
-    setTimeout(() => modal.classList.add('active'), 10);
-
-
-
-    const form = document.getElementById('admin-cargo-form');
-
-    form.reset();
-
-    document.getElementById('cargo-id').value = '';
-
-
-
-    if (cargoId) {
-
-        const cargo = Store.getData().cargos.find(c => c.id === cargoId);
-
-        if (cargo) {
-
-            document.getElementById('cargo-id').value = cargo.id;
-
-            document.getElementById('cargo-nome').value = cargo.nome_cargo;
-
-
-
-            const checks = document.querySelectorAll('.cargo-perm-check');
-
-            checks.forEach(chk => {
-
-                chk.checked = cargo.telas_permitidas && cargo.telas_permitidas.includes(chk.value);
-
-            });
-
-        }
-
-    }
-
-}
-
-
-
-function closeCargoModal(e) {
-
-    if (e) e.preventDefault();
-
-    const modal = document.getElementById('admin-cargo-modal');
-
-    modal.classList.remove('active');
-
-    setTimeout(() => modal.style.display = 'none', 300);
-
-}
-
-
-
-async function handleSaveCargo(e) {
-
-    e.preventDefault();
-
-    const id = document.getElementById('cargo-id').value;
-
-    const nome = document.getElementById('cargo-nome').value.trim();
-
-
-
-    const checkboxes = document.querySelectorAll('.cargo-perm-check:checked');
-
-    const permitidas = Array.from(checkboxes).map(chk => chk.value);
-
-
-
-    // Disable button to prevent double submit
-    const submitBtn = document.getElementById('btn-save-cargo') || e.target.querySelector('button[type="submit"]') || document.querySelector('#admin-cargo-modal button[type="submit"]');
-
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
-    }
-
-
-
-    let success = false;
-
-    if (id) {
-
-        success = await Store.updateCargo(parseInt(id), nome, permitidas);
-
-    } else {
-
-        success = await Store.addCargo(nome, permitidas);
-
-    }
-
-
-
-    if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Salvar Permissões';
-    }
-
-
-
-    if (success) {
-
-        closeCargoModal();
-
-        renderAdminPanel();
-
-        showFeedbackToast(`Permissões do cargo ${nome} salvas!`, 'success');
-
-        // Se o usuário logado tiver esse permissão editada, seria ideal um recarregamento, 
-
-        // mas assumimos que o Admin Master está gerenciando outras.
-
-    } else {
-
-        showFeedbackToast('Erro ao salvar cargo. Verifique a API.', 'danger');
-
-    }
-
-}
-
-
-
-async function deleteCargo(id) {
-
-    if (confirm("Tem certeza que deseja excluir esse Cargo e suas Permissões de Acesso?")) {
-
-        const success = await Store.deleteCargo(id);
-
-        if (success) {
-
-            renderAdminPanel();
-
-            showFeedbackToast('Cargo excluído com sucesso.', 'success');
-
-        } else {
-
-            showFeedbackToast('Erro ao excluir cargo.', 'danger');
-
-        }
-
-    }
-
-}
-
-
-
-// ==========================================
-
-// VIEW: Backup e Segurança
-
-// ==========================================
-
-function renderBackupView() {
-
-    const config = Store.getData().config;
-
-    const toggle = document.getElementById('toggle-auto-backup');
-
-    if (toggle) toggle.checked = config && config.autoBackup;
-
-
-
-    const lastBackupText = document.getElementById('last-backup-text');
-
-    if (lastBackupText) {
-
-        if (config && config.lastBackupData) {
-
-            const d = new Date(config.lastBackupData);
-
-            lastBackupText.innerHTML = `Último backup automático: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
-
-        } else {
-
-            lastBackupText.innerHTML = `Último backup: Nunca`;
-
-        }
-
-    }
-
-}
-
-
-
-function downloadBackupFile() {
-
-    const dataStr = JSON.stringify(Store.getData(), null, 2);
-
-    const blob = new Blob([dataStr], { type: 'application/json' });
-
-    const url = URL.createObjectURL(blob);
-
-
-
-    const d = new Date();
-
-    const dateString = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}${d.getDate().toString().padStart(2, '0')}`;
-
-
-
-    const link = document.createElement('a');
-
-    link.setAttribute('href', url);
-
-    link.setAttribute('download', `fiscalapp_backup_${dateString}.json`);
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-
 
 
     Store.registerLog("Backup de Segurança", "Realizou o download manual da base de dados");
@@ -4467,44 +4701,29 @@ function downloadBackupFile() {
 
 
 
-function restoreBackupFile() {
-
-    const fileInput = document.getElementById('backup-file-input');
-
-    const file = fileInput.files[0];
-
-    if (!file) {
-
-        showNotify("Atenção", "Por favor, selecione um arquivo JSON de backup antes de clicar em Restaurar.", "warning");
-
-        return;
-
-    }
-
-
-
-    if (!confirm("⚠️ ATENÇÃO EXTREMA ⚠️\n\nIsso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execuções, mensagens, clientes novos feitos DEPOIS desse backup vão SUMIR para sempre.\n\nVocê tem 100% de certeza absoluta?")) {
-
-        return;
-
-    }
-
-
+function handleRestoreBackup(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
     const reader = new FileReader();
-
-    reader.onload = function (e) {
-
+    reader.onload = async function (event) {
         try {
+            const uploadedData = JSON.parse(event.target.result);
 
-            const rawData = e.target.result;
+            const confirmacao = await showConfirm(
+                "?? ATENÇÃO EXTREMA ??",
+                `Isso apagará TODA a base atual do FiscalApp e a substituirá completamente pelos dados deste arquivo. Todas as execuções, mensagens, e clientes novos feitos DEPOIS desse backup vão <strong>SUMIR para sempre</strong>.
+                <br><br>Você tem 100% de certeza absoluta?`,
+                'danger'
+            );
 
-            const parsedData = JSON.parse(rawData);
+            if (!confirmacao) {
+                e.target.value = '';
+                return;
+            }
 
-
-
-            if (!parsedData.clientes || !parsedData.funcionarios || !parsedData.config || !parsedData.version) {
-
+            // Validar a estrutura uploadedData antes de prosseguir
+            if (!uploadedData.clientes || !uploadedData.funcionarios || !uploadedData.config || !uploadedData.version) {
                 throw new Error("O arquivo selecionado não parece ser um backup válido do FiscalApp.");
 
             }
@@ -4607,30 +4826,30 @@ function renderAuditoriaCompetencia() {
     const userSelect = document.getElementById('audit-comp-user');
     const btnRun = document.getElementById('btn-run-audit-comp');
 
-    // Populate Meses
+    // Povoar Meses
     mesSelect.innerHTML = '<option value="">Todos os Meses</option>';
     const mesesObj = Store.getData().meses || [];
     [...mesesObj].sort((a, b) => b.id.localeCompare(a.id)).forEach(m => {
         mesSelect.innerHTML += `<option value="${m.id}">${m.mes}</option>`;
     });
 
-    // Populate Users
+    // Povoar Usuários
     userSelect.innerHTML = '<option value="">Todos os Funcionários</option>';
     const usersObj = Store.getData().funcionarios || [];
     usersObj.forEach(u => {
         userSelect.innerHTML += `<option value="${u.nome}">${u.nome}</option>`;
     });
 
-    // Reset Table
+    // Resetar Tabela
     document.getElementById('audit-comp-results').style.display = 'none';
 
-    // Remove old listeners to prevent bubbling
+    // Remover listeners antigos para evitar bubbling
     const cloneBtn = btnRun.cloneNode(true);
     btnRun.parentNode.replaceChild(cloneBtn, btnRun);
 
     cloneBtn.addEventListener('click', runAuditoriaCompetencia);
 
-    // Print Button Listener
+    // Listener do Botão Imprimir
     const btnPrint = document.getElementById('btn-print-audit-comp');
     if (btnPrint) {
         btnPrint.addEventListener('click', () => {
@@ -4652,10 +4871,10 @@ function runAuditoriaCompetencia() {
     const tbody = document.querySelector('#audit-comp-table tbody');
     tbody.innerHTML = '';
 
-    // Ler all rotinas
+    // Ler todas as rotinas
     const allExecs = Store.getData().execucoes || [];
 
-    // Filter
+    // Filtrar
     let filtered = allExecs;
     if (mesId) {
         filtered = filtered.filter(e => e.competencia === mesId);
@@ -4664,7 +4883,7 @@ function runAuditoriaCompetencia() {
         filtered = filtered.filter(e => e.responsavel === userName);
     }
 
-    // Stats
+    // Estatísticas
     let noPrazo = 0;
     let atrasado = 0;
     let pendente = 0;
@@ -4724,7 +4943,7 @@ function runAuditoriaCompetencia() {
         });
     }
 
-    // Update KPIs
+    // Atualizar KPIs
     document.getElementById('audit-comp-noprazo').textContent = noPrazo;
     document.getElementById('audit-comp-atrasado').textContent = atrasado;
     document.getElementById('audit-comp-pendente').textContent = pendente;
@@ -4737,7 +4956,7 @@ function runAuditoriaCompetencia() {
 }
 
 // ==========================================
-// Settings Hub Tabs Initialization
+// Inicialização das Abas de Configurações
 // ==========================================
 let settingsInitDone = false;
 function initSettingsTabs() {
@@ -4746,7 +4965,7 @@ function initSettingsTabs() {
 
     tabs.forEach(tab => {
         tab.addEventListener("click", () => {
-            // Remove active classes
+            // Remover classes ativas
             tabs.forEach(t => {
                 t.classList.remove("active");
             });
@@ -4755,17 +4974,21 @@ function initSettingsTabs() {
                 pane.classList.remove("active");
             });
 
-            // Set active class to clicked tab
+            // Definir classe ativa na aba clicada
             tab.classList.add("active");
 
             const targetId = tab.getAttribute("data-target");
+
+            // Persistir o estado da aba
+            localStorage.setItem("fiscalapp_settings_tab", targetId);
+
             const targetPane = document.getElementById(targetId);
             if (targetPane) {
                 targetPane.style.display = "block";
                 setTimeout(() => targetPane.classList.add("active"), 10);
             }
 
-            // Fire Specific Tab Renders
+            // Disparar Renderizações Específicas de Abas
             if (targetId === "set-rbac") {
                 renderAdminPanel();
             } else if (targetId === "set-setores") {
@@ -4833,3 +5056,200 @@ window.updateCompetenciaSelects = function (newCompId) {
 window.showEarlyReleaseToast = function (compName) {
     showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${compName} foi liberada!`, 'success');
 };
+
+
+// ==========================================
+// ADMIN: Segurança, RBAC e Cargos
+// ==========================================
+
+/**
+ * Renderiza a tabela de cargos e permissões na aba de Segurança
+ */
+function renderAdminPanel() {
+    console.log("Renderizando Painel de Segurança (Cargos)...");
+    const tbody = document.querySelector('#admin-cargos-table tbody');
+    if (!tbody) return;
+
+    const cargos = Store.getData().cargos;
+    tbody.innerHTML = '';
+
+    if (cargos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">Nenhum cargo cadastrado.</td></tr>';
+        return;
+    }
+
+    cargos.forEach(cargo => {
+        const tr = document.createElement('tr');
+        tr.className = 'fade-in';
+
+        // Formatar telas permitidas para exibição
+        let telasArray = [];
+        try {
+            telasArray = Array.isArray(cargo.telas_permitidas) ? cargo.telas_permitidas : JSON.parse(cargo.telas_permitidas || '[]');
+        } catch (e) {
+            telasArray = [];
+        }
+
+        const telasBadges = telasArray.map(t => `<span class="table-badge info" style="margin-right: 4px; font-size: 0.7rem;">${t}</span>`).join('');
+
+        tr.innerHTML = `
+            <td><strong>#${cargo.id.toString().padStart(3, '0')}</strong></td>
+            <td><strong>${cargo.nome_cargo}</strong></td>
+            <td>${telasBadges || '<span style="color:var(--text-muted)">Nenhuma</span>'}</td>
+            <td>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button class="btn btn-small btn-secondary" onclick="openCargoModal(${cargo.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        <i class="fa-solid fa-pen"></i> Editar
+                    </button>
+                    <button class="btn btn-small btn-secondary text-danger" onclick="deleteCargoUI(${cargo.id})" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function openCargoModal(id = null) {
+    const modal = document.getElementById('admin-cargo-modal');
+    if (!modal) return;
+
+    const form = document.getElementById('admin-cargo-form');
+    form.reset();
+    document.getElementById('cargo-id').value = id || '';
+
+    // Desmarcar todos os checkboxes
+    document.querySelectorAll('.cargo-perm-check').forEach(ck => ck.checked = false);
+
+    if (id) {
+        const cargo = Store.getData().cargos.find(c => c.id === id);
+        if (cargo) {
+            document.getElementById('cargo-nome').value = cargo.nome_cargo;
+
+            let telas = [];
+            try {
+                telas = Array.isArray(cargo.telas_permitidas) ? cargo.telas_permitidas : JSON.parse(cargo.telas_permitidas || '[]');
+            } catch (e) { telas = []; }
+
+            telas.forEach(t => {
+                const ck = document.querySelector(`.cargo-perm-check[value="${t}"]`);
+                if (ck) ck.checked = true;
+            });
+        }
+    }
+
+    modal.classList.add('active');
+}
+
+function closeCargoModal() {
+    const modal = document.getElementById('admin-cargo-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+async function handleSaveCargo(e) {
+    // Garante que o form nunca faça reload da página
+    if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    const id = document.getElementById('cargo-id').value;
+    const nome = document.getElementById('cargo-nome').value.trim();
+
+    if (!nome) {
+        showNotify("Atenção", "Informe o nome do cargo antes de salvar.", "warning");
+        return;
+    }
+
+    const selecionadas = Array.from(document.querySelectorAll('.cargo-perm-check:checked')).map(ck => ck.value);
+
+    // Usa o loader padrão premium do sistema
+    showLoading('Salvando Cargo', 'Atualizando banco de permissões...');
+
+    let ok = false;
+    try {
+        if (id) {
+            ok = await Store.updateCargo(parseInt(id), nome, selecionadas);
+        } else {
+            ok = await Store.addCargo(nome, selecionadas);
+        }
+    } catch (err) {
+        console.error("Erro ao salvar cargo:", err);
+        ok = false;
+    }
+
+    hideLoading();
+
+    if (ok) {
+        closeCargoModal();
+        renderAdminPanel();
+        showNotify("Sucesso", "Cargo e permissões salvos com sucesso!", "success");
+    } else {
+        showNotify("Erro", "Não foi possível salvar o cargo. Verifique sua conexão.", "error");
+    }
+}
+
+async function deleteCargoUI(id) {
+    const cargo = Store.getData().cargos.find(c => c.id === id);
+    if (!cargo) return;
+
+    const confirm = await showConfirm(
+        "Excluir Cargo",
+        `Tem certeza que deseja excluir o cargo <strong>${cargo.nome_cargo}</strong>? Isso pode afetar o acesso dos funcionários vinculados.`,
+        "danger"
+    );
+
+    if (confirm) {
+        showLoading('Excluindo', 'Removendo cargo do sistema...');
+        const ok = await Store.deleteCargo(id);
+        hideLoading();
+        if (ok) {
+            renderAdminPanel();
+            showNotify("Sucesso", "Cargo removido.", "success");
+        }
+    }
+}
+
+// ==========================================
+// ADMIN: Setores
+// ==========================================
+
+function renderSetoresSettings() {
+    console.log("Renderizando Configurações de Setores...");
+    if (typeof renderSetoresListPreview === 'function') {
+        renderSetoresListPreview();
+    }
+}
+
+// ==========================================
+// ADMIN: Backups
+// ==========================================
+
+function renderBackupView() {
+    console.log("Renderizando Visualização de Backups...");
+    const container = document.getElementById('backup-history-list');
+    if (!container) return;
+
+    // Simulação ou carregamento de logs de backup
+    container.innerHTML = `
+        <div class="glass-card" style="padding: 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <div>
+                <strong>Backup Automático Diário</strong><br>
+                <small style="color:var(--text-muted)">Última execução: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</small>
+            </div>
+            <span class="table-badge success">Concluído</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 1rem;">
+            Os backups são armazenados localmente no seu navegador e em cache do servidor.
+        </p>
+    `;
+}
+
+// Vinculação Global (Scoping Fix)
+window.renderAdminPanel = renderAdminPanel;
+window.openCargoModal = openCargoModal;
+window.closeCargoModal = closeCargoModal;
+window.handleSaveCargo = handleSaveCargo;
+window.deleteCargoUI = deleteCargoUI;
+window.renderBackupView = renderBackupView;

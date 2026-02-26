@@ -1,4 +1,4 @@
-// js/store.js - Configured to fetch from Python API / Vercel
+// js/store.js - Configurado para buscar da API Python / Vercel
 
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://127.0.0.1:8000/api' // URL do servidor local FastAPI para testes
@@ -11,7 +11,7 @@ const addDays = (date, days) => {
     return d;
 };
 
-// Initial state cache - starts empty and gets populated by the API
+// Cache do estado inicial - começa vazio e é preenchido pela API
 let db = {
     setores: [],
     funcionarios: [],
@@ -40,7 +40,7 @@ let db = {
 
 window.Store = {
     // -----------------------------------------------------------------
-    // API HYDRATION
+    // HIDRATAÇÃO DA API
     // -----------------------------------------------------------------
     async fetchAllData() {
         try {
@@ -86,7 +86,7 @@ window.Store = {
             })) || [];
             db.logs = await logsRes.json() || [];
 
-            // Try to set cargos (can fail if table doesn't exist yet, fallback to empty array)
+            // Tentar definir os cargos (pode falhar se a tabela não existir, fallback para array vazio)
             try {
                 const cargosData = await cargosRes.json();
                 db.cargos = Array.isArray(cargosData) ? cargosData : [];
@@ -114,7 +114,7 @@ window.Store = {
 
             try {
                 const configData = await global_configRes.json();
-                if (configData && configData.length > 0) {
+                if (Array.isArray(configData) && configData.length > 0) {
                     const c = configData[0];
                     db.config.brandName = c.brand_name || db.config.brandName;
                     db.config.brandLogoUrl = c.brand_logo_url || db.config.brandLogoUrl;
@@ -135,9 +135,11 @@ window.Store = {
                     db.config.menuOrder = Array.isArray(mOrder) ? mOrder : [];
                     db.config.menu_order = db.config.menuOrder; // Garantir sincronia local
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.warn("Erro ao processar global_config:", e);
+            }
 
-            // Map python rotinasBase to expected camelCase names for legacy frontend compatibility
+            // Mapear rotinasBase do python para camelCase esperado por compatibilidade de frontend legado
             db.rotinasBase = db.rotinasBase.map(r => ({
                 id: r.id,
                 nome: r.nome,
@@ -198,7 +200,7 @@ window.Store = {
             return true;
         } catch (error) {
             console.error("Erro ao puxar dados do banco:", error);
-            // Fallback for visual offline testing if needed, or notify user
+            // Fallback para testes offline visuais se necessário, ou notificar o usuário
             if (typeof window.showNotify === 'function') {
                 window.showNotify("Erro de Conexão", "Erro de conexão com o banco de dados. Tente atualizar a página.", "error");
             } else {
@@ -208,7 +210,7 @@ window.Store = {
         }
     },
 
-    // As in local storage, but now wait for fetch
+    // Como no storage local, mas agora espera o fetch
     async loadFromStorage() {
         const loaded = await this.fetchAllData();
         if (loaded) {
@@ -229,13 +231,13 @@ window.Store = {
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         const currentExt = `${monthNames[now.getMonth()]} ${year}`;
 
-        // Check if current real-world month exists in DB
+        // Checar se o mês real atual existe no Banco de Dados
         const exists = db.meses.find(m => m.id === currentCompId);
 
         if (!exists) {
             console.log(`[Rollover] Mês ${currentCompId} não existe. Iniciando virada de competência...`);
 
-            // Deactivate old active months
+            // Desativar meses ativos antigos
             const oldActives = db.meses.filter(m => m.ativo);
             for (let m of oldActives) {
                 m.ativo = false;
@@ -250,7 +252,7 @@ window.Store = {
                 }
             }
 
-            // Create new month
+            // Criar novo mês
             const newMonth = {
                 id: currentCompId,
                 mes: currentExt,
@@ -270,14 +272,14 @@ window.Store = {
                 });
 
                 if (res.ok) {
-                    // It returns array, map back
+                    // Ele retorna um array, mapeando de volta
                     const data = await res.json();
                     db.meses.push(data[0]);
                     this.registerLog("Sistema", `Competência virada para ${currentExt}`);
 
-                    // Bootstrapping engine: Trigger creation of tasks for all clients
+                    // Bootstrapping da engine: Disparar criação de tarefas para todos os clientes
                     console.log(`[Rollover] Gerando tarefas para ${db.clientes.length} clientes...`);
-                    // We must wait a tiny bit to assure month was pushed locally
+                    // Devemos esperar um pouco para garantir que o mês foi inserido localmente
                     for (let cliente of db.clientes) {
                         this.engineRotinas(cliente);
                     }
@@ -286,7 +288,7 @@ window.Store = {
                 console.error("Erro ao criar nova competência:", e);
             }
         } else if (!exists.ativo) {
-            // Fix edge case where month exists but is not marked active
+            // Corrigir caso extremo onde o mês existe, mas não está marcado como ativo
             exists.ativo = true;
             await fetch(`${API_BASE}/meses/${exists.id}`, {
                 method: 'PUT',
@@ -302,7 +304,7 @@ window.Store = {
         // você vai notar que os métodos individuais abaixo estão sendo adaptados para fazer POST imediatamente.
     },
 
-    // ... rest of the original function structures
+    // ... resto das estruturas da função original
     async registerLog(action, details) {
         const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
         const permissao = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.permissao : "Automático";
@@ -318,7 +320,7 @@ window.Store = {
                     details: details
                 })
             });
-            // Also add locally for instant UI update
+            // Também adicionar localmente para atualização instantânea da UI
             const now = new Date();
             const timestamp = now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
             db.logs.push({ timestamp, user_name: username, permissao, action, details });
@@ -331,7 +333,7 @@ window.Store = {
         return db;
     },
 
-    // UI Engine gets filtered from the local Cache (which was populated via loadFromStorage mapping)
+    // A engine da UI é filtrada a partir do Cache local (que foi preenchido via mapeamento loadFromStorage)
     getExecucoesWithDetails(userFilter = 'All') {
         const tToday = new Date().setHours(0, 0, 0, 0);
         // Filtra execuções órfãs ou de clientes que perderam o vínculo com a rotina
@@ -356,7 +358,9 @@ window.Store = {
 
             if (!isHistorico) {
                 const rotinasDoCliente = client.rotinasSelecionadas || [];
-                if (!rotinasDoCliente.includes(rotinaObj.id)) {
+                const isEventual = rotinaObj.frequencia && rotinaObj.frequencia.toLowerCase() === 'eventual';
+
+                if (!isEventual && !rotinasDoCliente.includes(rotinaObj.id)) {
                     return false; // A rotina não pertence mais ao cliente. Omitir.
                 }
             }
@@ -456,8 +460,8 @@ window.Store = {
             .sort((a, b) => new Date(a.diaPrazo || new Date()) - new Date(b.diaPrazo || new Date()));
     },
 
-    // Action Disparators - API MOCK
-    // In a real deep restructuring we would have an app.put('/api/execucoes/{id}') on Python
+    // Disparadores de Ação - MOCK DA API
+    // Em uma restruturação profunda real, teríamos um app.put('/api/execucoes/{id}') no Python
     async toggleExecucaoFeito(id, isFeito) {
         const ex = db.execucoes.find(e => e.id === id);
         const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
@@ -784,26 +788,88 @@ window.Store = {
     },
 
     async deleteCompetencia(compId) {
-        // Remover Mês
-        const idx = db.meses.findIndex(m => m.id === compId);
-        if (idx !== -1) {
-            const isAtivo = db.meses[idx].ativo;
-            db.meses.splice(idx, 1);
-            try {
-                await fetch(`${API_BASE}/meses/${compId}`, { method: 'DELETE' });
-                this.registerLog("Gestão de Competências", `Excluiu inteiramente a competência: ${compId} (e suas execuções vinculadas)`);
-            } catch (e) { console.error("Erro deletar mes", e); }
-        }
+        const compIdStr = String(compId).trim();
+        console.log("[Store] Solicitando exclusão da competência:", compIdStr);
 
-        // Remover todas as execucoes sob essa competência
-        const toDeleteIds = db.execucoes.filter(e => e.competencia === compId).map(e => e.id);
-        db.execucoes = db.execucoes.filter(e => e.competencia !== compId);
+        // Configurações diretas do Supabase para bypass do backend Python quando necessário
+        const SUPABASE_URL = "https://khbdbuoryxqiprlkdcpz.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYmRidW9yeXhxaXBybGtkY3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODU4ODcsImV4cCI6MjA4NzI2MTg4N30.1rr3_-LVO6b2PR96lJl8d7vVfHseWwUeAQDY4tdJR-M";
 
-        for (const tid of toDeleteIds) {
-            try { await fetch(`${API_BASE}/execucoes/${tid}`, { method: 'DELETE' }); }
-            catch (err) { console.log(err); }
+        const supabaseHeaders = {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+        };
+
+        try {
+            // Estratégia 1: Tentar via backend Python (que cuida das execuções vinculadas)
+            const res = await fetch(`${API_BASE}/meses/${compIdStr}`, {
+                method: 'DELETE',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            // Capturar o body da resposta para diagnóstico
+            let responseBody = null;
+            try { responseBody = await res.json(); } catch (_) { }
+
+            console.log(`[Store] Resposta do backend DELETE /meses/${compIdStr}:`, res.status, responseBody);
+
+            if (res.ok) {
+                // Backend funcionou! Atualizar cache local e retornar sucesso
+                console.log("[Store] Exclusão confirmada pelo backend Python.");
+            } else {
+                // Backend falhou — tentar diretamente no Supabase REST API
+                console.warn(`[Store] Backend falhou (${res.status}). Tentando DELETE direto no Supabase...`);
+
+                // Passo 1: Deletar execuções vinculadas diretamente no Supabase
+                try {
+                    const delExecRes = await fetch(
+                        `${SUPABASE_URL}/rest/v1/execucoes?competencia=eq.${encodeURIComponent(compIdStr)}`,
+                        { method: 'DELETE', headers: supabaseHeaders }
+                    );
+                    console.log(`[Store] DELETE execucoes direto no Supabase: ${delExecRes.status}`);
+                } catch (execErr) {
+                    console.warn("[Store] Aviso ao deletar execuções diretamente:", execErr);
+                }
+
+                // Passo 2: Deletar o mês diretamente no Supabase
+                const directRes = await fetch(
+                    `${SUPABASE_URL}/rest/v1/meses?id=eq.${encodeURIComponent(compIdStr)}`,
+                    { method: 'DELETE', headers: supabaseHeaders }
+                );
+
+                if (!directRes.ok) {
+                    let directError = null;
+                    try { directError = await directRes.json(); } catch (_) { }
+                    const detail = directError?.message || directError?.hint || directError?.code || `HTTP ${directRes.status}`;
+                    console.error("[Store] DELETE direto no Supabase também falhou:", detail, directError);
+                    window.showNotify("Erro ao Excluir", `Não foi possível excluir: ${detail}`, "error");
+                    return false;
+                }
+
+                console.log("[Store] Exclusão confirmada diretamente pelo Supabase.");
+            }
+
+            // Atualizar Cache Local após qualquer caminho de sucesso
+            const initialMesesCount = db.meses.length;
+            db.meses = db.meses.filter(m => String(m.id).trim() !== compIdStr);
+
+            const initialExecsCount = db.execucoes.length;
+            db.execucoes = db.execucoes.filter(e => String(e.competencia).trim() !== compIdStr);
+
+            console.log(`[Store] Cache local sincronizado: Meses (${initialMesesCount} -> ${db.meses.length}), Execuções (${initialExecsCount} -> ${db.execucoes.length})`);
+
+            // Registrar no log do sistema
+            this.registerLog("Gestão de Competências", `Excluiu a competência: ${compIdStr} e todas as tarefas vinculadas.`);
+
+            return true;
+
+        } catch (e) {
+            console.error("[Store] Falha crítica na exclusão da competência:", e);
+            window.showNotify("Erro de Conexão", "Não foi possível conectar ao servidor para excluir a competência.", "error");
+            return false;
         }
-        return true;
     },
 
     async addClient(clientData) {
@@ -872,32 +938,62 @@ window.Store = {
 
     },
 
-    async addFuncionario(nome, setor, permissao, senha, ativo = true) {
+    async addFuncionario(nome, setor, permissao, senha, cargo_id = null, ativo = true) {
+        const todos = db.funcionarios;
+        if (todos.some(f => f.nome.trim().toLowerCase() === nome.trim().toLowerCase())) {
+            console.error("Erro Store: Nome de funcionário duplicado.");
+            return false;
+        }
+
         const res = await fetch(`${API_BASE}/funcionarios`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, setor, permissao, senha, ativo })
+            body: JSON.stringify({ nome, setor, permissao, senha, cargo_id, ativo })
         });
         if (res.ok) {
             const data = await res.json();
-            db.funcionarios.push({ id: data[0].id, nome, setor, permissao, senha, ativo });
+            db.funcionarios.push({ id: data[0].id, nome, setor, permissao, senha, cargo_id, ativo });
             this.registerLog("Gestão de Equipe", `Novo membro cadastrado: ${nome}`);
+            return true;
         }
+        return false;
     },
 
-    async editFuncionario(id, nome, setor, permissao, senha, ativo) {
+    async editFuncionario(id, nome, setor, permissao, senha, cargo_id, ativo) {
+        const todos = db.funcionarios;
+        if (todos.some(f => f.id != id && f.nome.trim().toLowerCase() === nome.trim().toLowerCase())) {
+            console.error("Erro Store: Nome de funcionário duplicado na edição.");
+            return false;
+        }
+
         const res = await fetch(`${API_BASE}/funcionarios/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, setor, permissao, senha, ativo })
+            body: JSON.stringify({ nome, setor, permissao, senha, cargo_id, ativo })
         });
         if (res.ok) {
-            const index = db.funcionarios.findIndex(f => f.id === parseInt(id));
+            const index = db.funcionarios.findIndex(f => f.id == id);
             if (index !== -1) {
-                db.funcionarios[index] = { ...db.funcionarios[index], nome, setor, permissao, senha, ativo };
+                db.funcionarios[index] = { ...db.funcionarios[index], nome, setor, permissao, senha, cargo_id, ativo };
                 this.registerLog("Gestão de Equipe", `Membro editado: ${nome} (Ativo: ${ativo})`);
+                return true;
             }
         }
+        return false;
+    },
+
+    async deleteFuncionario(id) {
+        try {
+            const res = await fetch(`${API_BASE}/funcionarios/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                db.funcionarios = db.funcionarios.filter(f => f.id == id ? false : true);
+                this.registerLog("Gestão de Equipe", `Conta de funcionário removida (ID: ${id})`);
+                return true;
+            }
+        } catch (e) {
+            console.error("Erro Store deleteFuncionario:", e);
+        }
+        return false;
     },
 
     async addSetor(nome) {
@@ -1006,7 +1102,7 @@ window.Store = {
         }
     },
 
-    // Mocks for edit - in a full refactor these would be PUT requests
+    // Mocks para edição - em uma refatoração completa, estes seriam requisições PUT
     async editClient(id, clientData) {
         const {
             razaoSocial, cnpj, regime, responsavelFiscal, driveLink,
@@ -1019,12 +1115,12 @@ window.Store = {
 
         const c = db.clientes.find(x => x.id === parseInt(id));
         if (c) {
-            // Determine added and removed routines
+            // Determinar rotinas adicionadas e removidas
             const oldRotinas = c.rotinasSelecionadas || [];
             const newRotinasIds = finalRotinasIds.filter(rId => !oldRotinas.includes(rId));
             const removedRotinasIds = oldRotinas.filter(rId => !finalRotinasIds.includes(rId));
 
-            // Update local object
+            // Atualizar objeto local
             Object.assign(c, {
                 razaoSocial, cnpj, regime, responsavelFiscal, rotinasSelecionadas: finalRotinasIds, driveLink,
                 codigo, ie, im, dataAbertura, tipoEmpresa, contatoNome, email, telefone,
@@ -1032,7 +1128,7 @@ window.Store = {
                 ativo: clientData.ativo
             });
 
-            // Handle Removals
+            // Lidar com remoções
             if (removedRotinasIds.length > 0) {
                 const month = db.meses.find(m => m.ativo);
                 if (month) {
@@ -1057,7 +1153,7 @@ window.Store = {
                 }
             }
 
-            // Persist Client Changes
+            // Persistir alterações do cliente
             try {
                 const res = await fetch(`${API_BASE}/clientes/${id}`, {
                     method: 'PUT',
@@ -1100,7 +1196,7 @@ window.Store = {
 
             this.registerLog("Editou Cliente", razaoSocial);
 
-            // Handle Additions
+            // Lidar com adições
             if (newRotinasIds.length > 0) {
                 const tempClient = { ...c, rotinasSelecionadas: newRotinasIds };
                 await this.engineRotinas(tempClient);
@@ -1295,38 +1391,71 @@ window.Store = {
     },
 
     getAuthBySession(sessionId) {
-        if (!sessionId) return null;
-        if (sessionId === '999' || sessionId === 999) {
-            return { id: 999, nome: 'Manager', setor: 'Todos', permissao: 'Gerente', telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings'] };
+        console.log("--- DEBUG SESSÃO --- ID:", sessionId);
+        if (!sessionId || sessionId === "null") return null;
+
+        // Bypass Master Manager (ID 999)
+        if (sessionId == '999' || sessionId == 999) {
+            console.log("ACESSO MASTER: Manager hardcoded detectado. Liberando tudo.");
+            return {
+                id: 999,
+                nome: 'Manager',
+                setor: 'Todos',
+                permissao: 'Gerente',
+                telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias', 'meu-desempenho']
+            };
         }
 
-        const tempAuth = db.funcionarios.find(f => f.id === parseInt(sessionId));
-        if (!tempAuth || tempAuth.ativo === false) return null;
+        if (!Array.isArray(db.funcionarios)) {
+            console.warn("DB_ERRO: Tabela de funcionários não carregada.");
+            return null;
+        }
+
+        const tempAuth = db.funcionarios.find(f => String(f.id) === String(sessionId));
+        if (!tempAuth || tempAuth.ativo === false) {
+            console.warn("LOGIN_BLOCK: Funcionário não encontrado ou inativo para ID:", sessionId);
+            return null;
+        }
 
         let auth = { ...tempAuth };
         auth.telas_permitidas = [];
 
-        if (db.cargos && db.cargos.length > 0) {
-            const cargo = db.cargos.find(c => c.id === auth.cargo_id || c.nome_cargo === auth.permissao);
+        // 1. Carregar permissões do Cargo (se existir)
+        if (Array.isArray(db.cargos) && db.cargos.length > 0) {
+            const cargo = db.cargos.find(c => c.id === auth.cargo_id || (auth.permissao && c.nome_cargo === auth.permissao));
             if (cargo && cargo.telas_permitidas) {
-                auth.telas_permitidas = cargo.telas_permitidas;
+                auth.telas_permitidas = Array.isArray(cargo.telas_permitidas) ? cargo.telas_permitidas :
+                    (typeof cargo.telas_permitidas === 'string' ? JSON.parse(cargo.telas_permitidas) : []);
             }
         }
 
+        // 2. BLINDAGEM ADMINISTRATIVA (Override Absoluto)
+        const isGerente = auth.permissao && auth.permissao.toLowerCase() === 'gerente';
+        const isAdminNome = auth.nome && (auth.nome.toLowerCase() === 'manager' || auth.nome.toLowerCase() === 'admin');
+
+        if (isGerente || isAdminNome) {
+            console.log(`BLINDAGEM: Perfil administrativo detectado (${auth.permissao}). Forçando abas de gestão.`);
+            const adminScreens = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias', 'meu-desempenho'];
+
+            // Garantir que todas as telas de admin estejam presentes
+            adminScreens.forEach(s => {
+                if (!auth.telas_permitidas.includes(s)) auth.telas_permitidas.push(s);
+            });
+        }
+
+        // 3. Fallback para funcionários comuns
         if (auth.telas_permitidas.length === 0) {
-            if (auth.permissao === 'Gerente') {
-                auth.telas_permitidas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings'];
-            } else {
-                auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
-            }
+            auth.telas_permitidas = ['operacional', 'meu-desempenho', 'mensagens'];
         }
 
+        console.log(`SESSION_OK: Logado como ${auth.nome} [${auth.permissao}]. Telas Ativas:`, auth.telas_permitidas);
         return auth;
     },
 
     login(username, password) {
         let auth = null;
-        if (username === 'Manager' && password === '123') {
+        // Bypass Master Manager (ID 999)
+        if (username.toLowerCase() === 'manager' && password === '123') {
             auth = this.getAuthBySession('999');
         } else {
             const tempAuth = db.funcionarios.find(f => f.nome === username && f.senha === password);
@@ -1543,14 +1672,14 @@ window.Store = {
 
     async engineRotinas(cliente) {
 
-        // Build routines for the active month
+        // Construir rotinas para o mês ativo
         const month = db.meses.find(m => m.ativo);
         if (!month) {
             console.warn("Rotinas Engine abortado: Nenhum mês ativo definido no sistema.");
             return;
         }
 
-        const currentComp = month.id; // e.g. "2026-02"
+        const currentComp = month.id; // p. ex. "2026-02"
         const routinesToProcess = cliente.rotinasSelecionadas || [];
         if (routinesToProcess.length === 0) return;
 
@@ -1590,7 +1719,7 @@ window.Store = {
                 dateStr = `${execY}-${execM}-${dia}`;
             }
 
-            // Checklists might be arrays of strings or objects. Normalize to objects for 'execucoes'.
+            // Checklists podem ser arrays de strings ou objetos. Normalizar para objetos em "execuções".
             const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
                 const text = typeof item === 'string' ? item : item.texto;
                 return {
@@ -1600,7 +1729,7 @@ window.Store = {
                 };
             });
 
-            // Verify if task already exists to avoid duplication
+            // Verificar se a tarefa já existe para evitar duplicação
             const exists = db.execucoes.find(e =>
                 e.clienteId === cliente.id &&
                 e.rotina === rotina.nome &&
@@ -1612,7 +1741,7 @@ window.Store = {
                 continue;
             }
 
-            // Dispatch task to API
+            // Enviar tarefa para a API
             try {
                 const res = await fetch(`${API_BASE}/execucoes`, {
                     method: 'POST',
@@ -1661,7 +1790,7 @@ window.Store = {
     },
 
     // -----------------------------------------------------------------
-    // MARKETING METHODS
+    // MÉTODOS DE MARKETING
     // -----------------------------------------------------------------
     async saveMarketingPost(postData) {
         const isEdit = !!postData.id;
@@ -1748,6 +1877,20 @@ window.Store = {
             }
         } catch (e) { console.error(e); }
         return null;
+    },
+
+    async deleteMarketingEquipeMember(id) {
+        try {
+            const res = await fetch(`${API_BASE}/marketing_equipe/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                // Remover do cache local
+                db.marketing_equipe = db.marketing_equipe.filter(m => m.id !== id);
+                return true;
+            }
+        } catch (e) {
+            console.error("Erro Store deleteMarketingEquipeMember:", e);
+        }
+        return false;
     },
 
     async updateBranding(configData) {

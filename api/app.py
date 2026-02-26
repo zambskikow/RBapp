@@ -6,7 +6,7 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
-# Allow CORS for local testing and Vercel
+# Permitir CORS para testes locais e Vercel
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,19 +15,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Supabase Client
+# Inicializar Cliente Supabase
+# A anon key é usada para operações normais
+# A service_role key (via env var SUPABASE_SERVICE_KEY) bypassa o RLS para operações administrativas
 url: str = os.getenv("SUPABASE_URL", "https://khbdbuoryxqiprlkdcpz.supabase.co")
 key: str = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYmRidW9yeXhxaXBybGtkY3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODU4ODcsImV4cCI6MjA4NzI2MTg4N30.1rr3_-LVO6b2PR96lJl8d7vVfHseWwUeAQDY4tdJR-M")
 
+# Chave de serviço (service_role) para contornar o RLS em operações administrativas de DELETE
+# Configure a variável SUPABASE_SERVICE_KEY nas env vars da Vercel
+service_key: str = os.getenv("SUPABASE_SERVICE_KEY", key)  # Fallback para anon key se não configurada
+
 supabase = None
+supabase_admin = None  # Cliente com permissões elevadas (bypassa RLS)
 supabase_error = None
 try:
     supabase = create_client(url, key)
+    # Criar cliente admin com service_role key (ou anon key como fallback)
+    supabase_admin = create_client(url, service_key)
 except Exception as e:
     import traceback
     supabase_error = str(e) + " | " + traceback.format_exc()
 
-# --- Pydantic Models for incoming POST/PUT requests ---
+# --- Modelos Pydantic para solicitações POST/PUT recebidas ---
 class ClienteCreate(BaseModel):
     razao_social: str
     cnpj: str
@@ -250,7 +259,7 @@ class GlobalConfigUpdate(BaseModel):
     theme: str | None = None
     menu_order: list | None = None
 
-# --- API Endpoints ---
+# --- Endpoints da API ---
 
 @app.get("/api/status")
 def read_root():
@@ -315,8 +324,31 @@ def update_mes(mes_id: str, updates: MesUpdate):
 
 @app.delete("/api/meses/{mes_id}")
 def delete_mes(mes_id: str):
-    response = supabase.table("meses").delete().eq("id", mes_id).execute()
-    return response.data
+    # Verificar se o cliente admin está disponível
+    client = supabase_admin if supabase_admin else supabase
+    if not client:
+        raise HTTPException(status_code=503, detail="Serviço indisponível: Supabase não inicializado.")
+
+    # Deletar execuções vinculadas primeiro para evitar erro de Constraint de Foreign Key
+    try:
+        del_exec_res = client.table("execucoes").delete().eq("competencia", mes_id).execute()
+        print(f"[delete_mes] Execuções deletadas para competência {mes_id}: {len(del_exec_res.data)} registros.")
+    except Exception as e:
+        print(f"Aviso ao deletar execucoes do mes {mes_id}: {e}")
+
+    # Deletar o mes em si
+    try:
+        response = client.table("meses").delete().eq("id", mes_id).execute()
+        print(f"[delete_mes] Resultado do DELETE no mes '{mes_id}': {response.data}")
+        # Verificar se algo foi realmente deletado
+        if response.data is None:
+            raise HTTPException(status_code=500, detail=f"Supabase retornou resposta nula ao deletar mês '{mes_id}'. Verifique as políticas de RLS.")
+        return response.data
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erro crítico ao deletar mês {mes_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --- Setores ---
 @app.get("/api/setores")
@@ -350,6 +382,18 @@ def update_funcionario(funcionario_id: int, updates: FuncionarioUpdate):
     response = supabase.table("funcionarios").update(updates.model_dump(exclude_unset=True)).eq("id", funcionario_id).execute()
     return response.data
 
+@app.delete("/api/funcionarios/{funcionario_id}")
+def delete_funcionario(funcionario_id: int):
+    # Deletar dependências para evitar erro de Foreign Key (Constraint 409)
+    try:
+        supabase.table("marketing_equipe").delete().eq("funcionario_id", funcionario_id).execute()
+    except Exception as e:
+        print(f"Aviso ao deletar dependências do funcionário {funcionario_id}: {e}")
+
+    # Deletar o funcionário em si
+    response = supabase.table("funcionarios").delete().eq("id", funcionario_id).execute()
+    return response.data
+
 # --- Rotinas Base ---
 @app.get("/api/rotinas_base")
 def get_rotinas_base():
@@ -368,6 +412,16 @@ def update_rotina_put(rotina_id: int, updates: RotinaBaseUpdate):
 
 @app.delete("/api/rotinas_base/{rotina_id}")
 def delete_rotina(rotina_id: int):
+    # Buscar nome da rotina para apagar execuções
+    try:
+        rotina_res = supabase.table("rotinas_base").select("nome").eq("id", rotina_id).execute()
+        if rotina_res.data and len(rotina_res.data) > 0:
+            rotina_nome = rotina_res.data[0]["nome"]
+            supabase.table("execucoes").delete().eq("rotina", rotina_nome).execute()
+    except Exception as e:
+        print(f"Aviso ao deletar execucoes da rotina {rotina_id}: {e}")
+
+    # Deletar a rotina base em si
     response = supabase.table("rotinas_base").delete().eq("id", rotina_id).execute()
     return response.data
 
@@ -451,7 +505,7 @@ def delete_cargo(cargo_id: int):
     response = supabase.table("cargos_permissoes").delete().eq("id", cargo_id).execute()
     return response.data
 
-# --- Marketing Posts ---
+# --- Posts de Marketing ---
 @app.get("/api/marketing_posts")
 def get_marketing_posts():
     response = supabase.table("marketing_posts").select("*").execute()
@@ -472,7 +526,7 @@ def delete_marketing_post(post_id: int):
     response = supabase.table("marketing_posts").delete().eq("id", post_id).execute()
     return response.data
 
-# --- Marketing Campanhas ---
+# --- Campanhas de Marketing ---
 @app.get("/api/marketing_campanhas")
 def get_marketing_campanhas():
     response = supabase.table("marketing_campanhas").select("*").execute()
@@ -493,7 +547,7 @@ def delete_marketing_campanha(campanha_id: int):
     response = supabase.table("marketing_campanhas").delete().eq("id", campanha_id).execute()
     return response.data
 
-# --- Marketing Equipe ---
+# --- Equipe de Marketing ---
 @app.get("/api/marketing_equipe")
 def get_marketing_equipe():
     response = supabase.table("marketing_equipe").select("*").execute()
@@ -514,7 +568,7 @@ def delete_marketing_equipe(id: int):
     response = supabase.table("marketing_equipe").delete().eq("id", id).execute()
     return response.data
 
-# --- Marketing Metricas ---
+# --- Métricas de Marketing ---
 @app.get("/api/marketing_metricas")
 def get_marketing_metricas():
     response = supabase.table("marketing_metricas").select("*").order("data_referencia", desc=True).limit(100).execute()
@@ -525,7 +579,7 @@ def create_marketing_metrica(metrica: MarketingMetricaCreate):
     response = supabase.table("marketing_metricas").insert(metrica.model_dump()).execute()
     return response.data
 
-# --- Global Config ---
+# --- Configuração Global ---
 @app.get("/api/global_config")
 def get_global_config():
     response = supabase.table("global_config").select("*").execute()
