@@ -524,7 +524,6 @@ body {
 
 /* Classe dinâmica para jogar o perfil pro topo do Blur */
 .uac-on-top {
-    position: relative !important;
     z-index: 999999 !important;
 }
 
