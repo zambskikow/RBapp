@@ -78,6 +78,14 @@ async function initApp() {
                 applyUserPermissions(auth);
                 applyBranding();
 
+                // Restaura Ordem Customizada do Menu Lateral
+                const savedOrderStr = localStorage.getItem('fiscalapp_menu_order');
+                if (savedOrderStr) {
+                    try {
+                        applyUserMenuOrder(JSON.parse(savedOrderStr));
+                    } catch (e) { }
+                }
+
                 console.log("%c INICIANDO RENDERIZAÇÃO BLINDADA...", "color: #6366f1; font-weight: bold;");
                 // Renderizações isoladas para evitar que erro em um quebre o app
                 const renders = [
@@ -571,23 +579,7 @@ async function initApp() {
         }
     });
 
-    // 14. Branding Event
-    const brandingForm = document.getElementById('form-branding');
-    if (brandingForm) {
-        brandingForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const configData = {
-                brandName: document.getElementById('brand-name').value,
-                brandLogoUrl: document.getElementById('brand-logo-url').value,
-                accentColor: document.getElementById('brand-accent-color').value,
-                slogan: document.getElementById('brand-slogan').value,
-                theme: document.getElementById('brand-theme').value
-            };
-            await Store.updateBranding(configData);
-            applyBranding();
-            showNotify("Sucesso", "Identidade visual personalizada com sucesso!", "success");
-        });
-    }
+    // O form de branding passou a ser gerenciado em renderBrandingSettings() para dar preview nativo
 
     const btnGenCode = document.getElementById('btn-generate-code');
     if (btnGenCode) {
@@ -5065,6 +5057,10 @@ function initSettingsTabs() {
                 renderAdminPanel();
             } else if (targetId === "set-setores") {
                 renderSetoresSettings();
+            } else if (targetId === "set-equipe" && typeof renderEquipe === 'function') {
+                renderEquipe();
+            } else if (targetId === "set-branding" && typeof renderBrandingSettings === 'function') {
+                renderBrandingSettings();
             } else if (targetId === "set-backup") {
                 renderBackupView();
             } else if (targetId === "set-auditoria") {
@@ -5320,6 +5316,225 @@ function renderSetoresSettings() {
         renderSetoresListPreview();
     }
 }
+
+// ==========================================
+// ADMIN: Personalização e Menu (Layout e Ordem)
+// ==========================================
+
+function renderBrandingSettings() {
+    console.log("Renderizando Personalização (Branding e Menu)...");
+
+    // 1. Carregar preferências atuais (seja de var/local/store) 
+    // Em um cenário real viriam do Store ou do Perfil da Empresa
+    const savedBrand = JSON.parse(localStorage.getItem('fiscalapp_branding') || '{}');
+
+    const form = document.getElementById('form-branding');
+    if (form) {
+        document.getElementById('brand-name').value = savedBrand.name || '';
+        document.getElementById('brand-slogan').value = savedBrand.slogan || '';
+        document.getElementById('brand-theme').value = savedBrand.theme || 'glass';
+        document.getElementById('brand-accent-color').value = savedBrand.color || '#6366f1';
+        document.getElementById('brand-logo-url').value = savedBrand.logoUrl || '';
+
+        // Live Preview das Cores
+        document.getElementById('brand-accent-color').addEventListener('input', (e) => {
+            document.documentElement.style.setProperty('--primary', e.target.value);
+        });
+
+        form.onsubmit = function (e) {
+            e.preventDefault();
+            const config = {
+                name: document.getElementById('brand-name').value,
+                slogan: document.getElementById('brand-slogan').value,
+                theme: document.getElementById('brand-theme').value,
+                color: document.getElementById('brand-accent-color').value,
+                logoUrl: document.getElementById('brand-logo-url').value
+            };
+            localStorage.setItem('fiscalapp_branding', JSON.stringify(config));
+
+            // Aplicar o tema selecionado
+            document.body.className = config.theme === 'light' ? 'light-mode' : (config.theme === 'dark' ? 'dark-mode' : '');
+
+            // Atualizar cor primária permanentemente via CSS Vars
+            document.documentElement.style.setProperty('--primary', config.color);
+            document.documentElement.style.setProperty('--accent', config.color);
+
+            // Atualizar o frontend (nome na sidebar)
+            const sbLogoText = document.querySelector('.sidebar-header h2');
+            if (sbLogoText && config.name) sbLogoText.textContent = config.name;
+
+            showNotify("Sucesso", "Identidade visual atualizada com sucesso.", "success");
+        };
+    }
+
+    // 2. Renderizar lista de reordenação (Drag and Drop nativo)
+    renderMenuReorder();
+}
+
+function renderMenuReorder() {
+    const listContainer = document.getElementById('menu-reorder-list');
+    if (!listContainer) return;
+
+    // Buscar a ordem das ULs na sidebar real
+    const sidebarMenu = document.querySelector('.sidebar-menu');
+    const lis = Array.from(sidebarMenu.querySelectorAll('li.nav-item'));
+
+    listContainer.innerHTML = '';
+
+    // Lógica para obter a ordem limpa (tirando tooltips etc)
+    lis.forEach((li, index) => {
+        const textSpan = li.querySelector('span[class="nav-text"]') || li.querySelector('span');
+        const icon = li.querySelector('i');
+        const label = textSpan ? textSpan.textContent.trim() : 'Menu ' + (index + 1);
+        const iconHtml = icon ? icon.outerHTML : '<i class="fa-solid fa-list"></i>';
+        const targetView = li.getAttribute('onclick') ? li.getAttribute('onclick').match(/'([^']+)'/) : null;
+        let viewId = targetView ? targetView[1] : '';
+
+        const itemPanel = document.createElement('div');
+        itemPanel.className = 'reorder-item';
+        itemPanel.setAttribute('draggable', 'true');
+        itemPanel.dataset.viewId = viewId;
+
+        itemPanel.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <i class="fa-solid fa-grip-vertical text-muted" style="cursor: grab;"></i>
+                <div style="width: 35px; height: 35px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary-light);">
+                    ${iconHtml}
+                </div>
+                <strong style="font-size: 0.95rem;">${label}</strong>
+            </div>
+            <label class="switch" style="transform: scale(0.8); margin: 0;">
+                <input type="checkbox" checked class="menu-visibility-toggle">
+                <span class="slider round"></span>
+            </label>
+        `;
+        listContainer.appendChild(itemPanel);
+
+        // Drag and Drop Listeners
+        itemPanel.addEventListener('dragstart', handleDragStart);
+        itemPanel.addEventListener('dragenter', handleDragEnter);
+        itemPanel.addEventListener('dragover', handleDragOver);
+        itemPanel.addEventListener('dragleave', handleDragLeave);
+        itemPanel.addEventListener('drop', handleDrop);
+        itemPanel.addEventListener('dragend', handleDragEnd);
+    });
+}
+
+// Lógica local de Drag and Drop
+let dragSrcEl = null;
+
+function handleDragStart(e) {
+    this.style.opacity = '0.4';
+    dragSrcEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    e.dataTransfer.setData('view-id', this.dataset.viewId);
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    this.classList.add('over');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('over');
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+
+    if (dragSrcEl !== this) {
+        // Swap HTML and data
+        const tempHtml = dragSrcEl.innerHTML;
+        const tempViewId = dragSrcEl.dataset.viewId;
+
+        dragSrcEl.innerHTML = this.innerHTML;
+        dragSrcEl.dataset.viewId = this.dataset.viewId;
+
+        this.innerHTML = tempHtml;
+        this.dataset.viewId = tempViewId;
+    }
+    return false;
+}
+
+function handleDragEnd(e) {
+    this.style.opacity = '1';
+    let items = document.querySelectorAll('.reorder-item');
+    items.forEach(item => item.classList.remove('over'));
+}
+
+window.saveMenuOrder = function () {
+    const list = document.querySelectorAll('.reorder-item');
+    const newOrder = [];
+
+    list.forEach(item => {
+        newOrder.push({
+            viewId: item.dataset.viewId,
+            label: item.querySelector('strong').textContent.trim(),
+            visible: item.querySelector('.menu-visibility-toggle').checked
+        });
+    });
+
+    localStorage.setItem('fiscalapp_menu_order', JSON.stringify(newOrder));
+
+    const btn = document.getElementById('btn-save-menu-order');
+    const icon = btn.querySelector('i');
+    icon.className = "fa-solid fa-spinner fa-spin";
+
+    setTimeout(() => {
+        applyUserMenuOrder(newOrder); // Aplica visualmente
+        icon.className = "fa-solid fa-check";
+        btn.innerHTML = `<i class="fa-solid fa-check"></i> Salvo!`;
+        btn.classList.replace('btn-primary', 'btn-success');
+
+        showFeedbackToast('Nova ordem do menu aplicada com sucesso.', 'success');
+
+        setTimeout(() => {
+            btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Salvar`;
+            btn.classList.replace('btn-success', 'btn-primary');
+        }, 3000);
+    }, 800);
+};
+
+// Aplica a ordem salva visualmente no painel esquerdo real
+function applyUserMenuOrder(orderArray) {
+    if (!orderArray || orderArray.length === 0) return;
+
+    const sidebarMenu = document.querySelector('.sidebar-menu');
+    if (!sidebarMenu) return;
+
+    const lis = Array.from(sidebarMenu.querySelectorAll('li.nav-item'));
+
+    // Mapear por target func ou regex do onclick
+    const getTargetFromLi = (li) => {
+        const onclick = li.getAttribute('onclick');
+        if (!onclick) return null;
+        const m = onclick.match(/'([^']+)'/);
+        return m ? m[1] : null;
+    };
+
+    // Reordena na DOM
+    orderArray.forEach(config => {
+        const liToMove = lis.find(li => getTargetFromLi(li) === config.viewId);
+        if (liToMove) {
+            sidebarMenu.appendChild(liToMove); // Joga pro fim, a ordem do forEach dita quem fica em cima
+            liToMove.style.display = config.visible ? 'flex' : 'none';
+        }
+    });
+
+    // Coloca o Logout (se existir) obrigatoriamente no final, e a Divisor
+    const divider = sidebarMenu.querySelector('.nav-divider');
+    const logoutBtn = Array.from(sidebarMenu.childNodes).find(n => n.outerHTML && n.outerHTML.includes('doLogout'));
+
+    if (divider) sidebarMenu.appendChild(divider);
+    if (logoutBtn) sidebarMenu.appendChild(logoutBtn);
+}
+
 
 // ==========================================
 // ADMIN: Backups

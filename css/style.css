@@ -1564,7 +1564,7 @@ body {
 /* ==========================================
    GLOBAL SETTINGS HUB (Admin Panel)
    ========================================== */
-   
+
 /* Estilos para o Grid Premium de Permissões (Roles) */
 .permissions-premium-grid {
     display: grid;
@@ -1581,9 +1581,11 @@ body {
 .permissions-premium-grid::-webkit-scrollbar {
     width: 6px;
 }
+
 .permissions-premium-grid::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.1);
 }
+
 .permissions-premium-grid::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
@@ -1667,30 +1669,30 @@ body {
 .perm-card:hover .perm-card-content {
     background: rgba(255, 255, 255, 0.06);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Estado Marcado (Checked) */
-.perm-card input:checked ~ .perm-card-content {
+.perm-card input:checked~.perm-card-content {
     background: rgba(99, 102, 241, 0.1);
     border-color: var(--primary-light);
     box-shadow: 0 0 0 1px var(--primary-light);
 }
 
-.perm-card input:checked ~ .perm-card-content .perm-icon {
+.perm-card input:checked~.perm-card-content .perm-icon {
     color: white;
     background: var(--primary);
     box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
 }
 
 /* Cartão Perigoso (Admin) */
-.danger-card input:checked ~ .perm-card-content {
+.danger-card input:checked~.perm-card-content {
     background: rgba(239, 68, 68, 0.1);
     border-color: var(--danger);
     box-shadow: 0 0 0 1px var(--danger);
 }
 
-.danger-card input:checked ~ .perm-card-content .perm-icon {
+.danger-card input:checked~.perm-card-content .perm-icon {
     background: var(--danger) !important;
     box-shadow: 0 0 15px rgba(239, 68, 68, 0.4) !important;
 }
@@ -3396,11 +3398,25 @@ body {
 
 /* Animação Premium Global de Lixeira */
 @keyframes trash-bounce {
-    0% { transform: translateY(0) rotate(0deg); }
-    30% { transform: translateY(-3px) rotate(-8deg); }
-    50% { transform: translateY(-5px) rotate(-12deg); }
-    70% { transform: translateY(-3px) rotate(-8deg); }
-    100% { transform: translateY(0) rotate(0deg); }
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    30% {
+        transform: translateY(-3px) rotate(-8deg);
+    }
+
+    50% {
+        transform: translateY(-5px) rotate(-12deg);
+    }
+
+    70% {
+        transform: translateY(-3px) rotate(-8deg);
+    }
+
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
 }
 
 button:hover i.fa-trash,
@@ -3408,7 +3424,8 @@ button:hover i.fa-trash,
 .btn-delete-comp:hover i.fa-trash,
 .text-danger:hover i.fa-trash {
     animation: trash-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    display: inline-block; /* Garantir que a transformação se aplique */
+    display: inline-block;
+    /* Garantir que a transformação se aplique */
 }
 
 .settings-tab-btn.active {
