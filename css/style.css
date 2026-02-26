@@ -496,6 +496,36 @@ body {
     display: none;
 }
 
+/* ==========================================
+   OVERLAY DE DESFOQUE GLOBAL (BLUR)
+   ========================================== */
+#uac-global-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.4);
+    /* Fundo sutil escuro */
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9998;
+    /* Acima de tudo, exceto do menu */
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+#uac-global-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Classe dinâmica para jogar o perfil pro topo */
+.uac-on-top {
+    z-index: 9999 !important;
+}
+
 /* User Account Dropdown (Configurações da Conta) */
 .user-account-dropdown {
     position: absolute;

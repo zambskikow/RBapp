@@ -5670,29 +5670,63 @@ function initUserAccountMenu() {
         document.getElementById('uac-display-role').textContent = LOGGED_USER.permissao;
     }
 
+    // Criar overlay global dinamicamente se não existir
+    let uacOverlay = document.getElementById('uac-global-overlay');
+    if (!uacOverlay) {
+        uacOverlay = document.createElement('div');
+        uacOverlay.id = 'uac-global-overlay';
+        document.body.appendChild(uacOverlay);
+
+        // Clicar no overlay fecha explicitamente o menu
+        uacOverlay.addEventListener('click', () => {
+            menu.classList.remove('active');
+            uacOverlay.classList.remove('active');
+            trigger.classList.remove('uac-on-top');
+            menu.classList.remove('uac-on-top');
+        });
+    }
+
     // Toggle Menu
     trigger.addEventListener('click', (e) => {
         e.stopPropagation(); // Evita que o click fora feche imediatamente
-        menu.classList.toggle('active');
-    });
+        const isActive = menu.classList.toggle('active');
 
-    // Fechar ao clicar fora
-    document.addEventListener('click', (e) => {
-        if (menu.classList.contains('active') && !menu.contains(e.target) && !trigger.contains(e.target)) {
-            menu.classList.remove('active');
+        // Alterna visão do overlay de desfoque
+        if (isActive) {
+            uacOverlay.classList.add('active');
+            trigger.classList.add('uac-on-top');
+            menu.classList.add('uac-on-top');
+        } else {
+            uacOverlay.classList.remove('active');
+            trigger.classList.remove('uac-on-top');
+            menu.classList.remove('uac-on-top');
         }
     });
 
-    // Ação: Sair (Reaproveitando a lógica de logout existente se possível, ou recriando para o botão do menu)
+    // Função local para fechar totalmente o menu (limpa efeitos visual)
+    const closeUserMenu = () => {
+        menu.classList.remove('active');
+        if (uacOverlay) uacOverlay.classList.remove('active');
+        if (trigger) trigger.classList.remove('uac-on-top');
+        if (menu) menu.classList.remove('uac-on-top');
+    };
+
+    // Fechar ao clicar fora (captura geral de documento)
+    document.addEventListener('click', (e) => {
+        if (menu.classList.contains('active') && !menu.contains(e.target) && !trigger.contains(e.target)) {
+            closeUserMenu();
+        }
+    });
+
+    // Ação: Sair (Reaproveitando a lógica de logout existente)
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
-            menu.classList.remove('active');
+            closeUserMenu();
             // Procura o botão global de logout e simula clique
             const globalLogout = document.getElementById('btn-logout');
             if (globalLogout) {
                 globalLogout.click();
             } else {
-                // Caso não encontre, executa logout padrão
                 localStorage.removeItem('fiscalapp_session');
                 window.location.reload();
             }
@@ -5702,7 +5736,7 @@ function initUserAccountMenu() {
     // Ação: Personalização (Navega para Settings -> set-branding)
     if (btnPersonalizacao) {
         btnPersonalizacao.addEventListener('click', () => {
-            menu.classList.remove('active');
+            closeUserMenu();
 
             // Verifica permissão Admin
             let hasSettingsPerm = false;
