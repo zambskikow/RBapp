@@ -2183,13 +2183,14 @@
                             </label>
                         </div>
                     </div>
+                    <footer class="modal-footer">
+                        <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+                            <button type="button" class="btn btn-secondary" id="cargo-modal-cancel">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Permissões</button>
+                        </div>
+                    </footer>
                 </form>
             </div>
-
-            <footer class="modal-footer">
-                <button class="btn btn-secondary" id="cargo-modal-cancel">Cancelar</button>
-                <button class="btn btn-primary" form="admin-cargo-form" type="submit">Salvar Permissões</button>
-            </footer>
         </div>
     </div>
 
@@ -2428,7 +2429,8 @@
                     <i class="fa-solid fa-calendar-days" style="font-size: 2.5rem; color: var(--primary);"></i>
                 </div>
                 <p style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.5; font-size: 0.95rem;">
-                    Preencha o código da nova competência. Serão geradas automaticamente todas as rotinas atreladas aos
+                    Preencha o código da nova competência. Serão geradas automaticamente todas as rotinas atreladas
+                    aos
                     clientes para este mês.
                 </p>
                 <div class="form-group" style="text-align: left;">
@@ -2455,7 +2457,8 @@
             </div>
             <h2 style="margin-bottom: 1rem; color: var(--text-light);">Excluir Competência</h2>
             <p style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.5;" id="delete-comp-msg">
-                Você está prestes a apagar essa competência inteira, junto com todas as tarefas vinculadas a ela. Esta é
+                Você está prestes a apagar essa competência inteira, junto com todas as tarefas vinculadas a ela.
+                Esta é
                 uma ação destrutiva irreversível.
             </p>
             <input type="hidden" id="delete-comp-id">
@@ -2481,7 +2484,8 @@
                         <i class="fa-solid fa-user-tie" style="font-size: 2rem; color: var(--primary);"></i>
                     </div>
                     <div>
-                        <h2 id="emp-perf-name" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">Nome
+                        <h2 id="emp-perf-name" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            Nome
                             do Funcionário</h2>
                         <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Relatório Analítico de
                             Desempenho</p>
@@ -2611,7 +2615,8 @@
             style="color: rgba(255,255,255,0.9); font-size: 1.5rem; font-weight: 500; margin-bottom: 1rem; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
             Você concluiu a competência!</h2>
         <p id="success-overlay-message"
-            style="color: rgba(255,255,255,0.8); font-size: 1.1rem; max-width: 500px; line-height: 1.6;">O próximo mês
+            style="color: rgba(255,255,255,0.8); font-size: 1.1rem; max-width: 500px; line-height: 1.6;">O próximo
+            mês
             foi liberado para você antecipadamente.</p>
     </div>
 

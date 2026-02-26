@@ -551,15 +551,25 @@ async function initApp() {
         });
     }
 
-    // 13. Admin Panel (RBAC) Events
-    const btnAddCargo = document.getElementById('btn-add-cargo');
-    if (btnAddCargo) btnAddCargo.addEventListener('click', () => openCargoModal());
-    const closeCargo1 = document.getElementById('close-cargo-modal');
-    if (closeCargo1) closeCargo1.addEventListener('click', closeCargoModal);
-    const closeCargo2 = document.getElementById('cargo-modal-cancel');
-    if (closeCargo2) closeCargo2.addEventListener('click', closeCargoModal);
-    const cargoForm = document.getElementById('admin-cargo-form');
-    if (cargoForm) cargoForm.addEventListener('submit', handleSaveCargo);
+    // 13. Admin Panel (RBAC) Events - usa event delegation para garantir que os elementos existam
+    document.addEventListener('click', function (e) {
+        // Botão Novo Cargo
+        if (e.target.closest('#btn-add-cargo')) {
+            openCargoModal();
+        }
+        // Botões fechar modal de cargo
+        if (e.target.closest('#close-cargo-modal') || e.target.closest('#cargo-modal-cancel')) {
+            closeCargoModal();
+        }
+    }, { capture: false });
+    // Submit do form de cargo via event delegation
+    document.addEventListener('submit', function (e) {
+        if (e.target && e.target.id === 'admin-cargo-form') {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSaveCargo(e);
+        }
+    });
 
     // 14. Branding Event
     const brandingForm = document.getElementById('form-branding');
@@ -5122,28 +5132,45 @@ function closeCargoModal() {
 }
 
 async function handleSaveCargo(e) {
-    e.preventDefault();
+    // Garante que o form nunca faça reload da página
+    if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
     const id = document.getElementById('cargo-id').value;
-    const nome = document.getElementById('cargo-nome').value;
+    const nome = document.getElementById('cargo-nome').value.trim();
+
+    if (!nome) {
+        showNotify("Atenção", "Informe o nome do cargo antes de salvar.", "warning");
+        return;
+    }
 
     const selecionadas = Array.from(document.querySelectorAll('.cargo-perm-check:checked')).map(ck => ck.value);
 
+    // Usa o loader padrão premium do sistema
     showLoading('Salvando Cargo', 'Atualizando banco de permissões...');
 
     let ok = false;
-    if (id) {
-        ok = await Store.updateCargo(parseInt(id), nome, selecionadas);
-    } else {
-        ok = await Store.addCargo(nome, selecionadas);
+    try {
+        if (id) {
+            ok = await Store.updateCargo(parseInt(id), nome, selecionadas);
+        } else {
+            ok = await Store.addCargo(nome, selecionadas);
+        }
+    } catch (err) {
+        console.error("Erro ao salvar cargo:", err);
+        ok = false;
     }
 
     hideLoading();
+
     if (ok) {
         closeCargoModal();
         renderAdminPanel();
-        showNotify("Sucesso", "Cargo e permissões atualizados!", "success");
+        showNotify("Sucesso", "Cargo e permissões salvos com sucesso!", "success");
     } else {
-        showNotify("Erro", "Falha ao salvar cargo.", "error");
+        showNotify("Erro", "Não foi possível salvar o cargo. Verifique sua conexão.", "error");
     }
 }
 
