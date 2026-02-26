@@ -46,6 +46,10 @@ async def login(response: Response, form_data: LoginRequest):
     3. Retorna um Cookie HttpOnly seguro e um JSON com dados do user.
     """
     try:
+        # 0. Verificar se a conexão com o banco via Vercel falhou por falta de Keys
+        if supabase is None:
+            raise HTTPException(status_code=500, detail="SUPABASE_OFFLINE: Variáveis de Ambiente não configuradas na Vercel (.env).")
+
         # 1. Buscar usuário
         # Aqui usamos o Supabase anon (ele possui acesso restrito de listagem ou nós controlaremos o retorno via select)
         user_res = supabase.table("funcionarios").select("*").eq("nome", form_data.username).execute()
