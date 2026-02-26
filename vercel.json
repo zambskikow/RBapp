@@ -17,7 +17,7 @@
   "rewrites": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/src/main.py"
+      "dest": "backend/src/main.py"
     },
     {
       "src": "/src/(.*)",
