@@ -128,6 +128,14 @@ async function initApp() {
 
                 initUserAccountMenu(); // Inicializa o Dropdown do Usuário após carregar o DOM
 
+                // Garantia Global: Restaurar a sidebar de configurações se ela foi escondida no menu do usuário
+                document.querySelectorAll('.nav-item').forEach(nav => {
+                    nav.addEventListener('click', () => {
+                        const settingsSidebar = document.querySelector('.settings-sidebar-mini');
+                        if (settingsSidebar) settingsSidebar.style.display = 'flex';
+                    });
+                });
+
                 // Restaurar a view correta imediatamente após os renders (sem delay perceptível)
                 setTimeout(() => {
                     const navLink = document.querySelector(`.nav-item[data-view="${savedView}"]`);
@@ -5695,17 +5703,38 @@ function initUserAccountMenu() {
     if (btnPersonalizacao) {
         btnPersonalizacao.addEventListener('click', () => {
             menu.classList.remove('active');
-            // Clica no link do painel de controle da Sidebar (mesmo oculto se tiver permissão via trigger local)
-            const navSettings = document.querySelector('.nav-item[data-view="settings"]');
-            if (navSettings) {
-                navSettings.click();
-                // Espera um micro-tick e clica na aba de branding
+
+            // Verifica permissão Admin
+            let hasSettingsPerm = false;
+            if (typeof LOGGED_USER !== 'undefined' && LOGGED_USER && LOGGED_USER.telas_permitidas) {
+                const telas = Array.isArray(LOGGED_USER.telas_permitidas) ?
+                    LOGGED_USER.telas_permitidas :
+                    JSON.parse(LOGGED_USER.telas_permitidas || '[]');
+                hasSettingsPerm = telas.includes('settings');
+            }
+
+            // Exibir a view de Settings manualmente caso o link nativo não esteja visível
+            document.querySelectorAll('.view-section').forEach(v => {
+                v.style.display = 'none';
+                v.classList.remove('active');
+            });
+
+            const settingsView = document.getElementById('view-settings');
+            if (settingsView) {
+                settingsView.style.display = 'block';
+                setTimeout(() => settingsView.classList.add('active'), 50);
+
+                // Se o usuário não é admin, oculta a sidebar de navegação de configurações
+                const settingsSidebar = settingsView.querySelector('.settings-sidebar-mini');
+                if (settingsSidebar) {
+                    settingsSidebar.style.display = hasSettingsPerm ? 'flex' : 'none';
+                }
+
+                // Dispara o clique na aba de branding após renderizar
                 setTimeout(() => {
                     const tabBranding = document.querySelector('.settings-tab-btn[data-target="set-branding"]');
                     if (tabBranding) tabBranding.click();
                 }, 50);
-            } else {
-                showNotify("Acesso Restrito", "Apenas administradores podem acessar esta área no momento.", "warning");
             }
         });
     }

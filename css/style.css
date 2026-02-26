@@ -462,9 +462,15 @@ body {
 /* Interação do Perfil (Clicável) */
 .user-profile {
     cursor: pointer;
-    transition: background 0.3s ease, padding 0.3s ease;
+    transition: background 0.3s ease, transform 0.2s ease;
     border-radius: var(--radius-md);
     position: relative;
+    padding: 10px;
+    margin: 0.5rem -10px 0;
+    /* Compensa o padding da sidebar para crescer a área clicável se necessário, ou usar 0 */
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .user-profile:hover {
@@ -477,6 +483,9 @@ body {
     font-size: 0.9rem;
     transition: color 0.3s ease;
     padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .user-profile:hover .user-profile-menu-icon {
