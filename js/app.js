@@ -5064,7 +5064,7 @@ function renderAdminPanel() {
             telasArray = [];
         }
 
-        const telasBadges = telasArray.map(t => `<span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; margin-right: 4px; font-size: 0.7rem;">${t}</span>`).join('');
+        const telasBadges = telasArray.map(t => `<span class="table-badge info" style="margin-right: 4px; font-size: 0.7rem;">${t}</span>`).join('');
 
         tr.innerHTML = `
             <td><strong>#${cargo.id.toString().padStart(3, '0')}</strong></td>
@@ -5147,7 +5147,7 @@ async function handleSaveCargo(e) {
     }
 }
 
-window.deleteCargoUI = async function (id) {
+async function deleteCargoUI(id) {
     const cargo = Store.getData().cargos.find(c => c.id === id);
     if (!cargo) return;
 
@@ -5195,10 +5195,18 @@ function renderBackupView() {
                 <strong>Backup Automático Diário</strong><br>
                 <small style="color:var(--text-muted)">Última execução: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</small>
             </div>
-            <span class="badge badge-success">Concluído</span>
+            <span class="table-badge success">Concluído</span>
         </div>
         <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 1rem;">
             Os backups são armazenados localmente no seu navegador e em cache do servidor.
         </p>
     `;
 }
+
+// Vinculação Global (Scoping Fix)
+window.renderAdminPanel = renderAdminPanel;
+window.openCargoModal = openCargoModal;
+window.closeCargoModal = closeCargoModal;
+window.handleSaveCargo = handleSaveCargo;
+window.deleteCargoUI = deleteCargoUI;
+window.renderBackupView = renderBackupView;
