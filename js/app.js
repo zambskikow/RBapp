@@ -125,6 +125,13 @@ async function initApp() {
                         const dashLink = document.querySelector(`.nav-item[data-view="dashboard"]`);
                         if (dashLink) dashLink.click();
                     }
+
+                    // Ocultar splash screen com fade suave após a view estar pronta
+                    const splash = document.getElementById('app-splash-screen');
+                    if (splash) {
+                        splash.classList.add('splash-fadeout');
+                        setTimeout(() => splash.remove(), 600);
+                    }
                 }, 0);
             } catch (e) {
                 console.error("%c ERRO CRÍTICO NA INICIALIZAÇÃO PÓS-LOGIN:", "color: #ef4444; font-weight: bold;", e);
@@ -132,14 +139,29 @@ async function initApp() {
         } else {
             console.warn("Sessão storage encontrada, mas inválida no banco de dados.");
             localStorage.removeItem('fiscalapp_session');
+            // Sem sessão válida: ocultar splash para exibir a tela de login
+            const splash = document.getElementById('app-splash-screen');
+            if (splash) {
+                splash.classList.add('splash-fadeout');
+                setTimeout(() => splash.remove(), 600);
+            }
         }
 
+    } else {
+        // Sem sessão armazenada: ocultar splash e mostrar o login
+        const splash = document.getElementById('app-splash-screen');
+        if (splash) {
+            splash.classList.add('splash-fadeout');
+            setTimeout(() => splash.remove(), 600);
+        }
     }
 
 
 
     // Setup everything else but don't render until logged in
     setupNavigation();
+
+
     setupPasswordToggles();
 
 

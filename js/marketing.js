@@ -147,12 +147,28 @@ const Marketing = {
         const totalPublicados = posts.filter(p => p.status === 'Publicado').length;
         const totalAgendados = posts.filter(p => p.status === 'Agendado').length;
 
-        document.getElementById('mk-kpi-publicados').innerText = totalPublicados;
-        document.getElementById('mk-kpi-agendados').innerText = totalAgendados;
+        // Animar KPIs com efeito de contagem (mesmo padrão do restante do sistema)
+        if (typeof animateValue === 'function') {
+            animateValue('mk-kpi-publicados', 0, totalPublicados, 600);
+            animateValue('mk-kpi-agendados', 0, totalAgendados, 600);
+        } else {
+            document.getElementById('mk-kpi-publicados').innerText = totalPublicados;
+            document.getElementById('mk-kpi-agendados').innerText = totalAgendados;
+        }
 
         if (metrics.length > 0) {
-            document.getElementById('mk-kpi-engajamento').innerText = (metrics[0].engajamento || 0) + '%';
-            document.getElementById('mk-kpi-leads').innerText = metrics[0].leads_whatsapp || 0;
+            const engajamento = metrics[0].engajamento || 0;
+            const leads = metrics[0].leads_whatsapp || 0;
+            if (typeof animateValueSuffix === 'function') {
+                animateValueSuffix('mk-kpi-engajamento', 0, engajamento, 600, '%');
+            } else {
+                document.getElementById('mk-kpi-engajamento').innerText = engajamento + '%';
+            }
+            if (typeof animateValue === 'function') {
+                animateValue('mk-kpi-leads', 0, leads, 600);
+            } else {
+                document.getElementById('mk-kpi-leads').innerText = leads;
+            }
         }
 
         this.renderCharts();
