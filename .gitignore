@@ -1,13 +1,30 @@
-# Dependências e ambiente
-.env
-.venv/
+# Node.js
+node_modules/
+dist/
+build/
+.npm/
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+env/
+ENV/
+.venv/
 
-# IDEs
-.vscode/
-.idea/
+# Environment Variables
+.env
+.env.local
+.env.*.local
 
-# OS
+# Vercel
+.vercel
+
+# General
 .DS_Store
 Thumbs.db
+*.log

@@ -6,6 +6,51 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
+@app.get("/api/debug")
+def debug_info():
+    """Endpoint de diagnóstico para verificar se as credenciais do Supabase estão corretas"""
+    service_key_set = bool(os.getenv("SUPABASE_SERVICE_KEY"))
+    service_key_diferente = os.getenv("SUPABASE_SERVICE_KEY", None) != key
+    return {
+        "supabase_ok": supabase is not None,
+        "supabase_admin_ok": supabase_admin is not None,
+        "service_key_configurada": service_key_set,
+        "service_key_e_diferente_da_anon": service_key_diferente,
+        "supabase_error": supabase_error,
+        "url": url
+    }
+
+@app.get("/api/test-delete/{mes_id}")
+def test_delete_diagnostico(mes_id: str):
+    """
+    Diagnóstico completo ANTES de deletar: verifica se o registro existe,
+    quantas execuções estão vinculadas, e retorna tudo sem fazer nenhuma alteração.
+    Acesse: /api/test-delete/2025-01 (substitua pelo ID real da competência)
+    """
+    client = supabase_admin if supabase_admin else supabase
+    resultado = {
+        "mes_id_buscado": mes_id,
+        "usando_service_role": supabase_admin is not None and bool(os.getenv("SUPABASE_SERVICE_KEY")),
+    }
+
+    # Verificar se o mês existe no banco
+    try:
+        mes_res = client.table("meses").select("*").eq("id", mes_id).execute()
+        resultado["mes_encontrado"] = bool(mes_res.data)
+        resultado["mes_data"] = mes_res.data
+    except Exception as e:
+        resultado["mes_erro"] = str(e)
+
+    # Contar execuções vinculadas
+    try:
+        exec_res = client.table("execucoes").select("id, competencia").eq("competencia", mes_id).execute()
+        resultado["execucoes_vinculadas_count"] = len(exec_res.data) if exec_res.data else 0
+        resultado["execucoes_sample"] = exec_res.data[:3] if exec_res.data else []
+    except Exception as e:
+        resultado["execucoes_erro"] = str(e)
+
+    return resultado
+
 # Permitir CORS para testes locais e Vercel
 app.add_middleware(
     CORSMiddleware,
@@ -341,8 +386,12 @@ def delete_mes(mes_id: str):
         response = client.table("meses").delete().eq("id", mes_id).execute()
         print(f"[delete_mes] Resultado do DELETE no mes '{mes_id}': {response.data}")
         # Verificar se algo foi realmente deletado
-        if response.data is None:
-            raise HTTPException(status_code=500, detail=f"Supabase retornou resposta nula ao deletar mês '{mes_id}'. Verifique as políticas de RLS.")
+        # ATENÇÃO: Supabase retorna [] (lista vazia) quando o RLS bloqueia silenciosamente ─ NÃO retorna None
+        if not response.data:  # Captura tanto None quanto [] (lista vazia = bloqueado por RLS ou não encontrado)
+            raise HTTPException(
+                status_code=404,
+                detail=f"Nenhum registro deletado para o mês '{mes_id}'. Possível bloqueio de RLS ou registro inexistente. Chave admin: {'service_role' if os.getenv('SUPABASE_SERVICE_KEY') else 'anon (sem service_key)'}"
+            )
         return response.data
     except HTTPException:
         raise
@@ -589,6 +638,65 @@ def get_global_config():
 def update_global_config(id: int, updates: GlobalConfigUpdate):
     response = supabase.table("global_config").update(updates.model_dump(exclude_unset=True)).eq("id", id).execute()
     return response.data
+
+# --- Backup Completo do Supabase ---
+@app.get("/api/backup/download")
+def download_backup():
+    """
+    Exporta todas as tabelas do banco de dados Supabase em formato JSON.
+    Usa o cliente admin (service_role) para garantir acesso completo, ignorando regras de RLS.
+    """
+    from datetime import datetime, timezone
+
+    client = supabase_admin if supabase_admin else supabase
+    if not client:
+        raise HTTPException(status_code=503, detail="Supabase não inicializado.")
+
+    # Lista de todas as tabelas a exportar
+    tabelas = [
+        "clientes",
+        "funcionarios",
+        "rotinas_base",
+        "execucoes",
+        "meses",
+        "setores",
+        "logs",
+        "mensagens",
+        "global_config",
+        "cargos_permissoes",
+        "marketing_posts",
+        "marketing_campanhas",
+        "marketing_metricas",
+        "marketing_equipe",
+    ]
+
+    dados = {}
+    erros = []
+    total_registros = 0
+
+    for tabela in tabelas:
+        try:
+            # Buscar todos os registros (sem limite padrão do Supabase que é 1000)
+            res = client.table(tabela).select("*").execute()
+            dados[tabela] = res.data or []
+            total_registros += len(dados[tabela])
+        except Exception as e:
+            # Registrar o erro mas continuar com as outras tabelas
+            erros.append({"tabela": tabela, "erro": str(e)})
+            dados[tabela] = []
+
+    return {
+        "metadata": {
+            "versao": "1.0",
+            "sistema": "FiscalApp",
+            "gerado_em": datetime.now(timezone.utc).isoformat(),
+            "total_registros": total_registros,
+            "tabelas_exportadas": len(tabelas),
+            "erros": erros,
+            "contagem_por_tabela": {t: len(dados[t]) for t in tabelas}
+        },
+        "tabelas": dados
+    }
 
 if __name__ == "__main__":
     import uvicorn

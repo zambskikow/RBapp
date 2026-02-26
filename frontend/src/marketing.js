@@ -147,12 +147,28 @@ const Marketing = {
         const totalPublicados = posts.filter(p => p.status === 'Publicado').length;
         const totalAgendados = posts.filter(p => p.status === 'Agendado').length;
 
-        document.getElementById('mk-kpi-publicados').innerText = totalPublicados;
-        document.getElementById('mk-kpi-agendados').innerText = totalAgendados;
+        // Animar KPIs com efeito de contagem (mesmo padrão do restante do sistema)
+        if (typeof animateValue === 'function') {
+            animateValue('mk-kpi-publicados', 0, totalPublicados, 600);
+            animateValue('mk-kpi-agendados', 0, totalAgendados, 600);
+        } else {
+            document.getElementById('mk-kpi-publicados').innerText = totalPublicados;
+            document.getElementById('mk-kpi-agendados').innerText = totalAgendados;
+        }
 
         if (metrics.length > 0) {
-            document.getElementById('mk-kpi-engajamento').innerText = (metrics[0].engajamento || 0) + '%';
-            document.getElementById('mk-kpi-leads').innerText = metrics[0].leads_whatsapp || 0;
+            const engajamento = metrics[0].engajamento || 0;
+            const leads = metrics[0].leads_whatsapp || 0;
+            if (typeof animateValueSuffix === 'function') {
+                animateValueSuffix('mk-kpi-engajamento', 0, engajamento, 600, '%');
+            } else {
+                document.getElementById('mk-kpi-engajamento').innerText = engajamento + '%';
+            }
+            if (typeof animateValue === 'function') {
+                animateValue('mk-kpi-leads', 0, leads, 600);
+            } else {
+                document.getElementById('mk-kpi-leads').innerText = leads;
+            }
         }
 
         this.renderCharts();
@@ -386,8 +402,12 @@ const Marketing = {
                 <td>12 tarefas</td>
                 <td>95%</td>
                 <td>
-                    <button class="action-btn-mini"><i class="fa-solid fa-pen"></i></button>
-                    <button class="action-btn-mini" style="color:var(--danger);"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-small btn-secondary" onclick="Marketing.editEquipeMember(${m.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        <i class="fa-solid fa-pen"></i> Editar
+                    </button>
+                    <button class="btn btn-small btn-secondary text-danger" onclick="Marketing.deleteEquipeMember(${m.id}, '${func ? func.nome.replace(/'/g, "\\'") : 'Desconhecido'}')" title="Excluir" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem; margin-left: 0.5rem;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -528,6 +548,34 @@ const Marketing = {
 
     editPost(id) { this.openPostModal(id); },
     editCampanha(id) { this.openCampanhaModal(id); },
+
+    editEquipeMember(id) {
+        showNotify("Em Breve", "Edição de membro da equipe de marketing em desenvolvimento.", "info");
+    },
+
+    async deleteEquipeMember(id, nome) {
+        if (!id) return;
+
+        // Confirmação Premium
+        const confirmacao = await window.showConfirm(
+            "Remover da Equipe?",
+            `Tem certeza que deseja remover "${nome}" da equipe de marketing?`,
+            'danger'
+        );
+
+        if (!confirmacao) return;
+
+        if (window.showLoading) window.showLoading("Processando", "Removendo membro...");
+        const success = await Store.deleteMarketingEquipeMember(id);
+        if (window.hideLoading) window.hideLoading();
+
+        if (success) {
+            if (window.showFeedbackToast) window.showFeedbackToast("Membro removido com sucesso!", "success");
+            this.renderEquipe(); // Recarrega a tabela de marketing
+        } else {
+            if (window.showFeedbackToast) window.showFeedbackToast("Erro ao remover membro da equipe.", "error");
+        }
+    },
 
     getBadgeColor(platform) {
         if (!platform) return 'var(--primary)';
