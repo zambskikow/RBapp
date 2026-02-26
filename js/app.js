@@ -78,12 +78,23 @@ async function initApp() {
                 applyUserPermissions(auth);
                 applyBranding();
 
-                // Restaura Ordem Customizada do Menu Lateral
+                // Restaura Ordem Customizada do Menu Lateral a partir do localStorage
                 const savedOrderStr = localStorage.getItem('fiscalapp_menu_order');
                 if (savedOrderStr) {
                     try {
-                        applyUserMenuOrder(JSON.parse(savedOrderStr));
-                    } catch (e) { }
+                        const savedOrder = JSON.parse(savedOrderStr);
+                        const sidebarNav = document.querySelector('.sidebar .nav-menu');
+                        if (sidebarNav && Array.isArray(savedOrder) && savedOrder.length > 0) {
+                            const navSettings = document.getElementById('nav-settings');
+                            // Reordenar cada item conforme a ordem salva
+                            savedOrder.forEach(viewKey => {
+                                const item = sidebarNav.querySelector(`.nav-item[data-view="${viewKey}"]`);
+                                if (item) sidebarNav.appendChild(item);
+                            });
+                            // Settings sempre por último
+                            if (navSettings) sidebarNav.appendChild(navSettings);
+                        }
+                    } catch (e) { console.warn('[MenuOrder] Falha ao restaurar ordem do menu:', e); }
                 }
 
                 // Ocultar todas as views ANTES de renderizar para evitar o flash do conteúdo padrão
