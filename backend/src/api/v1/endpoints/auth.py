@@ -3,8 +3,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
 
-# Importar cliente Supabase da main
-from src.main import supabase
+# Importar cliente Supabase desacoplado
+from src.core.database import supabase
 from src.core.security import verify_password, create_access_token, decode_access_token
 
 router = APIRouter(prefix="/api/auth", tags=["Autenticação"])

@@ -1,8 +1,8 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from supabase import create_client, Client
+from src.core.database import supabase, supabase_admin, supabase_error, url
 
 app = FastAPI()
 
@@ -64,26 +64,7 @@ app.add_middleware(
 from src.api.v1.endpoints import auth
 app.include_router(auth.router)
 
-# Inicializar Cliente Supabase
-# A anon key é usada para operações normais
-# A service_role key (via env var SUPABASE_SERVICE_KEY) bypassa o RLS para operações administrativas
-url: str = os.getenv("SUPABASE_URL", "")
-key: str = os.getenv("SUPABASE_KEY", "")
-
-# Chave de serviço (service_role) para contornar o RLS em operações administrativas de DELETE
-# Configure a variável SUPABASE_SERVICE_KEY nas env vars da Vercel
-service_key: str = os.getenv("SUPABASE_SERVICE_KEY", key)  # Fallback para anon key se não configurada
-
-supabase = None
-supabase_admin = None  # Cliente com permissões elevadas (bypassa RLS)
-supabase_error = None
-try:
-    supabase = create_client(url, key)
-    # Criar cliente admin com service_role key (ou anon key como fallback)
-    supabase_admin = create_client(url, service_key)
-except Exception as e:
-    import traceback
-    supabase_error = str(e) + " | " + traceback.format_exc()
+from src.core.database import supabase, supabase_admin, supabase_error, url
 
 # Adicionar o Dependency Injection padrão
 CurrentUser = Depends(get_current_user_from_cookie)
