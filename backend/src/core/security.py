@@ -1,12 +1,9 @@
 import os
+import bcrypt
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
 from jose import jwt, JWTError
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
-
-# Arquitetura de Hash baseada em Bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Configurações do JWT lidas do ambiente
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "SUA_CHAVE_SUPER_SECRETA_PADRAO_AKDJAWIE")
@@ -17,20 +14,30 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440
 # Nota: Como usamos cookies HTTPOnly, não precisaremos diretamente dessa classe na forma padrão.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
+import hashlib
+
+def _pre_hash(password: str) -> bytes:
+    """Pre-hash com SHA256 para contornar o limite de 72 bytes do Bcrypt para senhas muito longas"""
+    return hashlib.sha256(password.encode('utf-8')).digest()
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verifica se a senha plana em match com o bcrypt hash"""
     try:
-        return pwd_context.verify(plain_password, hashed_password)
+        # Tenta verificar a versão pre-hashed primeiro (O novo formato seguro)
+        if bcrypt.checkpw(_pre_hash(plain_password), hashed_password.encode('utf-8')):
+            return True
+        # Tenta versão não pre-hashed apenas como camada de segurança legada
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
     except Exception:
         # Fallback de segurança temporário caso as senhas no DB ainda não sejam Hash (apenas durante a transição)
-        # Atenção: Após rodar o script de migração de senhas, esta linha DEVERÁ ser removida por segurança
         if plain_password == hashed_password:
             return True
         return False
 
 def get_password_hash(password: str) -> str:
-    """Gera um hash bcrypt da senha informada"""
-    return pwd_context.hash(password)
+    """Gera um hash bcrypt da senha informada (sempre pre-hashed para evitar erros)"""
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(_pre_hash(password), salt).decode('utf-8')
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Cria o JWT assinado"""

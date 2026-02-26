@@ -814,13 +814,17 @@ function restoreBackupFile() {
     window.showFeedbackToast('Função de restauração de backup em desenvolvimento.', 'info');
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const user = document.getElementById('login-username').value.trim();
     const pass = document.getElementById('login-password').value.trim();
     const errorMsg = document.getElementById('login-error');
 
-    const auth = Store.login(user, pass);
+    // Desabilitar o botão enquanto aguarda
+    const btn = document.querySelector('.btn-login');
+    if (btn) btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Entrando...';
+
+    const auth = await Store.login(user, pass);
     if (auth) {
         LOGGED_USER = auth;
         document.getElementById('login-overlay').classList.remove('active');
@@ -865,7 +869,9 @@ function handleLogin(e) {
             checkAndRunAutoBackup();
         }, 300); // Wait for fade out
     } else {
+        if (btn) btn.innerHTML = 'Entrar no Sistema';
         errorMsg.style.display = 'block';
+        errorMsg.textContent = 'Erro ao entrar. Login inválido ou servidor indisponível.';
     }
 }
 

@@ -5,15 +5,20 @@ import os
 import time
 import requests
 from dotenv import load_dotenv
-from passlib.context import CryptContext
+import hashlib
+import bcrypt
 
 load_dotenv()
 
-# Instanciar gerador bcrypt isolado 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def _pre_hash(password: str) -> bytes:
+    """Pre-hash com SHA256 para contornar o limite de bytes do Bcrypt para senhas longas"""
+    return hashlib.sha256(password.encode('utf-8')).digest()
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    """Gera o hash usando bcrypt nativo"""
+    salt = bcrypt.gensalt()
+    hashed_bytes = bcrypt.hashpw(_pre_hash(password), salt)
+    return hashed_bytes.decode('utf-8')
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
@@ -65,7 +70,9 @@ def migrar_senhas():
                 continue
 
             print(f"  [+] Migrando senha do Usuário '{user_nome}'...")
-            novo_hash = get_password_hash(senha_atual)
+            
+            # Enviar para a hash com proteção automática contra limite de byes _pre_hash
+            novo_hash = get_password_hash(str(senha_atual))
             
             # Update via REST PATCH
             url_patch = f"{SUPABASE_URL}/rest/v1/funcionarios?id=eq.{user_id}"
