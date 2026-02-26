@@ -643,6 +643,22 @@ window.showNotify = function (title, message, type = 'info') {
     }, 5000);
 }
 
+/**
+ * Exibe um toast de feedback rápido (alias de showNotify com título automático baseado no tipo)
+ * @param {string} message - Mensagem a exibir
+ * @param {string} type - Tipo: 'success', 'error', 'info', 'warning'
+ */
+window.showFeedbackToast = function (message, type = 'info') {
+    // Mapear tipo para título automático
+    const titulos = {
+        success: 'Sucesso',
+        error: 'Erro',
+        warning: 'Atenção',
+        info: 'Informação'
+    };
+    const titulo = titulos[type] || 'Informação';
+    window.showNotify(titulo, message, type);
+};
 
 function handleLogin(e) {
     e.preventDefault();
