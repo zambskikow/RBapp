@@ -1106,9 +1106,10 @@ function renderDashboard() {
     animateValue('kpi-warning', parseInt(document.getElementById('kpi-warning').innerText) || 0, kpis.vencendo, 800);
     animateValue('kpi-late', parseInt(document.getElementById('kpi-late').innerText) || 0, kpis.atrasados, 800);
 
+    // Animar KPI de eficiência com sufixo de porcentagem
+    animateValueSuffix('kpi-eficiencia', parseInt(document.getElementById('kpi-eficiencia').innerText) || 0, taxaEficiencia, 800, '%');
     const efEl = document.getElementById('kpi-eficiencia');
     if (efEl) {
-        efEl.innerText = `${taxaEficiencia}%`;
         efEl.style.color = taxaEficiencia > 80 ? 'var(--success)' : (taxaEficiencia > 50 ? 'var(--warning)' : 'var(--danger)');
     }
 
@@ -1358,8 +1359,7 @@ function renderMeuDesempenho() {
     animateValue('kpi-meu-done', parseInt(document.getElementById('kpi-meu-done').innerText) || 0, concluidas, 800);
     animateValue('kpi-meu-warning', parseInt(document.getElementById('kpi-meu-warning').innerText) || 0, vencendo, 800);
     animateValue('kpi-meu-late', parseInt(document.getElementById('kpi-meu-late').innerText) || 0, atrasadas, 800);
-    animateValue('kpi-meu-score', parseInt(document.getElementById('kpi-meu-score').innerText) || 0, scoreEficiencia, 800);
-    document.getElementById('kpi-meu-score').innerHTML = scoreEficiencia + '<span style="font-size:0.8rem; margin-left:2px;">%</span>';
+    animateValueSuffix('kpi-meu-score', parseInt(document.getElementById('kpi-meu-score').innerText) || 0, scoreEficiencia, 800, '%');
 
     // 1. Gráfico de Saúde (Doughnut)
     const ctxSemaforo = document.getElementById('meuSemaforoChart');
@@ -1574,12 +1574,12 @@ function updateEmployeePerformanceModal() {
 
     const scoreEficiencia = total > 0 ? Math.round((concluidas / total) * 100) : 0;
 
-    // Atualizar UI dos KPIs
-    document.getElementById('emp-kpi-total').textContent = total;
-    document.getElementById('emp-kpi-done').textContent = concluidas;
-    document.getElementById('emp-kpi-pend').textContent = pendentes;
-    document.getElementById('emp-kpi-late').textContent = atrasadas;
-    document.getElementById('emp-kpi-score').innerHTML = scoreEficiencia + '<span style="font-size:0.8rem; margin-left:2px;">%</span>';
+    // Atualizar UI dos KPIs com animação de contagem
+    animateValue('emp-kpi-total', 0, total, 600);
+    animateValue('emp-kpi-done', 0, concluidas, 600);
+    animateValue('emp-kpi-pend', 0, pendentes, 600);
+    animateValue('emp-kpi-late', 0, atrasadas, 600);
+    animateValueSuffix('emp-kpi-score', 0, scoreEficiencia, 600, '%');
 
     // Popular a tabela Detalhada
     const tbody = document.querySelector('#emp-perf-detail-table tbody');
@@ -3263,7 +3263,8 @@ function renderCompetenciasAdmin() {
 
     const meses = Store.getData().meses || [];
 
-    if (totalKpi) totalKpi.textContent = meses.length;
+    // Animar KPI de total de competências
+    if (totalKpi) animateValue('kpi-total-comp-admin', 0, meses.length, 600);
 
     const ativo = meses.find(m => m.ativo);
     if (activeKpi) activeKpi.textContent = ativo ? ativo.mes : 'Nenhum';
@@ -4588,6 +4589,7 @@ function formatDate(dateStr) {
 function animateValue(id, start, end, duration) {
 
     const obj = document.getElementById(id);
+    if (!obj) return;
 
     let startTimestamp = null;
 
@@ -4612,6 +4614,45 @@ function animateValue(id, start, end, duration) {
             // Garantir estado final
 
             obj.innerHTML = end;
+
+        }
+
+    };
+
+    window.requestAnimationFrame(step);
+
+}
+
+// Animação de Suavização para Números com Sufixo (ex: porcentagem)
+
+function animateValueSuffix(id, start, end, duration, suffix) {
+
+    const obj = document.getElementById(id);
+    if (!obj) return;
+
+    let startTimestamp = null;
+
+    const step = (timestamp) => {
+
+        if (!startTimestamp) startTimestamp = timestamp;
+
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+
+        // Suavização exponencial para fora
+
+        const easeAmount = 1 - Math.pow(1 - progress, 4);
+
+        obj.innerHTML = Math.floor(easeAmount * (end - start) + start) + suffix;
+
+        if (progress < 1) {
+
+            window.requestAnimationFrame(step);
+
+        } else {
+
+            // Garantir estado final
+
+            obj.innerHTML = end + suffix;
 
         }
 
