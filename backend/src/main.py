@@ -52,9 +52,17 @@ def test_delete_diagnostico(mes_id: str):
     return resultado
 
 # Permitir CORS para testes locais e Vercel
+# FastAPI falha com allow_credentials=True + allow_origins=["*"]. 
+# A solução segura é usar regex ou listar domínios locais e da Vercel
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Atenção: Em prod com credentials setado p/ true, isso deverá ser estrito (lista de origens exatas) ou origin regex
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5500",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5500",
+    ],
+    allow_origin_regex="https://.*\.vercel\.app.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,6 +73,8 @@ from src.api.v1.endpoints import auth
 app.include_router(auth.router)
 
 from src.core.database import supabase, supabase_admin, supabase_error, url
+
+from src.api.v1.endpoints.auth import get_current_user_from_cookie
 
 # Adicionar o Dependency Injection padrão
 CurrentUser = Depends(get_current_user_from_cookie)
