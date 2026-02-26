@@ -16,20 +16,20 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/backend/src/main.py"
+      "src": "/api/(.*)",
+      "dest": "/backend/src/main.py"
     },
     {
-      "source": "/src/(.*)",
-      "destination": "/frontend/src/$1"
+      "src": "/src/(.*)",
+      "dest": "/frontend/src/$1"
     },
     {
-      "source": "/",
-      "destination": "/frontend/public/index.html"
+      "src": "/",
+      "dest": "/frontend/public/index.html"
     },
     {
-      "source": "/(.*)",
-      "destination": "/frontend/public/$1"
+      "src": "/(.*)",
+      "dest": "/frontend/public/$1"
     }
   ]
 }
