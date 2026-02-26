@@ -15,9 +15,21 @@ def debug_info():
         "supabase_ok": supabase is not None,
         "supabase_admin_ok": supabase_admin is not None,
         "service_key_configurada": service_key_set,
-        "service_key_e_diferente_da_anon": service_key_diferente,
         "supabase_error": supabase_error,
-        "url": url
+        "url_status": bool(url),
+    }
+
+@app.get("/api/debug-env")
+def debug_env_vars():
+    """Confirma se o Vercel está conseguindo ler as env vars críticas"""
+    from src.core.database import url, key, service_key
+    
+    return {
+        "DB_URL_PRESENTE": bool(url),
+        "DB_KEY_PRESENTE": bool(key),
+        "DB_SERVICE_PRESENTE": bool(service_key),
+        "SUPABASE_CONECTADO": supabase is not None,
+        "ERROS_DB": supabase_error
     }
 
 @app.get("/api/test-delete/{mes_id}")
