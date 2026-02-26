@@ -58,20 +58,20 @@ window.Store = {
                 marketing_postsRes, marketing_campanhasRes, marketing_equipeRes,
                 marketing_metricasRes, global_configRes
             ] = await Promise.all([
-                fetch(`${API_BASE}/setores`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/funcionarios`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/rotinas_base`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/clientes`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/meses`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/execucoes`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/mensagens`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/logs`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/cargos`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/marketing_posts`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/marketing_campanhas`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/marketing_equipe`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/marketing_metricas`, { credentials: 'omit' }),
-                fetch(`${API_BASE}/global_config`, { credentials: 'omit' })
+                apiFetch(`${API_BASE}/setores`),
+                apiFetch(`${API_BASE}/funcionarios`),
+                apiFetch(`${API_BASE}/rotinas_base`),
+                apiFetch(`${API_BASE}/clientes`),
+                apiFetch(`${API_BASE}/meses`),
+                apiFetch(`${API_BASE}/execucoes`),
+                apiFetch(`${API_BASE}/mensagens`),
+                apiFetch(`${API_BASE}/logs`),
+                apiFetch(`${API_BASE}/cargos`),
+                apiFetch(`${API_BASE}/marketing_posts`),
+                apiFetch(`${API_BASE}/marketing_campanhas`),
+                apiFetch(`${API_BASE}/marketing_equipe`),
+                apiFetch(`${API_BASE}/marketing_metricas`),
+                apiFetch(`${API_BASE}/global_config`)
             ]);
 
             db.setores = (await setoresRes.json()).map(s => s.nome) || [];
