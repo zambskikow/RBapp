@@ -6,6 +6,20 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
+@app.get("/api/debug")
+def debug_info():
+    """Endpoint de diagnóstico para verificar se as credenciais do Supabase estão corretas"""
+    service_key_set = bool(os.getenv("SUPABASE_SERVICE_KEY"))
+    service_key_diferente = os.getenv("SUPABASE_SERVICE_KEY", None) != key
+    return {
+        "supabase_ok": supabase is not None,
+        "supabase_admin_ok": supabase_admin is not None,
+        "service_key_configurada": service_key_set,
+        "service_key_e_diferente_da_anon": service_key_diferente,
+        "supabase_error": supabase_error,
+        "url": url
+    }
+
 # Permitir CORS para testes locais e Vercel
 app.add_middleware(
     CORSMiddleware,
@@ -341,8 +355,12 @@ def delete_mes(mes_id: str):
         response = client.table("meses").delete().eq("id", mes_id).execute()
         print(f"[delete_mes] Resultado do DELETE no mes '{mes_id}': {response.data}")
         # Verificar se algo foi realmente deletado
-        if response.data is None:
-            raise HTTPException(status_code=500, detail=f"Supabase retornou resposta nula ao deletar mês '{mes_id}'. Verifique as políticas de RLS.")
+        # ATENÇÃO: Supabase retorna [] (lista vazia) quando o RLS bloqueia silenciosamente ─ NÃO retorna None
+        if not response.data:  # Captura tanto None quanto [] (lista vazia = bloqueado por RLS ou não encontrado)
+            raise HTTPException(
+                status_code=404,
+                detail=f"Nenhum registro deletado para o mês '{mes_id}'. Possível bloqueio de RLS ou registro inexistente. Chave admin: {'service_role' if os.getenv('SUPABASE_SERVICE_KEY') else 'anon (sem service_key)'}"
+            )
         return response.data
     except HTTPException:
         raise
