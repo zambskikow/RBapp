@@ -791,22 +791,67 @@ window.Store = {
         const compIdStr = String(compId).trim();
         console.log("[Store] Solicitando exclusão da competência:", compIdStr);
 
-        try {
-            // 1. Chamar API para exclusão no Banco de Dados
-            // O backend (app.py) já cuida de deletar as execuções vinculadas na tabela 'execucoes'
-            const res = await fetch(`${API_BASE}/meses/${compIdStr}`, { method: 'DELETE' });
+        // Configurações diretas do Supabase para bypass do backend Python quando necessário
+        const SUPABASE_URL = "https://khbdbuoryxqiprlkdcpz.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYmRidW9yeXhxaXBybGtkY3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODU4ODcsImV4cCI6MjA4NzI2MTg4N30.1rr3_-LVO6b2PR96lJl8d7vVfHseWwUeAQDY4tdJR-M";
 
-            if (!res.ok) {
-                console.error("[Store] Erro na API ao deletar mês:", res.status);
-                // Tentar capturar detalhes do erro se a API retornar JSON
-                const errorData = await res.json().catch(() => ({}));
-                console.error("[Store] Detalhes do erro da API:", errorData);
-                return false;
+        const supabaseHeaders = {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+        };
+
+        try {
+            // Estratégia 1: Tentar via backend Python (que cuida das execuções vinculadas)
+            const res = await fetch(`${API_BASE}/meses/${compIdStr}`, {
+                method: 'DELETE',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            // Capturar o body da resposta para diagnóstico
+            let responseBody = null;
+            try { responseBody = await res.json(); } catch (_) { }
+
+            console.log(`[Store] Resposta do backend DELETE /meses/${compIdStr}:`, res.status, responseBody);
+
+            if (res.ok) {
+                // Backend funcionou! Atualizar cache local e retornar sucesso
+                console.log("[Store] Exclusão confirmada pelo backend Python.");
+            } else {
+                // Backend falhou — tentar diretamente no Supabase REST API
+                console.warn(`[Store] Backend falhou (${res.status}). Tentando DELETE direto no Supabase...`);
+
+                // Passo 1: Deletar execuções vinculadas diretamente no Supabase
+                try {
+                    const delExecRes = await fetch(
+                        `${SUPABASE_URL}/rest/v1/execucoes?competencia=eq.${encodeURIComponent(compIdStr)}`,
+                        { method: 'DELETE', headers: supabaseHeaders }
+                    );
+                    console.log(`[Store] DELETE execucoes direto no Supabase: ${delExecRes.status}`);
+                } catch (execErr) {
+                    console.warn("[Store] Aviso ao deletar execuções diretamente:", execErr);
+                }
+
+                // Passo 2: Deletar o mês diretamente no Supabase
+                const directRes = await fetch(
+                    `${SUPABASE_URL}/rest/v1/meses?id=eq.${encodeURIComponent(compIdStr)}`,
+                    { method: 'DELETE', headers: supabaseHeaders }
+                );
+
+                if (!directRes.ok) {
+                    let directError = null;
+                    try { directError = await directRes.json(); } catch (_) { }
+                    const detail = directError?.message || directError?.hint || directError?.code || `HTTP ${directRes.status}`;
+                    console.error("[Store] DELETE direto no Supabase também falhou:", detail, directError);
+                    window.showNotify("Erro ao Excluir", `Não foi possível excluir: ${detail}`, "error");
+                    return false;
+                }
+
+                console.log("[Store] Exclusão confirmada diretamente pelo Supabase.");
             }
 
-            console.log("[Store] Exclusão confirmada pelo Banco de Dados.");
-
-            // 2. Atualizar Cache Local apenas após o sucesso da API
+            // Atualizar Cache Local após qualquer caminho de sucesso
             const initialMesesCount = db.meses.length;
             db.meses = db.meses.filter(m => String(m.id).trim() !== compIdStr);
 
@@ -821,7 +866,8 @@ window.Store = {
             return true;
 
         } catch (e) {
-            console.error("[Store] Falha crítica na comunicação com a API de exclusão:", e);
+            console.error("[Store] Falha crítica na exclusão da competência:", e);
+            window.showNotify("Erro de Conexão", "Não foi possível conectar ao servidor para excluir a competência.", "error");
             return false;
         }
     },

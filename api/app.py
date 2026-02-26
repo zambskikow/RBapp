@@ -16,13 +16,22 @@ app.add_middleware(
 )
 
 # Inicializar Cliente Supabase
+# A anon key é usada para operações normais
+# A service_role key (via env var SUPABASE_SERVICE_KEY) bypassa o RLS para operações administrativas
 url: str = os.getenv("SUPABASE_URL", "https://khbdbuoryxqiprlkdcpz.supabase.co")
 key: str = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYmRidW9yeXhxaXBybGtkY3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODU4ODcsImV4cCI6MjA4NzI2MTg4N30.1rr3_-LVO6b2PR96lJl8d7vVfHseWwUeAQDY4tdJR-M")
 
+# Chave de serviço (service_role) para contornar o RLS em operações administrativas de DELETE
+# Configure a variável SUPABASE_SERVICE_KEY nas env vars da Vercel
+service_key: str = os.getenv("SUPABASE_SERVICE_KEY", key)  # Fallback para anon key se não configurada
+
 supabase = None
+supabase_admin = None  # Cliente com permissões elevadas (bypassa RLS)
 supabase_error = None
 try:
     supabase = create_client(url, key)
+    # Criar cliente admin com service_role key (ou anon key como fallback)
+    supabase_admin = create_client(url, service_key)
 except Exception as e:
     import traceback
     supabase_error = str(e) + " | " + traceback.format_exc()
@@ -315,15 +324,31 @@ def update_mes(mes_id: str, updates: MesUpdate):
 
 @app.delete("/api/meses/{mes_id}")
 def delete_mes(mes_id: str):
+    # Verificar se o cliente admin está disponível
+    client = supabase_admin if supabase_admin else supabase
+    if not client:
+        raise HTTPException(status_code=503, detail="Serviço indisponível: Supabase não inicializado.")
+
     # Deletar execuções vinculadas primeiro para evitar erro de Constraint de Foreign Key
     try:
-        supabase.table("execucoes").delete().eq("competencia", mes_id).execute()
+        del_exec_res = client.table("execucoes").delete().eq("competencia", mes_id).execute()
+        print(f"[delete_mes] Execuções deletadas para competência {mes_id}: {len(del_exec_res.data)} registros.")
     except Exception as e:
         print(f"Aviso ao deletar execucoes do mes {mes_id}: {e}")
 
     # Deletar o mes em si
-    response = supabase.table("meses").delete().eq("id", mes_id).execute()
-    return response.data
+    try:
+        response = client.table("meses").delete().eq("id", mes_id).execute()
+        print(f"[delete_mes] Resultado do DELETE no mes '{mes_id}': {response.data}")
+        # Verificar se algo foi realmente deletado
+        if response.data is None:
+            raise HTTPException(status_code=500, detail=f"Supabase retornou resposta nula ao deletar mês '{mes_id}'. Verifique as políticas de RLS.")
+        return response.data
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erro crítico ao deletar mês {mes_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --- Setores ---
 @app.get("/api/setores")
