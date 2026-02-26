@@ -505,10 +505,11 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(15, 23, 42, 0.4);
-    /* Fundo sutil escuro */
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(15, 23, 42, 0.2);
+    /* Fundo sutil bem transparente */
+    backdrop-filter: blur(2px);
+    /* Desfoque reduzido para ~15% */
+    -webkit-backdrop-filter: blur(2px);
     z-index: 9998;
     /* Acima de tudo, exceto do menu */
     opacity: 0;
@@ -521,9 +522,10 @@ body {
     visibility: visible;
 }
 
-/* Classe dinâmica para jogar o perfil pro topo */
+/* Classe dinâmica para jogar o perfil pro topo do Blur */
 .uac-on-top {
-    z-index: 9999 !important;
+    position: relative !important;
+    z-index: 999999 !important;
 }
 
 /* User Account Dropdown (Configurações da Conta) */

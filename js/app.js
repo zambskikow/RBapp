@@ -5690,25 +5690,30 @@ function initUserAccountMenu() {
     trigger.addEventListener('click', (e) => {
         e.stopPropagation(); // Evita que o click fora feche imediatamente
         const isActive = menu.classList.toggle('active');
+        const sidebar = document.querySelector('.sidebar'); // Selecionar barra lateral
 
         // Alterna visão do overlay de desfoque
         if (isActive) {
             uacOverlay.classList.add('active');
             trigger.classList.add('uac-on-top');
             menu.classList.add('uac-on-top');
+            if (sidebar) sidebar.classList.add('uac-on-top'); // Eleva a sidebar acima do Blur
         } else {
             uacOverlay.classList.remove('active');
             trigger.classList.remove('uac-on-top');
             menu.classList.remove('uac-on-top');
+            if (sidebar) sidebar.classList.remove('uac-on-top');
         }
     });
 
     // Função local para fechar totalmente o menu (limpa efeitos visual)
     const closeUserMenu = () => {
+        const sidebar = document.querySelector('.sidebar');
         menu.classList.remove('active');
         if (uacOverlay) uacOverlay.classList.remove('active');
         if (trigger) trigger.classList.remove('uac-on-top');
         if (menu) menu.classList.remove('uac-on-top');
+        if (sidebar) sidebar.classList.remove('uac-on-top');
     };
 
     // Fechar ao clicar fora (captura geral de documento)
