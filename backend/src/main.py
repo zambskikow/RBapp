@@ -9,8 +9,9 @@ app = FastAPI()
 @app.get("/api/debug")
 def debug_info():
     """Endpoint de diagnóstico para verificar se as credenciais do Supabase estão corretas"""
+    from src.core.database import key # Import explícito
     service_key_set = bool(os.getenv("SUPABASE_SERVICE_KEY"))
-    service_key_diferente = os.getenv("SUPABASE_SERVICE_KEY", None) != key
+    
     return {
         "supabase_ok": supabase is not None,
         "supabase_admin_ok": supabase_admin is not None,
@@ -22,12 +23,12 @@ def debug_info():
 @app.get("/api/debug-env")
 def debug_env_vars():
     """Confirma se o Vercel está conseguindo ler as env vars críticas"""
-    from src.core.database import url, key, service_key
+    from src.core.database import url as db_url, key as db_key, service_key as db_service
     
     return {
-        "DB_URL_PRESENTE": bool(url),
-        "DB_KEY_PRESENTE": bool(key),
-        "DB_SERVICE_PRESENTE": bool(service_key),
+        "DB_URL_PRESENTE": bool(db_url),
+        "DB_KEY_PRESENTE": bool(db_key),
+        "DB_SERVICE_PRESENTE": bool(db_service),
         "SUPABASE_CONECTADO": supabase is not None,
         "ERROS_DB": supabase_error
     }
