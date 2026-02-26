@@ -55,7 +55,6 @@ async function initApp() {
 
 
     // Check session storage for session
-
     const storedSession = localStorage.getItem('fiscalapp_session');
 
     if (storedSession) {
@@ -715,7 +714,7 @@ async function downloadBackupFile() {
 
     try {
         const API_BASE = window.API_BASE || '/api';
-        const response = await fetch(`${API_BASE}/backup/download`);
+        const response = await fetch(`${API_BASE}/backup/download`, { credentials: 'omit' });
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({ detail: 'Erro desconhecido' }));

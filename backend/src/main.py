@@ -54,17 +54,21 @@ def test_delete_diagnostico(mes_id: str):
 # Permitir CORS para testes locais e Vercel
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # Atenção: Em prod com credentials setado p/ true, isso deverá ser estrito (lista de origens exatas) ou origin regex
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# --- ROTAS e ENDPOINTS MODULARES ---
+from src.api.v1.endpoints import auth
+app.include_router(auth.router)
+
 # Inicializar Cliente Supabase
 # A anon key é usada para operações normais
 # A service_role key (via env var SUPABASE_SERVICE_KEY) bypassa o RLS para operações administrativas
-url: str = os.getenv("SUPABASE_URL", "https://khbdbuoryxqiprlkdcpz.supabase.co")
-key: str = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYmRidW9yeXhxaXBybGtkY3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODU4ODcsImV4cCI6MjA4NzI2MTg4N30.1rr3_-LVO6b2PR96lJl8d7vVfHseWwUeAQDY4tdJR-M")
+url: str = os.getenv("SUPABASE_URL", "")
+key: str = os.getenv("SUPABASE_KEY", "")
 
 # Chave de serviço (service_role) para contornar o RLS em operações administrativas de DELETE
 # Configure a variável SUPABASE_SERVICE_KEY nas env vars da Vercel
@@ -81,7 +85,12 @@ except Exception as e:
     import traceback
     supabase_error = str(e) + " | " + traceback.format_exc()
 
+# Adicionar o Dependency Injection padrão
+CurrentUser = Depends(get_current_user_from_cookie)
+
 # --- Modelos Pydantic para solicitações POST/PUT recebidas ---
+from src.core.security import get_password_hash
+
 class ClienteCreate(BaseModel):
     razao_social: str
     cnpj: str
@@ -314,7 +323,7 @@ def read_root():
 
 # --- Clientes ---
 @app.get("/api/clientes")
-def get_clientes():
+def get_clientes(user=CurrentUser):
     response = supabase.table("clientes").select("*").execute()
     return response.data
 
@@ -353,7 +362,7 @@ def delete_cliente(cliente_id: int):
 
 # --- Meses ---
 @app.get("/api/meses")
-def get_meses():
+def get_meses(user=CurrentUser):
     response = supabase.table("meses").select("*").execute()
     return response.data
 
@@ -401,7 +410,7 @@ def delete_mes(mes_id: str):
 
 # --- Setores ---
 @app.get("/api/setores")
-def get_setores():
+def get_setores(user=CurrentUser):
     response = supabase.table("setores").select("*").execute()
     return response.data
 
@@ -411,13 +420,13 @@ def create_setor(setor: SetorCreate):
     return response.data
 
 @app.delete("/api/setores/{nome}")
-def delete_setor(nome: str):
+def delete_setor(nome: str, user=CurrentUser):
     response = supabase.table("setores").delete().eq("nome", nome).execute()
     return response.data
 
 # --- Funcionarios ---
 @app.get("/api/funcionarios")
-def get_funcionarios():
+def get_funcionarios(user=CurrentUser):
     response = supabase.table("funcionarios").select("*").execute()
     return response.data
 
@@ -445,7 +454,7 @@ def delete_funcionario(funcionario_id: int):
 
 # --- Rotinas Base ---
 @app.get("/api/rotinas_base")
-def get_rotinas_base():
+def get_rotinas_base(user=CurrentUser):
     response = supabase.table("rotinas_base").select("*").execute()
     return response.data
 
@@ -476,7 +485,7 @@ def delete_rotina(rotina_id: int):
 
 # --- Execucoes ---
 @app.get("/api/execucoes")
-def get_execucoes():
+def get_execucoes(user=CurrentUser):
     response = supabase.table("execucoes").select("*").execute()
     return response.data
 
@@ -497,7 +506,7 @@ def delete_execucao(exec_id: int):
 
 # --- Mensagens ---
 @app.get("/api/mensagens")
-def get_mensagens():
+def get_mensagens(user=CurrentUser):
     response = supabase.table("mensagens").select("*").execute()
     return response.data
 
@@ -524,7 +533,7 @@ def update_mensagem(msg_id: int, updates: MensagemUpdate):
 
 # --- Logs ---
 @app.get("/api/logs")
-def get_logs():
+def get_logs(user=CurrentUser):
     response = supabase.table("logs").select("*").order("timestamp", desc=True).limit(500).execute()
     return response.data
 
@@ -535,7 +544,7 @@ def create_log(log: LogCreate):
 
 # --- Cargos e Permissões (RBAC) ---
 @app.get("/api/cargos")
-def get_cargos():
+def get_cargos(user=CurrentUser):
     response = supabase.table("cargos_permissoes").select("*").execute()
     return response.data
 
@@ -556,7 +565,7 @@ def delete_cargo(cargo_id: int):
 
 # --- Posts de Marketing ---
 @app.get("/api/marketing_posts")
-def get_marketing_posts():
+def get_marketing_posts(user=CurrentUser):
     response = supabase.table("marketing_posts").select("*").execute()
     return response.data
 
@@ -577,7 +586,7 @@ def delete_marketing_post(post_id: int):
 
 # --- Campanhas de Marketing ---
 @app.get("/api/marketing_campanhas")
-def get_marketing_campanhas():
+def get_marketing_campanhas(user=CurrentUser):
     response = supabase.table("marketing_campanhas").select("*").execute()
     return response.data
 

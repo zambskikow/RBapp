@@ -11,6 +11,13 @@ const addDays = (date, days) => {
     return d;
 };
 
+// --- Wrapper Global de Fetch para injetar cookies do JWT em todas as requisições ---
+async function apiFetch(url, options = {}) {
+    options.credentials = 'include';
+    // Omit não é mais necessário aqui dentro a não ser no primeiro carregamento público, que será passado explicitamente
+    return fetch(url, options);
+}
+
 // Cache do estado inicial - começa vazio e é preenchido pela API
 let db = {
     setores: [],
@@ -51,20 +58,20 @@ window.Store = {
                 marketing_postsRes, marketing_campanhasRes, marketing_equipeRes,
                 marketing_metricasRes, global_configRes
             ] = await Promise.all([
-                fetch(`${API_BASE}/setores`),
-                fetch(`${API_BASE}/funcionarios`),
-                fetch(`${API_BASE}/rotinas_base`),
-                fetch(`${API_BASE}/clientes`),
-                fetch(`${API_BASE}/meses`),
-                fetch(`${API_BASE}/execucoes`),
-                fetch(`${API_BASE}/mensagens`),
-                fetch(`${API_BASE}/logs`),
-                fetch(`${API_BASE}/cargos`),
-                fetch(`${API_BASE}/marketing_posts`),
-                fetch(`${API_BASE}/marketing_campanhas`),
-                fetch(`${API_BASE}/marketing_equipe`),
-                fetch(`${API_BASE}/marketing_metricas`),
-                fetch(`${API_BASE}/global_config`)
+                fetch(`${API_BASE}/setores`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/funcionarios`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/rotinas_base`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/clientes`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/meses`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/execucoes`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/mensagens`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/logs`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/cargos`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/marketing_posts`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/marketing_campanhas`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/marketing_equipe`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/marketing_metricas`, { credentials: 'omit' }),
+                fetch(`${API_BASE}/global_config`, { credentials: 'omit' })
             ]);
 
             db.setores = (await setoresRes.json()).map(s => s.nome) || [];
@@ -265,7 +272,7 @@ window.Store = {
             };
 
             try {
-                const res = await fetch(`${API_BASE}/meses`, {
+                const res = await apiFetch(`${API_BASE}/meses`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newMonth)
@@ -579,7 +586,7 @@ window.Store = {
                 };
 
                 try {
-                    const res = await fetch(`${API_BASE}/meses`, {
+                    const res = await apiFetch(`${API_BASE}/meses`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(newMonth)
@@ -713,7 +720,7 @@ window.Store = {
         };
 
         try {
-            const res = await fetch(`${API_BASE}/meses`, {
+            const res = await apiFetch(`${API_BASE}/meses`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newMonth)
@@ -804,7 +811,7 @@ window.Store = {
 
         try {
             // Estratégia 1: Tentar via backend Python (que cuida das execuções vinculadas)
-            const res = await fetch(`${API_BASE}/meses/${compIdStr}`, {
+            const res = await apiFetch(`${API_BASE}/meses/${compIdStr}`, {
                 method: 'DELETE',
                 headers: { 'Accept': 'application/json' }
             });
@@ -881,7 +888,7 @@ window.Store = {
 
         const codigo = customCodigo || `C${(db.clientes.length + 1).toString().padStart(3, '0')}`;
 
-        const res = await fetch(`${API_BASE}/clientes`, {
+        const res = await apiFetch(`${API_BASE}/clientes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -945,7 +952,7 @@ window.Store = {
             return false;
         }
 
-        const res = await fetch(`${API_BASE}/funcionarios`, {
+        const res = await apiFetch(`${API_BASE}/funcionarios`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome, setor, permissao, senha, cargo_id, ativo })
@@ -966,7 +973,7 @@ window.Store = {
             return false;
         }
 
-        const res = await fetch(`${API_BASE}/funcionarios/${id}`, {
+        const res = await apiFetch(`${API_BASE}/funcionarios/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome, setor, permissao, senha, cargo_id, ativo })
@@ -984,7 +991,7 @@ window.Store = {
 
     async deleteFuncionario(id) {
         try {
-            const res = await fetch(`${API_BASE}/funcionarios/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_BASE}/funcionarios/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 db.funcionarios = db.funcionarios.filter(f => f.id == id ? false : true);
                 this.registerLog("Gestão de Equipe", `Conta de funcionário removida (ID: ${id})`);
@@ -997,7 +1004,7 @@ window.Store = {
     },
 
     async addSetor(nome) {
-        const res = await fetch(`${API_BASE}/setores`, {
+        const res = await apiFetch(`${API_BASE}/setores`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome })
@@ -1010,7 +1017,7 @@ window.Store = {
     },
 
     async deleteSetor(nome) {
-        const res = await fetch(`${API_BASE}/setores/${encodeURIComponent(nome)}`, {
+        const res = await apiFetch(`${API_BASE}/setores/${encodeURIComponent(nome)}`, {
             method: 'DELETE'
         });
         if (res.ok) {
@@ -1021,7 +1028,7 @@ window.Store = {
 
     async addRotinaBase(nome, setor, frequencia, diaPrazoPadrao, checklistPadrao, selectedClientIds = [], responsavel = "") {
         try {
-            const res = await fetch(`${API_BASE}/rotinas_base`, {
+            const res = await apiFetch(`${API_BASE}/rotinas_base`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1085,7 +1092,7 @@ window.Store = {
         db.execucoes = db.execucoes.filter(e => e.rotina !== rotinaNome);
 
         try {
-            const res = await fetch(`${API_BASE}/rotinas_base/${id}`, {
+            const res = await apiFetch(`${API_BASE}/rotinas_base/${id}`, {
                 method: 'DELETE'
             });
 
@@ -1155,7 +1162,7 @@ window.Store = {
 
             // Persistir alterações do cliente
             try {
-                const res = await fetch(`${API_BASE}/clientes/${id}`, {
+                const res = await apiFetch(`${API_BASE}/clientes/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1210,7 +1217,7 @@ window.Store = {
         const cName = db.clientes[clientIndex].razaoSocial;
 
         try {
-            const res = await fetch(`${API_BASE}/clientes/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_BASE}/clientes/${id}`, { method: 'DELETE' });
             if (!res.ok) console.warn('API DELETE falhou.', res.status);
 
             db.clientes.splice(clientIndex, 1);
@@ -1228,7 +1235,7 @@ window.Store = {
         const url = isEdit ? `${API_BASE}/marketing_posts/${postData.id}` : `${API_BASE}/marketing_posts`;
         const method = isEdit ? 'PUT' : 'POST';
 
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(postData)
@@ -1253,7 +1260,7 @@ window.Store = {
         const url = isEdit ? `${API_BASE}/marketing_campanhas/${campData.id}` : `${API_BASE}/marketing_campanhas`;
         const method = isEdit ? 'PUT' : 'POST';
 
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(campData)
@@ -1284,7 +1291,7 @@ window.Store = {
             r.responsavel = responsavel;
 
             try {
-                const res = await fetch(`${API_BASE}/rotinas_base/${id}`, {
+                const res = await apiFetch(`${API_BASE}/rotinas_base/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1339,7 +1346,7 @@ window.Store = {
     // --- CARGOS (RBAC) ---
     async addCargo(nome_cargo, telas_permitidas) {
         try {
-            const res = await fetch(`${API_BASE}/cargos`, {
+            const res = await apiFetch(`${API_BASE}/cargos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome_cargo, telas_permitidas: telas_permitidas || [] })
@@ -1356,7 +1363,7 @@ window.Store = {
 
     async updateCargo(id, nome_cargo, telas_permitidas) {
         try {
-            const res = await fetch(`${API_BASE}/cargos/${id}`, {
+            const res = await apiFetch(`${API_BASE}/cargos/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome_cargo, telas_permitidas: telas_permitidas || [] })
@@ -1380,7 +1387,7 @@ window.Store = {
             if (index === -1) return false;
             const cargoNome = db.cargos[index].nome_cargo;
 
-            const res = await fetch(`${API_BASE}/cargos/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_BASE}/cargos/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 db.cargos.splice(index, 1);
                 this.registerLog("Segurança", `Cargo Excluído: ${cargoNome}`);
@@ -1393,19 +1400,6 @@ window.Store = {
     getAuthBySession(sessionId) {
         console.log("--- DEBUG SESSÃO --- ID:", sessionId);
         if (!sessionId || sessionId === "null") return null;
-
-        // Bypass Master Manager (ID 999)
-        if (sessionId == '999' || sessionId == 999) {
-            console.log("ACESSO MASTER: Manager hardcoded detectado. Liberando tudo.");
-            return {
-                id: 999,
-                nome: 'Manager',
-                setor: 'Todos',
-                permissao: 'Gerente',
-                telas_permitidas: ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias', 'meu-desempenho']
-            };
-        }
-
         if (!Array.isArray(db.funcionarios)) {
             console.warn("DB_ERRO: Tabela de funcionários não carregada.");
             return null;
@@ -1452,21 +1446,32 @@ window.Store = {
         return auth;
     },
 
-    login(username, password) {
-        let auth = null;
-        // Bypass Master Manager (ID 999)
-        if (username.toLowerCase() === 'manager' && password === '123') {
-            auth = this.getAuthBySession('999');
-        } else {
-            const tempAuth = db.funcionarios.find(f => f.nome === username && f.senha === password);
-            if (tempAuth) {
-                auth = this.getAuthBySession(tempAuth.id);
-            }
-        }
+    async login(username, password) {
+        try {
+            const res = await apiFetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
 
-        if (auth) {
-            this.registerLog("Acesso", `${auth.nome} fez login no sistema.`);
-            return auth;
+            if (res.ok) {
+                const data = await res.json();
+                const auth = data.user;
+
+                // Fetch full permissions dynamically since the backend login only returns basic info
+                const fullAuth = this.getAuthBySession(auth.id);
+
+                if (fullAuth) {
+                    this.registerLog("Acesso", `${fullAuth.nome} fez login no sistema via JWT.`);
+                    return fullAuth;
+                }
+            } else {
+                const errorData = await res.json();
+                window.showNotify("Erro", errorData.detail || "Usuário ou senha inválidos", "error");
+            }
+        } catch (e) {
+            console.error("Erro no login:", e);
+            window.showNotify("Erro", "Falha de conexão com o servidor.", "error");
         }
         return null;
     },
@@ -1485,7 +1490,7 @@ window.Store = {
             favorito: false
         };
         try {
-            const res = await fetch(`${API_BASE}/mensagens`, {
+            const res = await apiFetch(`${API_BASE}/mensagens`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1514,7 +1519,7 @@ window.Store = {
             }
             try {
                 // Soft delete: envia lista de usuários que excluíram (msg permanece no banco)
-                const res = await fetch(`${API_BASE}/mensagens/${id}`, {
+                const res = await apiFetch(`${API_BASE}/mensagens/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ excluido_por: m.excluidoPor })
@@ -1620,7 +1625,7 @@ window.Store = {
         }));
 
         try {
-            const res = await fetch(`${API_BASE}/execucoes`, {
+            const res = await apiFetch(`${API_BASE}/execucoes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1743,7 +1748,7 @@ window.Store = {
 
             // Enviar tarefa para a API
             try {
-                const res = await fetch(`${API_BASE}/execucoes`, {
+                const res = await apiFetch(`${API_BASE}/execucoes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1798,7 +1803,7 @@ window.Store = {
         const method = isEdit ? 'PUT' : 'POST';
 
         try {
-            const res = await fetch(url, {
+            const res = await apiFetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(postData)
@@ -1841,7 +1846,7 @@ window.Store = {
         const method = isEdit ? 'PUT' : 'POST';
 
         try {
-            const res = await fetch(url, {
+            const res = await apiFetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(campData)
@@ -1865,7 +1870,7 @@ window.Store = {
 
     async addMarketingEquipeMember(memberData) {
         try {
-            const res = await fetch(`${API_BASE}/marketing_equipe`, {
+            const res = await apiFetch(`${API_BASE}/marketing_equipe`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(memberData)
@@ -1881,7 +1886,7 @@ window.Store = {
 
     async deleteMarketingEquipeMember(id) {
         try {
-            const res = await fetch(`${API_BASE}/marketing_equipe/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_BASE}/marketing_equipe/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 // Remover do cache local
                 db.marketing_equipe = db.marketing_equipe.filter(m => m.id !== id);
@@ -1897,7 +1902,7 @@ window.Store = {
         // Objeto db.config já é atualizado localmente pela UI se necessário,
         // mas aqui garantimos o PUT para o banco (global_config/1 assumido)
         try {
-            const res = await fetch(`${API_BASE}/global_config/1`, {
+            const res = await apiFetch(`${API_BASE}/global_config/1`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1932,7 +1937,7 @@ window.Store = {
         };
 
         try {
-            const res = await fetch(`${API_BASE}/global_config/1`, {
+            const res = await apiFetch(`${API_BASE}/global_config/1`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
