@@ -682,29 +682,74 @@ window.showFeedbackToast = function (message, type = 'info') {
 };
 
 /**
- * Faz download do backup dos dados em formato JSON
+ * Baixa o backup completo diretamente do Supabase via endpoint do backend.
+ * Exporta todas as 13 tabelas com metadados e contagem de registros.
  */
-function downloadBackupFile() {
+async function downloadBackupFile() {
+    const btn = document.getElementById('btn-export-backup');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exportando do Supabase...';
+    }
+
     try {
-        const data = Store.getData();
-        const json = JSON.stringify(data, null, 2);
+        const API_BASE = window.API_BASE || '/api';
+        const response = await fetch(`${API_BASE}/backup/download`);
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ detail: 'Erro desconhecido' }));
+            throw new Error(err.detail || `HTTP ${response.status}`);
+        }
+
+        const backupData = await response.json();
+
+        // Gerar nome do arquivo com data e hora
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-');
+        const fileName = `backup_fiscalapp_${dateStr}.json`;
+
+        // Fazer o download do JSON
+        const json = JSON.stringify(backupData, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        const now = new Date();
-        const dateStr = now.toISOString().slice(0, 10);
         a.href = url;
-        a.download = `backup_fiscalapp_${dateStr}.json`;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        window.showFeedbackToast('Backup exportado com sucesso!', 'success');
+
+        // Atualizar texto de último backup
+        const lastBackupEl = document.getElementById('last-backup-text');
+        if (lastBackupEl) {
+            lastBackupEl.textContent = `Último: ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        // Salvar data do último backup no localStorage
+        localStorage.setItem('fiscalapp_last_backup', now.toISOString());
+
+        const meta = backupData.metadata || {};
+        const totalReg = meta.total_registros || 0;
+        const erros = (meta.erros || []).length;
+
+        if (erros > 0) {
+            window.showNotify('Backup Parcial', `Backup concluído com ${erros} erro(s). ${totalReg} registros exportados.`, 'warning');
+        } else {
+            window.showNotify('Backup Concluído', `${totalReg} registros exportados com sucesso em "${fileName}".`, 'success');
+        }
+
     } catch (e) {
-        console.error('[Backup] Erro ao exportar backup:', e);
-        window.showFeedbackToast('Erro ao exportar backup.', 'error');
+        console.error('[Backup] Erro ao exportar backup do Supabase:', e);
+        window.showNotify('Erro no Backup', `Não foi possível exportar: ${e.message}`, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Baixar Base de Dados Agora';
+        }
     }
 }
+
 
 /**
  * Exporta os logs de auditoria em CSV

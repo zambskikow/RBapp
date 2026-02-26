@@ -639,6 +639,65 @@ def update_global_config(id: int, updates: GlobalConfigUpdate):
     response = supabase.table("global_config").update(updates.model_dump(exclude_unset=True)).eq("id", id).execute()
     return response.data
 
+# --- Backup Completo do Supabase ---
+@app.get("/api/backup/download")
+def download_backup():
+    """
+    Exporta todas as tabelas do banco de dados Supabase em formato JSON.
+    Usa o cliente admin (service_role) para garantir acesso completo, ignorando regras de RLS.
+    """
+    from datetime import datetime, timezone
+
+    client = supabase_admin if supabase_admin else supabase
+    if not client:
+        raise HTTPException(status_code=503, detail="Supabase não inicializado.")
+
+    # Lista de todas as tabelas a exportar
+    tabelas = [
+        "clientes",
+        "funcionarios",
+        "rotinas_base",
+        "execucoes",
+        "meses",
+        "setores",
+        "logs",
+        "mensagens",
+        "global_config",
+        "cargos_permissoes",
+        "marketing_posts",
+        "marketing_campanhas",
+        "marketing_metricas",
+        "marketing_equipe",
+    ]
+
+    dados = {}
+    erros = []
+    total_registros = 0
+
+    for tabela in tabelas:
+        try:
+            # Buscar todos os registros (sem limite padrão do Supabase que é 1000)
+            res = client.table(tabela).select("*").execute()
+            dados[tabela] = res.data or []
+            total_registros += len(dados[tabela])
+        except Exception as e:
+            # Registrar o erro mas continuar com as outras tabelas
+            erros.append({"tabela": tabela, "erro": str(e)})
+            dados[tabela] = []
+
+    return {
+        "metadata": {
+            "versao": "1.0",
+            "sistema": "FiscalApp",
+            "gerado_em": datetime.now(timezone.utc).isoformat(),
+            "total_registros": total_registros,
+            "tabelas_exportadas": len(tabelas),
+            "erros": erros,
+            "contagem_por_tabela": {t: len(dados[t]) for t in tabelas}
+        },
+        "tabelas": dados
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)

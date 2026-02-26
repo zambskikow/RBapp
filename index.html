@@ -1695,21 +1695,52 @@
                         <div class="settings-pane fade-in" id="set-backup" style="display: none;">
                             <div style="margin-bottom: 1.5rem;">
                                 <h2 style="font-size: 1.25rem;">Backup e Recuperação</h2>
-                                <p style="color: var(--text-muted); font-size: 0.9rem;">Garanta a segurança dos seus
-                                    dados realizando cópias locais.</p>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Exporte uma cópia completa dos
+                                    seus dados diretamente do banco de dados Supabase.</p>
                             </div>
                             <div class="settings-grid-2">
                                 <div class="glass-card table-container">
-                                    <h3 style="margin-bottom: 1rem; color: var(--primary);"><i
-                                            class="fa-solid fa-download"></i>
-                                        Fazer Backup</h3>
+                                    <h3 style="margin-bottom: 0.75rem; color: var(--primary);"><i
+                                            class="fa-solid fa-cloud-arrow-down"></i> Exportar do Supabase</h3>
                                     <p
-                                        style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem; line-height: 1.5;">
-                                        Faça o download de um arquivo ".json" contendo 100% dos dados atuais do
-                                        sistema.
+                                        style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 1.25rem; line-height: 1.6;">
+                                        Baixa um arquivo <strong style="color: var(--text-main);">.json</strong> com
+                                        <strong style="color: var(--text-main);">100% dos dados</strong> diretamente do
+                                        banco Supabase, incluindo todas as tabelas abaixo:
                                     </p>
-                                    <button class="btn btn-primary" id="btn-export-backup" style="width: 100%;"><i
-                                            class="fa-solid fa-file-export"></i> Baixar Base de Dados Agora</button>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.5rem;">
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">clientes</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">funcionarios</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">rotinas_base</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">execucoes</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">meses</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">setores</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">mensagens</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">logs</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">cargos_permissoes</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">global_config</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">marketing_posts</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">marketing_campanhas</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">marketing_metricas</span>
+                                        <span class="table-badge"
+                                            style="background: rgba(99,102,241,0.12); color: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); font-size: 0.72rem;">marketing_equipe</span>
+                                    </div>
+                                    <button class="btn btn-primary" id="btn-export-backup" style="width: 100%;">
+                                        <i class="fa-solid fa-cloud-arrow-down"></i> Baixar Base de Dados Agora
+                                    </button>
                                     <div
                                         style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
                                         <label>Lembrete de Auto-Backup</label>
@@ -1722,8 +1753,7 @@
                                 <div class="glass-card table-container"
                                     style="border: 1px solid rgba(239, 68, 68, 0.3);">
                                     <h3 style="margin-bottom: 1rem; color: var(--danger);"><i
-                                            class="fa-solid fa-upload"></i>
-                                        Restaurar Sistema</h3>
+                                            class="fa-solid fa-upload"></i> Restaurar Sistema</h3>
                                     <p
                                         style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1.5rem; line-height: 1.5;">
                                         Suba um backup anterior (isto apagará os dados atuais do momento).</p>
@@ -1731,8 +1761,7 @@
                                         style="padding: 0.5rem; margin-bottom: 1rem; width: 100%;">
                                     <button class="btn btn-primary" id="btn-restore-backup"
                                         style="width: 100%; background: var(--danger);"><i
-                                            class="fa-solid fa-rotate-left"></i>
-                                        Esmagar Base Atual e Restaurar</button>
+                                            class="fa-solid fa-rotate-left"></i> Esmagar Base Atual e Restaurar</button>
                                 </div>
                             </div>
                         </div>
