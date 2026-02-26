@@ -145,3 +145,14 @@ async def get_me(user_info: tuple = Depends(get_current_user_from_cookie)):
         "permissao": user["permissao"],
         "telas_permitidas": telas
     }
+
+@router.post("/debug-login")
+async def debug_login(form_data: dict, request: Request):
+    """Ponta provisória para provar falha no Fetch do Frontend ou na Leitura Pydantic"""
+    return {
+        "is_pydantic_ok": True,
+        "is_db_ok": supabase is not None,
+        "payload_received": form_data,
+        "headers": dict(request.headers),
+        "cookies": request.cookies
+    }
