@@ -3400,7 +3400,8 @@ function renderMenuReorderList() {
     const navItems = Array.from(document.querySelectorAll('.sidebar .nav-item'));
     const validItems = navItems.filter(item => {
         const view = item.getAttribute('data-view');
-        return view && view !== 'settings' && item.style.display !== 'none';
+        // Excluir settings (sempre fica por último) e itens sem data-view
+        return view && view !== 'settings';
     });
 
     _renderReorderItems(listContainer, validItems.map(item => ({
@@ -5240,18 +5241,16 @@ function initSettingsTabs() {
                 renderSetoresSettings();
             } else if (targetId === "set-equipe" && typeof renderEquipe === 'function') {
                 renderEquipe();
-            } else if (targetId === "set-branding" && typeof renderBrandingSettings === 'function') {
-                renderBrandingSettings();
+            } else if (targetId === "set-branding") {
+                // Renderizar personalização de marca e lista de reordenação do menu
+                if (typeof renderBrandingSettings === 'function') renderBrandingSettings();
+                renderMenuReorderList();
             } else if (targetId === "set-backup") {
                 renderBackupView();
             } else if (targetId === "set-auditoria") {
                 renderAuditoria();
             } else if (targetId === "set-auditoria-comp") {
                 renderAuditoriaCompetencia();
-            } else if (targetId === "set-equipe") {
-                renderEquipe();
-            } else if (targetId === "set-branding") {
-                renderMenuReorderList();
             }
         });
     });
