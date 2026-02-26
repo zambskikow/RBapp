@@ -5374,6 +5374,12 @@ function renderAdminPanel() {
     const tbody = document.querySelector('#admin-cargos-table tbody');
     if (!tbody) return;
 
+    // Garantir ícone no botão Novo Cargo (caso o HTML do servidor esteja desatualizado)
+    const btnAddCargo = document.getElementById('btn-add-cargo');
+    if (btnAddCargo && !btnAddCargo.querySelector('i')) {
+        btnAddCargo.innerHTML = '<i class="fa-solid fa-circle-plus"></i> Novo Cargo';
+    }
+
     const cargos = Store.getData().cargos;
     tbody.innerHTML = '';
 
