@@ -3388,99 +3388,206 @@ function closeDeleteCompetenciaModal() {
 }
 
 // ==========================================
-// CONFIG: Menu Reordering Logic
+// ==========================================
+// CONFIG: Menu Reordering Logic (UX Aprimorada)
 // ==========================================
 
 function renderMenuReorderList() {
     const listContainer = document.getElementById('menu-reorder-list');
     if (!listContainer) return;
 
-    listContainer.innerHTML = '';
-
     // Pegar todos os itens do menu (conforme estão no DOM agora)
     const navItems = Array.from(document.querySelectorAll('.sidebar .nav-item'));
-
-    navItems.forEach(item => {
+    const validItems = navItems.filter(item => {
         const view = item.getAttribute('data-view');
-        if (!view || view === 'settings') return; // Settings sempre fica embaixo
-
-        const label = item.querySelector('span').textContent;
-        const iconClass = item.querySelector('i').className;
-
-        const div = document.createElement('div');
-        div.className = 'reorder-item';
-        div.draggable = true;
-        div.setAttribute('data-view', view);
-        div.innerHTML = `
-            <i class="${iconClass}"></i>
-            <span>${label}</span>
-            <i class="fa-solid fa-grip-vertical drag-handle"></i>
-        `;
-
-        // Eventos de arrastar
-        div.addEventListener('dragstart', () => div.classList.add('dragging'));
-        div.addEventListener('dragend', () => div.classList.remove('dragging'));
-
-        listContainer.appendChild(div);
+        return view && view !== 'settings' && item.style.display !== 'none';
     });
 
-    listContainer.addEventListener('dragover', e => {
-        e.preventDefault();
-        const draggingItem = document.querySelector('.reorder-item.dragging');
-        if (!draggingItem) return;
+    _renderReorderItems(listContainer, validItems.map(item => ({
+        view: item.getAttribute('data-view'),
+        label: item.querySelector('span')?.textContent || '',
+        iconClass: item.querySelector('i')?.className || ''
+    })));
+}
 
-        const siblings = [...listContainer.querySelectorAll('.reorder-item:not(.dragging)')];
+// Renderiza os itens com botões ↑↓ e drag-and-drop suave
+function _renderReorderItems(container, itemsData) {
+    container.innerHTML = '';
 
-        // Encontrar o elemento sobre o qual o mouse está passando
-        let nextSibling = siblings.find(sibling => {
-            const box = sibling.getBoundingClientRect();
-            const offset = e.clientY - box.top - box.height / 2;
-            return offset < 0;
+    itemsData.forEach((data, index) => {
+        const total = itemsData.length;
+        const div = document.createElement('div');
+        div.className = 'reorder-item';
+        div.setAttribute('data-view', data.view);
+        div.setAttribute('draggable', 'true');
+        div.innerHTML = `
+            <div class="reorder-drag-handle" title="Arraste para mover">
+                <i class="fa-solid fa-grip-vertical"></i>
+            </div>
+            <i class="${data.iconClass} reorder-icon"></i>
+            <span class="reorder-label">${data.label}</span>
+            <div class="reorder-arrows">
+                <button class="reorder-btn-arrow" data-dir="up" title="Mover para cima" ${index === 0 ? 'disabled' : ''}>
+                    <i class="fa-solid fa-chevron-up"></i>
+                </button>
+                <button class="reorder-btn-arrow" data-dir="down" title="Mover para baixo" ${index === total - 1 ? 'disabled' : ''}>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+            </div>
+            <span class="reorder-position-badge">${index + 1}</span>
+        `;
+
+        // Botões ↑↓
+        div.querySelectorAll('.reorder-btn-arrow').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const dir = btn.getAttribute('data-dir');
+                const items = Array.from(container.querySelectorAll('.reorder-item'));
+                const idx = items.indexOf(div);
+                if (dir === 'up' && idx > 0) {
+                    container.insertBefore(div, items[idx - 1]);
+                } else if (dir === 'down' && idx < items.length - 1) {
+                    container.insertBefore(items[idx + 1], div);
+                }
+                _updateReorderBadgesAndButtons(container);
+                _applyAndSaveMenuOrder(container);
+            });
         });
 
-        listContainer.insertBefore(draggingItem, nextSibling);
+        // Drag-and-drop suave via mousedown/mousemove
+        _setupDragBehavior(div, container);
+
+        container.appendChild(div);
     });
 }
 
-async function saveMenuOrder() {
-    const listContainer = document.getElementById('menu-reorder-list');
-    const saveBtn = document.getElementById('btn-save-menu-order');
-    const saveIcon = saveBtn ? saveBtn.querySelector('i') : null;
+// Atualiza os números de posição e habilita/desabilita botões de seta
+function _updateReorderBadgesAndButtons(container) {
+    const items = Array.from(container.querySelectorAll('.reorder-item'));
+    items.forEach((item, index) => {
+        const badge = item.querySelector('.reorder-position-badge');
+        if (badge) badge.textContent = index + 1;
 
-    if (!listContainer) return;
+        const upBtn = item.querySelector('[data-dir="up"]');
+        const downBtn = item.querySelector('[data-dir="down"]');
+        if (upBtn) upBtn.disabled = index === 0;
+        if (downBtn) downBtn.disabled = index === items.length - 1;
+    });
+}
 
-    if (saveIcon) saveIcon.classList.add('icon-saving');
-    if (saveBtn) saveBtn.disabled = true;
+// Drag-and-drop suave usando eventos de ponteiro
+function _setupDragBehavior(div, container) {
+    const handle = div.querySelector('.reorder-drag-handle');
+    if (!handle) return;
 
-    const items = listContainer.querySelectorAll('.reorder-item');
+    handle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+
+        const startY = e.clientY;
+        const divRect = div.getBoundingClientRect();
+
+        div.classList.add('dragging');
+
+        // Placeholder que ocupa o espaço do item arrastado
+        const placeholder = document.createElement('div');
+        placeholder.className = 'drag-placeholder';
+        placeholder.style.height = divRect.height + 'px';
+        container.insertBefore(placeholder, div);
+
+        // Mover o item com o mouse
+        div.style.position = 'fixed';
+        div.style.zIndex = '9999';
+        div.style.width = divRect.width + 'px';
+        div.style.top = divRect.top + 'px';
+        div.style.left = divRect.left + 'px';
+        div.style.pointerEvents = 'none';
+        document.body.appendChild(div);
+
+        const onMouseMove = (e2) => {
+            const deltaY = e2.clientY - startY;
+            div.style.top = (divRect.top + deltaY) + 'px';
+
+            // Reposicionar placeholder
+            const placeholderItems = Array.from(container.querySelectorAll('.reorder-item:not(.dragging), .drag-placeholder'));
+            const overItem = placeholderItems.find(item => {
+                const r = item.getBoundingClientRect();
+                return e2.clientY > r.top && e2.clientY < r.bottom;
+            });
+
+            if (overItem && overItem !== placeholder) {
+                const overRect = overItem.getBoundingClientRect();
+                const isAfter = e2.clientY > overRect.top + overRect.height / 2;
+                if (isAfter) {
+                    container.insertBefore(placeholder, overItem.nextSibling);
+                } else {
+                    container.insertBefore(placeholder, overItem);
+                }
+            }
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            // Restaurar item no lugar do placeholder
+            div.classList.remove('dragging');
+            div.style.position = '';
+            div.style.zIndex = '';
+            div.style.width = '';
+            div.style.top = '';
+            div.style.left = '';
+            div.style.pointerEvents = '';
+
+            container.insertBefore(div, placeholder);
+            placeholder.remove();
+
+            _updateReorderBadgesAndButtons(container);
+            _applyAndSaveMenuOrder(container);
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+}
+
+// Salva a nova ordem e aplica imediatamente no menu lateral
+let _menuSaveTimeout = null;
+async function _applyAndSaveMenuOrder(container) {
+    const items = container.querySelectorAll('.reorder-item');
     const newOrder = Array.from(items).map(i => i.getAttribute('data-view'));
 
-    // Garantir que abas críticas de admin estejam na ordem (ao menos no final se não foram movidas)
+    // Garantir itens críticos no final se não estiverem na lista
     if (!newOrder.includes('competencias')) newOrder.push('competencias');
     if (!newOrder.includes('settings')) newOrder.push('settings');
 
-    showLoading('Salvando Ordem', 'Atualizando layout do menu lateral...');
-
-    const config = Store.getData().config || {};
-    config.menuOrder = newOrder;
-
-    // Sincronizar com formato do banco (snake_case)
-    const success = await Store.updateGlobalConfig({
-        ...config,
-        menu_order: newOrder
-    });
-
-    hideLoading();
-    if (saveIcon) saveIcon.classList.remove('icon-saving');
-    if (saveBtn) saveBtn.disabled = false;
-
-    if (success) {
-        // Reaplicar imediatamente
-        applyUserPermissions(LOGGED_USER);
-        showNotify("Sucesso", "Ordem do menu salva com sucesso!", "success");
-    } else {
-        showNotify("Erro", "Erro ao salvar ordem do menu.", "error");
+    // Aplicar imediatamente no DOM do menu lateral
+    const sidebarNav = document.querySelector('.sidebar .nav-menu');
+    if (sidebarNav) {
+        const navSettings = document.getElementById('nav-settings');
+        newOrder.forEach(viewKey => {
+            const item = sidebarNav.querySelector(`.nav-item[data-view="${viewKey}"]`);
+            if (item) sidebarNav.appendChild(item);
+        });
+        // Settings sempre por último
+        if (navSettings && sidebarNav) sidebarNav.appendChild(navSettings);
     }
+
+    // Debounce: salva no banco após 700ms sem novos movimentos
+    clearTimeout(_menuSaveTimeout);
+    _menuSaveTimeout = setTimeout(async () => {
+        const config = Store.getData().config || {};
+        config.menuOrder = newOrder;
+        await Store.updateGlobalConfig({ ...config, menu_order: newOrder });
+        localStorage.setItem('fiscalapp_menu_order', JSON.stringify(newOrder));
+        showFeedbackToast('Ordem do menu salva!', 'success');
+    }, 700);
+}
+
+// Mantém saveMenuOrder como wrapper público chamado pelo botão (compatibilidade)
+async function saveMenuOrder() {
+    const container = document.getElementById('menu-reorder-list');
+    if (!container) return;
+    await _applyAndSaveMenuOrder(container);
 }
 
 // ==========================================

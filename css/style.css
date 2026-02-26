@@ -3720,42 +3720,117 @@ button:hover i.fa-trash,
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-sm);
-    cursor: grab;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     user-select: none;
+    position: relative;
 }
 
 .reorder-item:hover {
     background: var(--bg-hover);
-    border-color: var(--border-glass-light);
+    border-color: rgba(99, 102, 241, 0.3);
 }
 
 .reorder-item.dragging {
-    opacity: 0.4;
+    opacity: 0.92;
     border: 2px dashed var(--primary-light);
+    background: rgba(99, 102, 241, 0.12);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.3);
+    transform: rotate(1deg);
+}
+
+.reorder-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: grab;
+    opacity: 0.5;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.reorder-drag-handle:hover {
+    opacity: 1;
+    color: var(--primary-light);
     background: rgba(99, 102, 241, 0.1);
+    cursor: grab;
+}
+
+.reorder-drag-handle:active {
     cursor: grabbing;
-    transform: scale(1.02);
+}
+
+.reorder-icon {
+    width: 20px;
+    text-align: center;
+    color: var(--primary-light);
+    flex-shrink: 0;
+}
+
+.reorder-label {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.reorder-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.reorder-btn-arrow {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+}
+
+.reorder-btn-arrow:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--primary-light);
+    color: var(--primary-light);
+}
+
+.reorder-btn-arrow:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+}
+
+.reorder-position-badge {
+    min-width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: var(--primary-light);
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .drag-placeholder {
-    height: 48px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px dashed rgba(255, 255, 255, 0.1);
+    background: rgba(99, 102, 241, 0.05);
+    border: 2px dashed rgba(99, 102, 241, 0.3);
     border-radius: var(--radius-sm);
-    margin-bottom: 0.5rem;
-}
-
-.reorder-item .drag-handle {
-    margin-left: auto;
-    opacity: 0.4;
-    cursor: grab;
-    padding: 5px;
-}
-
-.reorder-item .drag-handle:hover {
-    opacity: 1;
-    color: var(--primary-light);
+    transition: all 0.15s ease;
 }
 
 /* =====================================================================
@@ -4047,31 +4122,7 @@ button:hover i.fa-trash,
     /* Garante que a tabela não esmague em mobile */
 }
 
-/* Correção para altura e alinhamento dos itens da lista de reordenação */
-.reorder-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-glass);
-    border-radius: var(--radius-sm);
-    margin-bottom: 0.5rem;
-    user-select: none;
-    transition: all 0.2s ease;
-}
 
-.reorder-item i {
-    width: 20px;
-    text-align: center;
-    color: var(--primary-light);
-}
-
-.reorder-item span {
-    flex: 1;
-    font-size: 0.9rem;
-    color: var(--text-main);
-}
 
 .settings-pane {
     animation: fadeIn 0.4s ease-out;
@@ -4093,6 +4144,7 @@ button:hover i.fa-trash,
         width: 100%;
     }
 }
+
 /* ==========================================
    SPLASH SCREEN - Tela de carregamento inicial
    ========================================== */
@@ -4128,6 +4180,7 @@ button:hover i.fa-trash,
         opacity: 0;
         transform: translateY(16px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -4152,8 +4205,15 @@ button:hover i.fa-trash,
 }
 
 @keyframes splashPulse {
-    0%, 100% { filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.4)); }
-    50%       { filter: drop-shadow(0 0 28px rgba(139, 92, 246, 0.8)); }
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.4));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 28px rgba(139, 92, 246, 0.8));
+    }
 }
 
 .splash-logo-text {
@@ -4189,16 +4249,29 @@ button:hover i.fa-trash,
     background: linear-gradient(90deg, #6366F1, #8B5CF6, #6366F1);
     background-size: 200% 100%;
     animation: splashProgress 1.4s ease-in-out forwards,
-               splashShimmer 1.4s linear infinite;
+        splashShimmer 1.4s linear infinite;
 }
 
 @keyframes splashProgress {
-    0%   { width: 0%; }
-    60%  { width: 80%; }
-    100% { width: 100%; }
+    0% {
+        width: 0%;
+    }
+
+    60% {
+        width: 80%;
+    }
+
+    100% {
+        width: 100%;
+    }
 }
 
 @keyframes splashShimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
