@@ -2429,6 +2429,10 @@ function renderEquipe() {
         const badgeColor = f.permissao === 'Gerente' ? 'var(--primary)' : 'var(--success)';
         const isAtivo = f.ativo !== false; // padrão verdadeiro
 
+        // Buscar nome do cargo
+        const cargo = Store.getData().cargos.find(c => c.id == f.cargo_id);
+        const cargoNome = cargo ? cargo.nome_cargo : f.permissao;
+
         let statusHtml = '';
         if (LOGGED_USER && LOGGED_USER.permissao.toLowerCase() === 'gerente') {
             statusHtml = `
@@ -2452,7 +2456,7 @@ function renderEquipe() {
             <td><strong>#${f.id.toString().padStart(3, '0')}</strong></td>
             <td>${f.nome}</td>
             <td>${f.setor}</td>
-            <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${f.permissao}</span></td>
+            <td><span class="resp-tag" style="background: rgba(255,255,255,0.1); border-color: ${badgeColor}; color: ${badgeColor}">${cargoNome}</span></td>
             <td>${statusHtml}</td>
             <td>
                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
@@ -2490,6 +2494,18 @@ function openEquipeModal() {
     badgeDefault.className = 'table-badge success';
     badgeDefault.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ativo';
 
+    // Popular cargos
+    const cargoSelect = document.getElementById('equipe-cargo');
+    if (cargoSelect) {
+        cargoSelect.innerHTML = '<option value="">Nenhum cargo vinculado</option>';
+        Store.getData().cargos.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nome_cargo;
+            cargoSelect.appendChild(opt);
+        });
+    }
+
     document.getElementById('add-equipe-modal').classList.add('active');
 }
 
@@ -2519,6 +2535,19 @@ function openEditEquipeModal(id) {
     document.getElementById('equipe-permissao').value = f.permissao;
     document.getElementById('equipe-senha').value = f.senha;
 
+    // Popular e selecionar cargo
+    const cargoSelect = document.getElementById('equipe-cargo');
+    if (cargoSelect) {
+        cargoSelect.innerHTML = '<option value="">Nenhum cargo vinculado</option>';
+        Store.getData().cargos.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nome_cargo;
+            cargoSelect.appendChild(opt);
+        });
+        cargoSelect.value = f.cargo_id || '';
+    }
+
     document.getElementById('equipe-ativo').checked = f.ativo !== false;
     const badgeEdit = document.getElementById('equipe-status-badge');
     if (f.ativo !== false) {
@@ -2542,6 +2571,7 @@ async function handleAddFuncionario(e) {
     const id = document.getElementById('equipe-id').value;
     const nome = document.getElementById('equipe-nome').value;
     const setor = document.getElementById('equipe-setor').value;
+    const cargo_id = document.getElementById('equipe-cargo').value || null;
     const permissao = document.getElementById('equipe-permissao').value;
     const senha = document.getElementById('equipe-senha').value;
 
@@ -2568,9 +2598,9 @@ async function handleAddFuncionario(e) {
     }
 
     if (isEditing) {
-        await Store.editFuncionario(id, nome, setor, permissao, senha, ativo);
+        await Store.editFuncionario(id, nome, setor, permissao, senha, cargo_id, ativo);
     } else {
-        await Store.addFuncionario(nome, setor, permissao, senha, ativo);
+        await Store.addFuncionario(nome, setor, permissao, senha, cargo_id, ativo);
     }
 
     closeEquipeModal();
@@ -5024,6 +5054,7 @@ function renderAdminPanel() {
 
     cargos.forEach(cargo => {
         const tr = document.createElement('tr');
+        tr.className = 'fade-in';
 
         // Formatar telas permitidas para exibição
         let telasArray = [];
@@ -5036,12 +5067,18 @@ function renderAdminPanel() {
         const telasBadges = telasArray.map(t => `<span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; margin-right: 4px; font-size: 0.7rem;">${t}</span>`).join('');
 
         tr.innerHTML = `
-            <td>#${cargo.id}</td>
+            <td><strong>#${cargo.id.toString().padStart(3, '0')}</strong></td>
             <td><strong>${cargo.nome_cargo}</strong></td>
             <td>${telasBadges || '<span style="color:var(--text-muted)">Nenhuma</span>'}</td>
-            <td style="text-align: right;">
-                <button class="action-btn" onclick="openCargoModal(${cargo.id})" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                <button class="action-btn" onclick="deleteCargoUI(${cargo.id})" style="color: var(--danger)" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+            <td>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button class="btn btn-small btn-secondary" onclick="openCargoModal(${cargo.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        <i class="fa-solid fa-pen"></i> Editar
+                    </button>
+                    <button class="btn btn-small btn-secondary text-danger" onclick="deleteCargoUI(${cargo.id})" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
             </td>
         `;
         tbody.appendChild(tr);

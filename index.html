@@ -2016,11 +2016,20 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Nível de Permissão</label>
+                        <label>Cargo / Função</label>
+                        <select id="equipe-cargo" class="glass-select" style="width: 100%;">
+                            <option value="">Nenhum cargo vinculado</option>
+                            <!-- Preenchido via JS -->
+                        </select>
+                        <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 4px;">As
+                            permissões serão herdadas do cargo selecionado.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Nível de Acesso (Base)</label>
                         <select id="equipe-permissao" class="glass-select" style="width: 100%;">
-                            <option value="Operacional">Operacional (Apenas suas tarefas)</option>
-                            <option value="Supervisor">Supervisor (Visualiza equipe)</option>
-                            <option value="Gerente">Gerente (Acesso Total + Dashboards)</option>
+                            <option value="Operacional">Operacional (Tarefa Própria)</option>
+                            <option value="Supervisor">Supervisor (Visualiza Equipe)</option>
+                            <option value="Gerente">Gerente (Acesso Administrativo)</option>
                         </select>
                     </div>
                     <div class="form-group" style="margin-top: 1rem;">

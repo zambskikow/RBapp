@@ -889,7 +889,7 @@ window.Store = {
 
     },
 
-    async addFuncionario(nome, setor, permissao, senha, ativo = true) {
+    async addFuncionario(nome, setor, permissao, senha, cargo_id = null, ativo = true) {
         const todos = db.funcionarios;
         if (todos.some(f => f.nome.trim().toLowerCase() === nome.trim().toLowerCase())) {
             console.error("Erro Store: Nome de funcionário duplicado.");
@@ -899,18 +899,18 @@ window.Store = {
         const res = await fetch(`${API_BASE}/funcionarios`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, setor, permissao, senha, ativo })
+            body: JSON.stringify({ nome, setor, permissao, senha, cargo_id, ativo })
         });
         if (res.ok) {
             const data = await res.json();
-            db.funcionarios.push({ id: data[0].id, nome, setor, permissao, senha, ativo });
+            db.funcionarios.push({ id: data[0].id, nome, setor, permissao, senha, cargo_id, ativo });
             this.registerLog("Gestão de Equipe", `Novo membro cadastrado: ${nome}`);
             return true;
         }
         return false;
     },
 
-    async editFuncionario(id, nome, setor, permissao, senha, ativo) {
+    async editFuncionario(id, nome, setor, permissao, senha, cargo_id, ativo) {
         const todos = db.funcionarios;
         if (todos.some(f => f.id != id && f.nome.trim().toLowerCase() === nome.trim().toLowerCase())) {
             console.error("Erro Store: Nome de funcionário duplicado na edição.");
@@ -920,12 +920,12 @@ window.Store = {
         const res = await fetch(`${API_BASE}/funcionarios/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, setor, permissao, senha, ativo })
+            body: JSON.stringify({ nome, setor, permissao, senha, cargo_id, ativo })
         });
         if (res.ok) {
             const index = db.funcionarios.findIndex(f => f.id == id);
             if (index !== -1) {
-                db.funcionarios[index] = { ...db.funcionarios[index], nome, setor, permissao, senha, ativo };
+                db.funcionarios[index] = { ...db.funcionarios[index], nome, setor, permissao, senha, cargo_id, ativo };
                 this.registerLog("Gestão de Equipe", `Membro editado: ${nome} (Ativo: ${ativo})`);
                 return true;
             }
