@@ -5722,18 +5722,39 @@ function initUserAccountMenu() {
             const settingsView = document.getElementById('view-settings');
             if (settingsView) {
                 settingsView.style.display = 'block';
-                setTimeout(() => settingsView.classList.add('active'), 50);
+                setTimeout(() => settingsView.classList.add('active'), 10);
 
-                // Se o usuário não é admin, oculta a sidebar de navegação de configurações
+                // Ocultar a sidebar de navegação de configurações caso não seja admin
                 const settingsSidebar = settingsView.querySelector('.settings-sidebar-mini');
                 if (settingsSidebar) {
                     settingsSidebar.style.display = hasSettingsPerm ? 'flex' : 'none';
                 }
 
-                // Dispara o clique na aba de branding após renderizar
+                // Forçar a ativação manual da aba Layout e Ordem (set-branding) para garantir a consistência
                 setTimeout(() => {
+                    // Ocultar todos os painéis e abas (reset limpo)
+                    document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.classList.remove('active'));
+                    document.querySelectorAll('.settings-pane').forEach(pane => {
+                        pane.style.display = 'none';
+                        pane.classList.remove('active');
+                    });
+
+                    // Ativar visualmente o botão (se visível)
                     const tabBranding = document.querySelector('.settings-tab-btn[data-target="set-branding"]');
-                    if (tabBranding) tabBranding.click();
+                    if (tabBranding) tabBranding.classList.add('active');
+
+                    // Exibir o painel alvo
+                    const targetPane = document.getElementById('set-branding');
+                    if (targetPane) {
+                        targetPane.style.display = 'block';
+                        setTimeout(() => targetPane.classList.add('active'), 10);
+                    }
+
+                    // Renderizar os conteúdos internos se as funções existirem (caso ainda não inicializadas)
+                    if (typeof renderBrandingSettings === 'function') renderBrandingSettings();
+                    if (typeof renderMenuReorderList === 'function') renderMenuReorderList();
+
+                    localStorage.setItem("fiscalapp_settings_tab", "set-branding"); // Salvar aba
                 }, 50);
             }
         });
