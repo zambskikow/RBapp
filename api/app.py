@@ -20,6 +20,37 @@ def debug_info():
         "url": url
     }
 
+@app.get("/api/test-delete/{mes_id}")
+def test_delete_diagnostico(mes_id: str):
+    """
+    Diagnóstico completo ANTES de deletar: verifica se o registro existe,
+    quantas execuções estão vinculadas, e retorna tudo sem fazer nenhuma alteração.
+    Acesse: /api/test-delete/2025-01 (substitua pelo ID real da competência)
+    """
+    client = supabase_admin if supabase_admin else supabase
+    resultado = {
+        "mes_id_buscado": mes_id,
+        "usando_service_role": supabase_admin is not None and bool(os.getenv("SUPABASE_SERVICE_KEY")),
+    }
+
+    # Verificar se o mês existe no banco
+    try:
+        mes_res = client.table("meses").select("*").eq("id", mes_id).execute()
+        resultado["mes_encontrado"] = bool(mes_res.data)
+        resultado["mes_data"] = mes_res.data
+    except Exception as e:
+        resultado["mes_erro"] = str(e)
+
+    # Contar execuções vinculadas
+    try:
+        exec_res = client.table("execucoes").select("id, competencia").eq("competencia", mes_id).execute()
+        resultado["execucoes_vinculadas_count"] = len(exec_res.data) if exec_res.data else 0
+        resultado["execucoes_sample"] = exec_res.data[:3] if exec_res.data else []
+    except Exception as e:
+        resultado["execucoes_erro"] = str(e)
+
+    return resultado
+
 # Permitir CORS para testes locais e Vercel
 app.add_middleware(
     CORSMiddleware,
