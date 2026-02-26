@@ -4410,7 +4410,7 @@ function openDemandaEventualModal() {
     // Verificar rotinas eventuais antes de abrir
     const rotinas = Store.getData().rotinasBase.filter(r => (r.frequencia || '').toLowerCase() === 'eventual');
     if (rotinas.length === 0) {
-        showNotify("Atenção", "Não há rotinas eventuais cadastradas. Cadastre uma rotina com frequência 'Eventual' primeiro.", "info");
+        document.getElementById('modal-sem-rotina-eventual').classList.add('active');
         return;
     }
 
@@ -4523,6 +4523,10 @@ function closeDemandaEventualModal() {
     document.getElementById('modal-demanda-eventual').classList.remove('active');
     document.getElementById('evt-cliente-dropdown').style.display = 'none';
     document.removeEventListener('click', _fecharDropdownFora);
+}
+
+function closeModalSemRotinaEventual() {
+    document.getElementById('modal-sem-rotina-eventual').classList.remove('active');
 }
 
 

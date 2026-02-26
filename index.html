@@ -792,7 +792,7 @@
                         <button class="btn btn-primary" id="btn-nova-demanda-eventual"
                             onclick="openDemandaEventualModal()"
                             style="white-space: nowrap; padding: 0.6rem 1.1rem; font-size: 0.85rem;">
-                            <i class="fa-solid fa-bolt"></i> Nova Demanda Eventual
+                            <i class="fa-solid fa-bolt"></i> Nova Rotina Eventual
                         </button>
                     </div>
                 </div>
@@ -2390,6 +2390,27 @@
                             style="margin-right: 8px;"></i> Salvar Perfil</button>
                 </div>
             </footer>
+        </div>
+    </div>
+
+    <!-- Modal: Alerta Sem Rotina Eventual -->
+    <div id="modal-sem-rotina-eventual" class="modal-overlay">
+        <div class="glass-card"
+            style="width: 100%; max-width: 440px; padding: 2.5rem 2rem; border-radius: 16px; text-align: center; position: relative;">
+            <div style="margin-bottom: 1.5rem;">
+                <div
+                    style="width: 70px; height: 70px; background: rgba(245, 158, 11, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; border: 1px solid rgba(245, 158, 11, 0.2);">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning); font-size: 2.2rem;"></i>
+                </div>
+                <h2 style="font-size: 1.4rem; margin-bottom: 0.8rem; font-weight: 600;">Nenhuma Rotina Eventual</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">
+                    Você ainda não possui rotinas eventuais cadastradas. Por favor, acesse a <strong>Gestão de
+                        Rotinas</strong> e crie uma rotina com a frequência "Eventual" para poder atribuí-la a um
+                    cliente.
+                </p>
+            </div>
+            <button class="btn btn-primary" onclick="closeModalSemRotinaEventual()"
+                style="width: 100%; padding: 0.9rem; font-size: 1rem; border-radius: 8px; justify-content: center;">Entendi</button>
         </div>
     </div>
 
