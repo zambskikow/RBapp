@@ -86,12 +86,35 @@ async def login(response: Response, form_data: LoginRequest):
             max_age=86400   # 1 dia
         )
 
+        # 3.1 Converter abas baseado em cargos (Lógica do Frontend transportada para Backend Seguro)
+        telas = ["operacional", "meu-desempenho", "mensagens"]
+        
+        if str(user.get("cargo_id")) != "None" and user.get("cargo_id"):
+             cargos_res = supabase.table("cargos").select("telas_permitidas").eq("id", user["cargo_id"]).execute()
+             if cargos_res.data:
+                  tt = cargos_res.data[0].get("telas_permitidas", [])
+                  if isinstance(tt, str):
+                      import json
+                      try: tt = json.loads(tt) 
+                      except: tt = []
+                  telas = tt
+                  
+        is_gerente = (user.get("permissao") or "").lower() == "gerente"
+        is_admin = (user.get("nome") or "").lower() in ["manager", "admin"]
+        
+        if is_gerente or is_admin:
+            todas = ['dashboard', 'operacional', 'clientes', 'equipe', 'rotinas', 'mensagens', 'marketing', 'settings', 'competencias', 'meu-desempenho']
+            for t in todas:
+                if t not in telas: telas.append(t)
+
         return {
              "message": "Login efetuado com sucesso",
              "user": {
                  "id": user["id"],
                  "nome": user["nome"],
-                 "permissao": user["permissao"]
+                 "permissao": user["permissao"],
+                 "cargo_id": user.get("cargo_id"),
+                 "telas_permitidas": telas
              }
         }
         

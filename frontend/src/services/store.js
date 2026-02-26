@@ -1457,13 +1457,13 @@ window.Store = {
             if (res.ok) {
                 const data = await res.json();
                 const auth = data.user;
-
-                // Fetch full permissions dynamically since the backend login only returns basic info
-                const fullAuth = this.getAuthBySession(auth.id);
-
-                if (fullAuth) {
-                    this.registerLog("Acesso", `${fullAuth.nome} fez login no sistema via JWT.`);
-                    return fullAuth;
+                // Frontend agora confia no Payload do Backend que já processou 
+                // Seguranca, Cargos e Telas Permitidas
+                if (auth && auth.telas_permitidas) {
+                    this.registerLog("Acesso", `${auth.nome} fez login no sistema via JWT.`);
+                    return auth;
+                } else {
+                    console.warn("Payload de login malformado", auth);
                 }
             } else {
                 const errorData = await res.json();
