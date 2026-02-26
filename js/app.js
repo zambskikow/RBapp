@@ -660,6 +660,74 @@ window.showFeedbackToast = function (message, type = 'info') {
     window.showNotify(titulo, message, type);
 };
 
+/**
+ * Faz download do backup dos dados em formato JSON
+ */
+function downloadBackupFile() {
+    try {
+        const data = Store.getData();
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `backup_fiscalapp_${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        window.showFeedbackToast('Backup exportado com sucesso!', 'success');
+    } catch (e) {
+        console.error('[Backup] Erro ao exportar backup:', e);
+        window.showFeedbackToast('Erro ao exportar backup.', 'error');
+    }
+}
+
+/**
+ * Exporta os logs de auditoria em CSV
+ */
+function downloadAuditoriaCSV() {
+    try {
+        const logs = Store.getData().logs || [];
+        if (!logs.length) {
+            window.showFeedbackToast('Nenhum log para exportar.', 'info');
+            return;
+        }
+        const header = ['Data/Hora', 'Usuário', 'Permissão', 'Ação', 'Detalhes'];
+        const rows = logs.map(l => [
+            l.timestamp || '',
+            l.user_name || '',
+            l.permissao || '',
+            l.action || '',
+            (l.details || '').replace(/,/g, ';')
+        ]);
+        const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `auditoria_${dateStr}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        window.showFeedbackToast('Auditoria exportada com sucesso!', 'success');
+    } catch (e) {
+        console.error('[Auditoria] Erro ao exportar CSV:', e);
+        window.showFeedbackToast('Erro ao exportar auditoria.', 'error');
+    }
+}
+
+/**
+ * Restaura backup a partir de um arquivo JSON
+ */
+function restoreBackupFile() {
+    window.showFeedbackToast('Função de restauração de backup em desenvolvimento.', 'info');
+}
+
 function handleLogin(e) {
     e.preventDefault();
     const user = document.getElementById('login-username').value.trim();
@@ -3245,7 +3313,10 @@ function renderCompetenciasAdmin() {
     // Anexar Eventos de Exclusão
     document.querySelectorAll('.btn-delete-comp').forEach(btn => {
         btn.addEventListener('click', async (e) => {
-            const id = e.currentTarget.getAttribute('data-id');
+            // CRÍTICO: salvar referência do botão ANTES de qualquer await
+            // O browser zera e.currentTarget após operações assíncronas
+            const btnEl = e.currentTarget;
+            const id = btnEl ? btnEl.getAttribute('data-id') : null;
             if (!id) return;
 
             const confirmacao = await showConfirm(
@@ -3256,9 +3327,10 @@ function renderCompetenciasAdmin() {
             );
 
             if (confirmacao) {
-                const icon = e.currentTarget.querySelector('i');
+                // Usar btnEl (referência salva) em vez de e.currentTarget (que é null após await)
+                const icon = btnEl ? btnEl.querySelector('i') : null;
                 if (icon) icon.className = "fa-solid fa-spinner fa-spin";
-                e.currentTarget.disabled = true;
+                if (btnEl) btnEl.disabled = true;
 
                 showLoading('Processando', `Apagando ${id}...`);
                 const success = await Store.deleteCompetencia(id);
@@ -3270,7 +3342,7 @@ function renderCompetenciasAdmin() {
                 } else {
                     showNotify("Erro", "Houve um erro na exclusão. Tente novamente.", "error");
                     if (icon) icon.className = "fa-solid fa-trash";
-                    e.currentTarget.disabled = false;
+                    if (btnEl) btnEl.disabled = false;
                 }
             }
         });
