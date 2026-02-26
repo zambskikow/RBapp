@@ -787,40 +787,41 @@ window.Store = {
 
     async deleteCompetencia(compId) {
         const compIdStr = String(compId).trim();
-        let deletedLocally = false;
-
-        // Remover Mês
-        const idx = db.meses.findIndex(m => String(m.id).trim() === compIdStr);
-        if (idx !== -1) {
-            db.meses.splice(idx, 1);
-            deletedLocally = true;
-        } else {
-            console.warn("Mês não encontrado no cache local:", compIdStr);
-        }
+        console.log("[Store] Solicitando exclusão da competência:", compIdStr);
 
         try {
+            // 1. Chamar API para exclusão no Banco de Dados
+            // O backend (app.py) já cuida de deletar as execuções vinculadas na tabela 'execucoes'
             const res = await fetch(`${API_BASE}/meses/${compIdStr}`, { method: 'DELETE' });
+
             if (!res.ok) {
-                console.error("Erro na API ao deletar mês:", res.status);
-            } else {
-                this.registerLog("Gestão de Competências", `Excluiu inteiramente a competência: ${compIdStr} (e suas execuções vinculadas)`);
+                console.error("[Store] Erro na API ao deletar mês:", res.status);
+                // Tentar capturar detalhes do erro se a API retornar JSON
+                const errorData = await res.json().catch(() => ({}));
+                console.error("[Store] Detalhes do erro da API:", errorData);
+                return false;
             }
+
+            console.log("[Store] Exclusão confirmada pelo Banco de Dados.");
+
+            // 2. Atualizar Cache Local apenas após o sucesso da API
+            const initialMesesCount = db.meses.length;
+            db.meses = db.meses.filter(m => String(m.id).trim() !== compIdStr);
+
+            const initialExecsCount = db.execucoes.length;
+            db.execucoes = db.execucoes.filter(e => String(e.competencia).trim() !== compIdStr);
+
+            console.log(`[Store] Cache local sincronizado: Meses (${initialMesesCount} -> ${db.meses.length}), Execuções (${initialExecsCount} -> ${db.execucoes.length})`);
+
+            // Registrar no log do sistema
+            this.registerLog("Gestão de Competências", `Excluiu a competência: ${compIdStr} e todas as tarefas vinculadas.`);
+
+            return true;
+
         } catch (e) {
-            console.error("Erro deletar mes", e);
+            console.error("[Store] Falha crítica na comunicação com a API de exclusão:", e);
+            return false;
         }
-
-        // Remover todas as execucoes sob essa competência
-        if (db.execucoes) {
-            const toDeleteIds = db.execucoes.filter(e => String(e.competencia) === compIdStr).map(e => e.id);
-            db.execucoes = db.execucoes.filter(e => String(e.competencia) !== compIdStr);
-
-            for (const tid of toDeleteIds) {
-                try { await fetch(`${API_BASE}/execucoes/${tid}`, { method: 'DELETE' }); }
-                catch (err) { console.log(err); }
-            }
-        }
-
-        return deletedLocally || true; // Por enquanto sempre retorne verdadeiro para atualizar a UI, mas localmente será removido
     },
 
     async addClient(clientData) {
