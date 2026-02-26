@@ -1564,6 +1564,137 @@ body {
 /* ==========================================
    GLOBAL SETTINGS HUB (Admin Panel)
    ========================================== */
+   
+/* Estilos para o Grid Premium de Permissões (Roles) */
+.permissions-premium-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    background: rgba(15, 23, 42, 0.4);
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-glass);
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.permissions-premium-grid::-webkit-scrollbar {
+    width: 6px;
+}
+.permissions-premium-grid::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+.permissions-premium-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.perm-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.perm-group-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.perm-card {
+    position: relative;
+    cursor: pointer;
+    border-radius: 12px;
+    overflow: hidden;
+    user-select: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.perm-card input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.perm-card-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.perm-icon {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.perm-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.perm-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.perm-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+}
+
+/* Hover e Checker */
+.perm-card:hover .perm-card-content {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Estado Marcado (Checked) */
+.perm-card input:checked ~ .perm-card-content {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 1px var(--primary-light);
+}
+
+.perm-card input:checked ~ .perm-card-content .perm-icon {
+    color: white;
+    background: var(--primary);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+}
+
+/* Cartão Perigoso (Admin) */
+.danger-card input:checked ~ .perm-card-content {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger);
+    box-shadow: 0 0 0 1px var(--danger);
+}
+
+.danger-card input:checked ~ .perm-card-content .perm-icon {
+    background: var(--danger) !important;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4) !important;
+}
+
 .settings-layout {
     display: grid;
     grid-template-columns: 250px 1fr;

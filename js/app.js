@@ -5145,10 +5145,24 @@ function renderAdminPanel() {
     const cargos = Store.getData().cargos;
     tbody.innerHTML = '';
 
-    if (cargos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">Nenhum cargo cadastrado.</td></tr>';
+    if (!cargos || cargos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-shield-halved" style="font-size: 2rem; opacity: 0.2; display:block; margin-bottom: 1rem;"></i> Nenhum perfil de acesso cadastrado.</td></tr>';
         return;
     }
+
+    // Mapeamento visual para as permissões do cargo
+    const permMap = {
+        'dashboard': { label: 'Dashboard', class: 'info', icon: 'fa-gauge' },
+        'operacional': { label: 'Operacional', class: 'success', icon: 'fa-list-check' },
+        'meu-desempenho': { label: 'Desempenho', class: 'info', icon: 'fa-chart-pie' },
+        'clientes': { label: 'Clientes', class: 'primary', icon: 'fa-users' },
+        'equipe': { label: 'Equipe', class: 'warning', icon: 'fa-user-tie' },
+        'rotinas': { label: 'Rotinas', class: 'primary', icon: 'fa-layer-group' },
+        'mensagens': { label: 'Mensagens', class: 'secondary', icon: 'fa-envelope' },
+        'marketing': { label: 'Marketing', class: 'secondary', icon: 'fa-bullhorn' },
+        'competencias': { label: 'Competências', class: 'warning', icon: 'fa-calendar-check' },
+        'settings': { label: 'Acesso MASTER', class: 'danger', icon: 'fa-gears' }
+    };
 
     cargos.forEach(cargo => {
         const tr = document.createElement('tr');
@@ -5162,18 +5176,31 @@ function renderAdminPanel() {
             telasArray = [];
         }
 
-        const telasBadges = telasArray.map(t => `<span class="table-badge info" style="margin-right: 4px; font-size: 0.7rem;">${t}</span>`).join('');
+        const telasBadges = telasArray.map(t => {
+            const p = permMap[t] || { label: t, class: 'default', icon: 'fa-check' };
+            const badgeStyle = p.class === 'danger' ? 'background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);' : '';
+            return `<span class="table-badge ${p.class}" style="margin: 2px; font-size: 0.72rem; ${badgeStyle}">
+                        <i class="fa-solid ${p.icon}" style="margin-right: 3px;"></i> ${p.label}
+                    </span>`;
+        }).join('');
 
         tr.innerHTML = `
-            <td><strong>#${cargo.id.toString().padStart(3, '0')}</strong></td>
-            <td><strong>${cargo.nome_cargo}</strong></td>
-            <td>${telasBadges || '<span style="color:var(--text-muted)">Nenhuma</span>'}</td>
+            <td><strong style="color: var(--text-muted);">#${cargo.id.toString().padStart(3, '0')}</strong></td>
+            <td>
+                <div style="display:flex; align-items:center; gap: 10px;">
+                    <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.1); color: var(--primary-light); display:flex; align-items:center; justify-content:center;">
+                        <i class="fa-solid ${cargo.telas_permitidas && cargo.telas_permitidas.includes('settings') ? 'fa-user-shield' : 'fa-id-badge'}"></i>
+                    </div>
+                    <strong>${cargo.nome_cargo}</strong>
+                </div>
+            </td>
+            <td style="max-width: 400px; line-height: 1.8;">${telasBadges || '<span style="color:var(--text-muted); font-size: 0.8rem; font-style: italic;">Sem acesso liberado</span>'}</td>
             <td>
                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button class="btn btn-small btn-secondary" onclick="openCargoModal(${cargo.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                    <button class="btn btn-small btn-secondary" onclick="openCargoModal(${cargo.id})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" title="Editar Perfil">
                         <i class="fa-solid fa-pen"></i> Editar
                     </button>
-                    <button class="btn btn-small btn-secondary text-danger" onclick="deleteCargoUI(${cargo.id})" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 5px 8px; font-size: 0.75rem;">
+                    <button class="btn btn-small btn-secondary text-danger" onclick="deleteCargoUI(${cargo.id})" style="color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); padding: 0.4rem 0.6rem; font-size: 0.8rem;" title="Remover Perfil">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>

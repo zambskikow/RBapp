@@ -1550,6 +1550,16 @@
                                 <span>Backups</span>
                             </button>
 
+                            <div class="settings-nav-group">Parâmetros Mestre</div>
+                            <button class="settings-tab-btn" data-target="set-feriados">
+                                <i class="fa-solid fa-calendar-day"></i>
+                                <span>Dias Úteis e Feriados</span>
+                            </button>
+                            <button class="settings-tab-btn" data-target="set-notificacoes">
+                                <i class="fa-solid fa-bell-concierge"></i>
+                                <span>Avisos e Notificações</span>
+                            </button>
+
                             <div class="settings-nav-group">Auditoria</div>
                             <button class="settings-tab-btn" data-target="set-auditoria">
                                 <i class="fa-solid fa-clipboard-list"></i>
@@ -1844,6 +1854,80 @@
                             </div>
                         </div>
 
+                        <!-- ABA: Prazos e Feriados (Nova Conf) -->
+                        <div class="settings-pane fade-in" id="set-feriados" style="display: none;">
+                            <div class="settings-action-header" style="margin-bottom: 2rem;">
+                                <div>
+                                    <h2 style="font-size: 1.25rem;"><i
+                                            class="fa-solid fa-calendar-day highlight-text"></i> Dias Úteis e Feriados
+                                    </h2>
+                                    <p style="color: var(--text-muted); font-size: 0.9rem;">Configure os dias de
+                                        expediente para o cálculo exato dos prazos de rotinas.</p>
+                                </div>
+                            </div>
+                            <div class="glass-card" style="padding: 3rem; text-align: center;">
+                                <i class="fa-solid fa-person-digging"
+                                    style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem; opacity: 0.5;"></i>
+                                <h3>Módulo em Desenvolvimento</h3>
+                                <p style="color: var(--text-muted); max-width: 400px; margin: 1rem auto;">A inteligência
+                                    de cálculo de dias úteis e integração com feriados nacionais será liberada na
+                                    próxima atualização fiscal.</p>
+                            </div>
+                        </div>
+
+                        <!-- ABA: Notificações (Nova Conf) -->
+                        <div class="settings-pane fade-in" id="set-notificacoes" style="display: none;">
+                            <div class="settings-action-header" style="margin-bottom: 2rem;">
+                                <div>
+                                    <h2 style="font-size: 1.25rem;"><i
+                                            class="fa-solid fa-bell-concierge highlight-text"></i> Alertas e
+                                        Notificações</h2>
+                                    <p style="color: var(--text-muted); font-size: 0.9rem;">Configure como o sistema
+                                        avisa sua equipe sobre prazos críticos e tarefas pendentes.</p>
+                                </div>
+                            </div>
+                            <div class="glass-card" style="padding: 2rem;">
+                                <div class="form-group"
+                                    style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                                    <div>
+                                        <strong>Alerta de Tarefas Vencendo</strong>
+                                        <p style="font-size: 0.8rem; color: var(--text-muted);">Avisar com antecedência
+                                            de X dias</p>
+                                    </div>
+                                    <select class="glass-select" style="width: 150px;">
+                                        <option>2 dias antes</option>
+                                        <option selected>3 dias antes</option>
+                                        <option>5 dias antes</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"
+                                    style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 1rem 0;">
+                                    <div>
+                                        <strong>Resumo Semanal por E-mail</strong>
+                                        <p style="font-size: 0.8rem; color: var(--text-muted);">Enviar estatísticas para
+                                            os gestores às segundas</p>
+                                    </div>
+                                    <label class="switch"><input type="checkbox" checked><span
+                                            class="slider round"></span></label>
+                                </div>
+                                <div class="form-group"
+                                    style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem;">
+                                    <div>
+                                        <strong>Forçar Aviso de Backup</strong>
+                                        <p style="font-size: 0.8rem; color: var(--text-muted);">Notificar admin se ficar
+                                            7 dias sem backup</p>
+                                    </div>
+                                    <label class="switch"><input type="checkbox" checked><span
+                                            class="slider round"></span></label>
+                                </div>
+                                <div style="margin-top: 2rem; text-align: right;">
+                                    <button class="btn btn-primary"
+                                        onclick="showFeedbackToast('Configurações salvas!', 'success')">Salvar
+                                        Preferências</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- ABA: Personalização / Branding -->
                         <div class="settings-pane fade-in" id="set-branding" style="display: none;">
                             <div style="margin-bottom: 2rem;">
@@ -2127,70 +2211,185 @@
 
     <!-- Modal Cargo Admin (RBAC) -->
     <div class="modal-overlay" id="admin-cargo-modal">
-        <div class="glass-card modal-content" style="max-width: 500px;">
-            <header class="modal-header">
-                <h2><i class="fa-solid fa-shield-halved highlight-text"></i> Configurar Cargo</h2>
+        <div class="glass-card modal-content" style="max-width: 650px; width: 95%;">
+            <header class="modal-header"
+                style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span
+                            style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 0.5rem; border-radius: 8px;"><i
+                                class="fa-solid fa-shield-halved"></i></span>
+                        Configuração de Perfil de Acesso
+                    </h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">Defina as telas e
+                        ferramentas que este cargo pode acessar.</p>
+                </div>
                 <button class="close-btn" id="close-cargo-modal"><i class="fa-solid fa-xmark"></i></button>
             </header>
 
-            <div class="modal-body">
+            <div class="modal-body" style="padding-bottom: 0;">
                 <form id="admin-cargo-form">
                     <input type="hidden" id="cargo-id">
-                    <div class="form-group">
-                        <label>Nome do Cargo</label>
-                        <input type="text" id="cargo-nome" class="glass-input" placeholder="Ex: Analista Fiscal Jr"
-                            required>
+
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label
+                            style="font-size: 0.9rem; font-weight: 500; color: #cbd5e1; margin-bottom: 0.5rem; display: block;"><i
+                                class="fa-solid fa-tag" style="color: var(--primary); margin-right: 5px;"></i> Nome do
+                            Cargo Comercial</label>
+                        <input type="text" id="cargo-nome" class="glass-input" placeholder="Ex: Analista Fiscal Sênior"
+                            required style="font-size: 1.05rem; padding: 0.8rem 1rem;">
                     </div>
 
-                    <div class="form-group" style="margin-top: 1.5rem;">
-                        <label style="margin-bottom: 1rem;">Módulos Permitidos (Telas)</label>
-                        <div id="cargo-permissions-list"
-                            style="display: flex; flex-direction: column; gap: 0.8rem; background: rgba(15, 23, 42, 0.4); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" value="dashboard" class="cargo-perm-check"> Manager Dashboard
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" value="operacional" class="cargo-perm-check"> Painel Operacional
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" value="meu-desempenho" class="cargo-perm-check"> Meu Desempenho
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" value="clientes" class="cargo-perm-check"> Gestão de Clientes
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" value="equipe" class="cargo-perm-check"> Gestão de Equipe
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" value="rotinas" class="cargo-perm-check"> Gestão de Rotinas
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" value="mensagens" class="cargo-perm-check"> Mensagens (Inbox)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" value="marketing" class="cargo-perm-check"> Comunicação
-                                (Marketing)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" value="competencias" class="cargo-perm-check"> Gestão de
-                                Competências
-                            </label>
-                            <div class="nav-divider" style="margin: 0.5rem 0;"></div>
-                            <label
-                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--danger);">
-                                <input type="checkbox" value="settings" class="cargo-perm-check"> Painel de Controle
-                                (Acesso Master Hub)
-                            </label>
+                    <div class="form-group">
+                        <label
+                            style="font-size: 0.9rem; font-weight: 500; color: #cbd5e1; margin-bottom: 1rem; display: block;"><i
+                                class="fa-solid fa-key" style="color: var(--primary); margin-right: 5px;"></i> Módulos
+                            Permitidos</label>
+
+                        <div id="cargo-permissions-list" class="permissions-premium-grid">
+
+                            <!-- Grupo: Visão Estratégica -->
+                            <div class="perm-group">
+                                <h4 class="perm-group-title">Visão Estratégica</h4>
+                                <label class="perm-card">
+                                    <input type="checkbox" value="dashboard" class="cargo-perm-check">
+                                    <div class="perm-card-content">
+                                        <i class="fa-solid fa-gauge perm-icon"></i>
+                                        <div class="perm-text">
+                                            <span class="perm-name">Dashboard</span>
+                                            <span class="perm-desc">Visão macro e KPIs</span>
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="perm-card">
+                                    <input type="checkbox" value="meu-desempenho" class="cargo-perm-check">
+                                    <div class="perm-card-content">
+                                        <i class="fa-solid fa-chart-pie perm-icon"></i>
+                                        <div class="perm-text">
+                                            <span class="perm-name">Meu Desempenho</span>
+                                            <span class="perm-desc">Estatísticas individuais</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Grupo: Operação Diária -->
+                            <div class="perm-group">
+                                <h4 class="perm-group-title">Operação Diária</h4>
+                                <label class="perm-card">
+                                    <input type="checkbox" value="operacional" class="cargo-perm-check">
+                                    <div class="perm-card-content">
+                                        <i class="fa-solid fa-list-check perm-icon"></i>
+                                        <div class="perm-text">
+                                            <span class="perm-name">Operacional</span>
+                                            <span class="perm-desc">Baixa de rotinas</span>
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="perm-card">
+                                    <input type="checkbox" value="mensagens" class="cargo-perm-check">
+                                    <div class="perm-card-content">
+                                        <i class="fa-solid fa-envelope perm-icon"></i>
+                                        <div class="perm-text">
+                                            <span class="perm-name">Mensagens</span>
+                                            <span class="perm-desc">Correio interno</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Grupo: Cadastros Mestre (Mesclado Rotinas, Clientes, Equipe) -->
+                            <div class="perm-group" style="grid-column: 1 / -1;">
+                                <h4 class="perm-group-title">Cadastros Mestre</h4>
+                                <div
+                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                                    <label class="perm-card">
+                                        <input type="checkbox" value="clientes" class="cargo-perm-check">
+                                        <div class="perm-card-content">
+                                            <i class="fa-solid fa-users perm-icon"></i>
+                                            <div class="perm-text">
+                                                <span class="perm-name">Clientes</span>
+                                                <span class="perm-desc">Gestão de carteira</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <label class="perm-card">
+                                        <input type="checkbox" value="rotinas" class="cargo-perm-check">
+                                        <div class="perm-card-content">
+                                            <i class="fa-solid fa-layer-group perm-icon"></i>
+                                            <div class="perm-text">
+                                                <span class="perm-name">Rotinas Base</span>
+                                                <span class="perm-desc">Matrizes de prazos</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <label class="perm-card">
+                                        <input type="checkbox" value="competencias" class="cargo-perm-check">
+                                        <div class="perm-card-content">
+                                            <i class="fa-solid fa-calendar-check perm-icon"></i>
+                                            <div class="perm-text">
+                                                <span class="perm-name">Competências</span>
+                                                <span class="perm-desc">Meses do sistema</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <label class="perm-card">
+                                        <input type="checkbox" value="marketing" class="cargo-perm-check">
+                                        <div class="perm-card-content">
+                                            <i class="fa-solid fa-bullhorn perm-icon"></i>
+                                            <div class="perm-text">
+                                                <span class="perm-name">Comunicação</span>
+                                                <span class="perm-desc">Marketing e avisos</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <label class="perm-card">
+                                        <input type="checkbox" value="equipe" class="cargo-perm-check">
+                                        <div class="perm-card-content">
+                                            <i class="fa-solid fa-user-tie perm-icon"></i>
+                                            <div class="perm-text">
+                                                <span class="perm-name">Equipe</span>
+                                                <span class="perm-desc">Gestão de analistas</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Grupo: Configurações de Sistema -->
+                            <div class="perm-group"
+                                style="grid-column: 1 / -1; border-top: 1px dashed rgba(239, 68, 68, 0.3); padding-top: 1rem;">
+                                <h4 class="perm-group-title" style="color: #ef4444;"><i
+                                        class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i>
+                                    Restrito (Admin)</h4>
+                                <label class="perm-card danger-card">
+                                    <input type="checkbox" value="settings" class="cargo-perm-check">
+                                    <div class="perm-card-content">
+                                        <i class="fa-solid fa-gears perm-icon" style="color: #ef4444;"></i>
+                                        <div class="perm-text">
+                                            <span class="perm-name" style="color: #ef4444;">Painel de Controle
+                                                MASTER</span>
+                                            <span class="perm-desc">Acesso total às configurações, acessos, backups e
+                                                auditoria avançada.</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
                         </div>
                     </div>
-                    <footer class="modal-footer">
-                        <div style="display: flex; gap: 0.5rem; margin-left: auto;">
-                            <button type="button" class="btn btn-secondary" id="cargo-modal-cancel">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Permissões</button>
-                        </div>
-                    </footer>
                 </form>
             </div>
+            <footer class="modal-footer"
+                style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; margin-top: 1rem;">
+                <div style="display: flex; gap: 0.8rem; margin-left: auto;">
+                    <button type="button" class="btn btn-secondary" id="cargo-modal-cancel"
+                        style="padding: 0.6rem 1.5rem;">Cancelar</button>
+                    <button type="submit" form="admin-cargo-form" class="btn btn-primary"
+                        style="padding: 0.6rem 1.5rem;"><i class="fa-solid fa-shield-check"
+                            style="margin-right: 8px;"></i> Salvar Perfil</button>
+                </div>
+            </footer>
         </div>
     </div>
 
