@@ -1590,17 +1590,9 @@ body {
 }
 
 /* Botões Base */
-.btn {
-    padding: 0.65rem 1.25rem;
-    border-radius: var(--radius-sm);
-    border: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+.btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary {
@@ -1610,8 +1602,7 @@ body {
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.5);
 }
 
 .btn-secondary {
@@ -1661,19 +1652,15 @@ body {
     border-radius: 6px;
 }
 
-/* UX dos Botões de Ação da Rotina */
-.btn-action-container {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
+/* UX dos Botões de Ação Global */
+.btn:hover i.fa-pen,
 .btn-edit:hover i {
     animation: subtle-pulse 0.4s ease-in-out;
 }
 
+.btn:hover i.fa-trash,
 .btn-delete:hover i {
-    animation: shake-icon 0.4s ease-in-out infinite;
+    animation: subtle-shake 0.4s ease-in-out;
 }
 
 @keyframes subtle-pulse {
@@ -1682,7 +1669,7 @@ body {
     }
 
     50% {
-        transform: scale(1.15) rotate(-10deg);
+        transform: scale(1.15) rotate(-5deg);
     }
 
     100% {
@@ -1690,7 +1677,7 @@ body {
     }
 }
 
-@keyframes shake-icon {
+@keyframes subtle-shake {
 
     0%,
     100% {
@@ -1698,11 +1685,11 @@ body {
     }
 
     25% {
-        transform: rotate(-15deg);
+        transform: rotate(-8deg);
     }
 
     75% {
-        transform: rotate(15deg);
+        transform: rotate(8deg);
     }
 }
 
