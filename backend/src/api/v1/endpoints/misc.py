@@ -7,7 +7,7 @@ from src.models.misc import (
 from src.crud.misc import MiscCRUD
 from src.api.v1.endpoints.auth import get_current_user_from_cookie
 
-router = APIRouter()
+router = APIRouter(prefix="/api", tags=["Miscelânea"])
 CurrentUser = Depends(get_current_user_from_cookie)
 
 # Setores

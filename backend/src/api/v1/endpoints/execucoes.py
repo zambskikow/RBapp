@@ -3,15 +3,15 @@ from src.models.execucao import ExecucaoCreate, ExecucaoUpdate
 from src.crud.execucao import ExecucaoCRUD
 from src.api.v1.endpoints.auth import get_current_user_from_cookie
 
-router = APIRouter()
+router = APIRouter(prefix="/api/execucoes", tags=["Execuções"])
 CurrentUser = Depends(get_current_user_from_cookie)
 
-@router.get("/")
+@router.get("")
 def get_execucoes(user=CurrentUser):
     response = ExecucaoCRUD.get_all()
     return response.data
 
-@router.post("/")
+@router.post("")
 def create_execucao(execucao: ExecucaoCreate, user=CurrentUser):
     response = ExecucaoCRUD.create(execucao.model_dump())
     return response.data

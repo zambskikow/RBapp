@@ -3,15 +3,15 @@ from src.models.funcionario import FuncionarioCreate, FuncionarioUpdate
 from src.crud.funcionario import FuncionarioCRUD
 from src.api.v1.endpoints.auth import get_current_user_from_cookie
 
-router = APIRouter()
+router = APIRouter(prefix="/api/funcionarios", tags=["Funcionários"])
 CurrentUser = Depends(get_current_user_from_cookie)
 
-@router.get("/")
+@router.get("")
 def get_funcionarios(user=CurrentUser):
     response = FuncionarioCRUD.get_all()
     return response.data
 
-@router.post("/")
+@router.post("")
 def create_funcionario(funcionario: FuncionarioCreate, user=CurrentUser):
     response = FuncionarioCRUD.create(funcionario.model_dump())
     return response.data

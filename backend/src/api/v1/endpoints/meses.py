@@ -3,15 +3,15 @@ from src.models.mes import MesCreate, MesUpdate
 from src.crud.mes import MesCRUD
 from src.api.v1.endpoints.auth import get_current_user_from_cookie
 
-router = APIRouter()
+router = APIRouter(prefix="/api/meses", tags=["Meses"])
 CurrentUser = Depends(get_current_user_from_cookie)
 
-@router.get("/")
+@router.get("")
 def get_meses(user=CurrentUser):
     response = MesCRUD.get_all()
     return response.data
 
-@router.post("/")
+@router.post("")
 def create_mes(mes: MesCreate, user=CurrentUser):
     response = MesCRUD.create(mes.model_dump())
     return response.data

@@ -34,13 +34,13 @@ app.add_middleware(
 )
 
 # --- ROTAS E ENDPOINTS MODULARES ---
-app.include_router(auth.router, tags=["Autenticação"])
-app.include_router(clientes.router, prefix="/api/clientes", tags=["Clientes"])
-app.include_router(funcionarios.router, prefix="/api/funcionarios", tags=["Funcionários"])
-app.include_router(meses.router, prefix="/api/meses", tags=["Meses"])
-app.include_router(execucoes.router, prefix="/api/execucoes", tags=["Execuções"])
-app.include_router(marketing.router, prefix="/api/marketing", tags=["Marketing"])
-app.include_router(misc.router, prefix="/api", tags=["Miscelânea"])
+app.include_router(auth.router)
+app.include_router(clientes.router)
+app.include_router(funcionarios.router)
+app.include_router(meses.router)
+app.include_router(execucoes.router)
+app.include_router(marketing.router)
+app.include_router(misc.router)
 
 # --- ENDPOINTS DE DIAGNÓSTICO E SISTEMA ---
 
