@@ -308,6 +308,152 @@ async function initApp() {
         if (meuDesempenhoView && meuDesempenhoView.style.display === 'block') renderMeuDesempenho();
     });
 
+    // Evento Sair
+    const btnLogout = document.getElementById('uac-btn-logout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', async () => {
+            // Fecha menu
+            accountMenu.classList.remove('active');
+            if (globalOverlay) globalOverlay.classList.remove('active');
+
+            try {
+                // Tenta chamar backend
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (e) {
+                console.error("Erro ao fazer logout no servidor:", e);
+            }
+
+            // Independentemente de erro na API, limpa local
+            Store.clearAll();
+            window.location.reload();
+        });
+    }
+
+    // Lógica para Alterar Senha
+    const btnAlterarSenha = document.getElementById('uac-btn-alterar-senha');
+    const modalAlterarSenha = document.getElementById('modal-alterar-senha');
+    const closeBtnAlterarSenha = document.getElementById('close-modal-alterar-senha');
+    const btnCancelarAlterarSenha = document.getElementById('btn-cancelar-alterar-senha');
+    const formAlterarSenha = document.getElementById('form-alterar-senha');
+    const alertAlterarSenha = document.getElementById('alert-alterar-senha');
+
+    function openModalAlterarSenha() {
+        accountMenu.classList.remove('active');
+        if (globalOverlay) globalOverlay.classList.remove('active');
+        modalAlterarSenha.classList.add('active');
+        formAlterarSenha.reset();
+        alertAlterarSenha.style.display = 'none';
+
+        // Reset pass toggles back to password
+        const inputs = formAlterarSenha.querySelectorAll('input[type="text"]');
+        inputs.forEach(inp => inp.type = 'password');
+    }
+
+    function closeModalAlterarSenha() {
+        modalAlterarSenha.classList.remove('active');
+    }
+
+    function showAlertAlterarSenha(message, type = 'error') {
+        alertAlterarSenha.textContent = message;
+        alertAlterarSenha.className = `alert alert-${type}`;
+        alertAlterarSenha.style.display = 'block';
+    }
+
+    if (btnAlterarSenha) btnAlterarSenha.addEventListener('click', openModalAlterarSenha);
+    if (closeBtnAlterarSenha) closeBtnAlterarSenha.addEventListener('click', closeModalAlterarSenha);
+    if (btnCancelarAlterarSenha) btnCancelarAlterarSenha.addEventListener('click', closeModalAlterarSenha);
+
+    // Fechar ao clicar fora
+    modalAlterarSenha.addEventListener('click', (e) => {
+        if (e.target === modalAlterarSenha) closeModalAlterarSenha();
+    });
+
+    if (formAlterarSenha) {
+        formAlterarSenha.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btnSubmit = formAlterarSenha.querySelector('button[type="submit"]');
+            const originalText = btnSubmit.innerHTML;
+
+            const senhaAtual = document.getElementById('input-senha-atual').value;
+            const novaSenha = document.getElementById('input-nova-senha').value;
+            const confirmarNovaSenha = document.getElementById('input-confirmar-nova-senha').value;
+
+            alertAlterarSenha.style.display = 'none';
+
+            if (novaSenha.length < 6) {
+                showAlertAlterarSenha('A nova senha deve ter pelo menos 6 caracteres.');
+                return;
+            }
+
+            if (novaSenha !== confirmarNovaSenha) {
+                showAlertAlterarSenha('As novas senhas não coincidem.');
+                return;
+            }
+
+            // UI Feedback
+            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Atualizando...';
+            btnSubmit.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: senhaAtual, new_password: novaSenha })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    closeModalAlterarSenha();
+
+                    // Show premium success notification
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Senha Atualizada',
+                            text: 'Sua senha foi alterada com sucesso.',
+                            icon: 'success',
+                            confirmButtonColor: 'var(--primary)',
+                            background: 'var(--bg-surface)',
+                            color: 'var(--text-main)',
+                            customClass: {
+                                popup: 'glass-card'
+                            }
+                        });
+                    } else {
+                        showSuccessOverlay('Senha Atualizada!', 'Sua senha foi alterada com sucesso.');
+                    }
+                } else {
+                    showAlertAlterarSenha(data.detail || 'Erro ao alterar a senha.');
+                }
+            } catch (error) {
+                console.error("Erro na API de mudança de senha", error);
+                showAlertAlterarSenha('Erro de conexão com o servidor.');
+            } finally {
+                btnSubmit.innerHTML = originalText;
+                btnSubmit.disabled = false;
+            }
+        });
+    }
+
+    // Password Toggles logic for the alter senha modal
+    const toggleBtns = formAlterarSenha?.querySelectorAll('.btn-toggle-password') || [];
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const input = btn.previousElementSibling;
+            if (input && input.tagName === 'INPUT') {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                } else {
+                    input.type = 'password';
+                    btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                }
+            }
+        });
+    });
+
     // Event Listener Gestão de Competências
     const btnAddComp = document.getElementById('btn-add-competencia');
     if (btnAddComp) {

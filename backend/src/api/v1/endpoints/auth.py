@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+﻿from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
@@ -7,7 +7,7 @@ from typing import Optional
 from src.core.database import supabase
 from src.core.security import verify_password, create_access_token, decode_access_token
 
-router = APIRouter(prefix="/api/auth", tags=["Autenticação"])
+router = APIRouter(prefix="/api/auth", tags=["AutenticaÃ§Ã£o"])
 
 class LoginRequest(BaseModel):
     username: str
@@ -24,48 +24,48 @@ class UserResponse(BaseModel):
 def get_current_user_from_cookie(request: Request):
     token = request.cookies.get("access_token")
     if not token:
-        raise HTTPException(status_code=401, detail="Não autenticado")
+        raise HTTPException(status_code=401, detail="NÃ£o autenticado")
     try:
-        # Remover 'Bearer ' se estiver presente (segurança extra)
+        # Remover 'Bearer ' se estiver presente (seguranÃ§a extra)
         if token.startswith("Bearer "):
             token = token[7:]
         payload = decode_access_token(token)
         user_id = payload.get("sub")
         if user_id is None:
-            raise HTTPException(status_code=401, detail="Token inválido")
+            raise HTTPException(status_code=401, detail="Token invÃ¡lido")
         return user_id, payload
     except Exception as e:
-        raise HTTPException(status_code=401, detail="Não autenticado ou token expirado")
+        raise HTTPException(status_code=401, detail="NÃ£o autenticado ou token expirado")
 
 @router.post("/login")
 async def login(response: Response, form_data: LoginRequest):
     """
-    Novo fluxo de Login focado em segurança:
-    1. Busca usuário via Supabase pela chave 'nome' (futuramento ideal pelo email).
-    2. Compara o hash (ou texto plano temporariamente se o script de update não rodou).
+    Novo fluxo de Login focado em seguranÃ§a:
+    1. Busca usuÃ¡rio via Supabase pela chave 'nome' (futuramento ideal pelo email).
+    2. Compara o hash (ou texto plano temporariamente se o script de update nÃ£o rodou).
     3. Retorna um Cookie HttpOnly seguro e um JSON com dados do user.
     """
     try:
-        # 0. Verificar se a conexão com o banco via Vercel falhou por falta de Keys
+        # 0. Verificar se a conexÃ£o com o banco via Vercel falhou por falta de Keys
         if supabase is None:
-            raise HTTPException(status_code=500, detail="SUPABASE_OFFLINE: Variáveis de Ambiente não configuradas na Vercel (.env).")
+            raise HTTPException(status_code=500, detail="SUPABASE_OFFLINE: VariÃ¡veis de Ambiente nÃ£o configuradas na Vercel (.env).")
 
-        # 1. Buscar usuário
-        # Aqui usamos o Supabase anon (ele possui acesso restrito de listagem ou nós controlaremos o retorno via select)
+        # 1. Buscar usuÃ¡rio
+        # Aqui usamos o Supabase anon (ele possui acesso restrito de listagem ou nÃ³s controlaremos o retorno via select)
         user_res = supabase.table("funcionarios").select("*").eq("nome", form_data.username).execute()
         
         if not user_res.data:
-            raise HTTPException(status_code=400, detail="Usuário ou senha incorretos")
+            raise HTTPException(status_code=400, detail="UsuÃ¡rio ou senha incorretos")
             
         user = user_res.data[0]
         
         # 2. Verificar senha (Hash bcrypt)
-        # Atenção: Temporariamente o security.py permite senhas iguais em plain text
+        # AtenÃ§Ã£o: Temporariamente o security.py permite senhas iguais em plain text
         if not verify_password(form_data.password, user.get("senha", "")):
-            raise HTTPException(status_code=400, detail="Usuário ou senha incorretos")
+            raise HTTPException(status_code=400, detail="UsuÃ¡rio ou senha incorretos")
 
         if user.get("ativo", True) is False:
-             raise HTTPException(status_code=403, detail="Acesso bloqueado. Usuário inativo.")
+             raise HTTPException(status_code=403, detail="Acesso bloqueado. UsuÃ¡rio inativo.")
 
         # 3. Gerar Token e setar Cookie seguro
         token_data = {
@@ -80,13 +80,13 @@ async def login(response: Response, form_data: LoginRequest):
         response.set_cookie(
             key="access_token",
             value=f"Bearer {access_token}",
-            httponly=True,  # Proíbe acesso via JavaScript no Frontend
+            httponly=True,  # ProÃ­be acesso via JavaScript no Frontend
             secure=True,    # Apenas HTTPS
             samesite="none",
             max_age=86400   # 1 dia
         )
 
-        # 3.1 Converter abas baseado em cargos (Lógica do Frontend transportada para Backend Seguro)
+        # 3.1 Converter abas baseado em cargos (LÃ³gica do Frontend transportada para Backend Seguro)
         telas = ["operacional", "meu-desempenho", "mensagens"]
         
         if str(user.get("cargo_id")) != "None" and user.get("cargo_id"):
@@ -131,14 +131,14 @@ async def logout(response: Response):
 
 @router.get("/me")
 async def get_me(user_info: tuple = Depends(get_current_user_from_cookie)):
-    """Verifica se o token ainda é válido ou recarrega informações essenciais da sessão"""
+    """Verifica se o token ainda Ã© vÃ¡lido ou recarrega informaÃ§Ãµes essenciais da sessÃ£o"""
     user_id, payload = user_info
     
     # Podemos opcionalmente cruzar de volta com a Table "Cargos" para as telas_permitidas.
     user_res = supabase.table("funcionarios").select("id, nome, permissao, ativo, cargo_id").eq("id", user_id).execute()
     
     if not user_res.data:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        raise HTTPException(status_code=404, detail="UsuÃ¡rio nÃ£o encontrado")
         
     user = user_res.data[0]
     
@@ -171,7 +171,7 @@ async def get_me(user_info: tuple = Depends(get_current_user_from_cookie)):
 
 @router.post("/debug-login")
 async def debug_login(form_data: dict, request: Request):
-    """Ponta provisória para provar falha no Fetch do Frontend ou na Leitura Pydantic"""
+    """Ponta provisÃ³ria para provar falha no Fetch do Frontend ou na Leitura Pydantic"""
     return {
         "is_pydantic_ok": True,
         "is_db_ok": supabase is not None,
@@ -179,3 +179,54 @@ async def debug_login(form_data: dict, request: Request):
         "headers": dict(request.headers),
         "cookies": request.cookies
     }
+
+@router.post('/change-password')
+async def change_password(request: Request, body: dict, user_info: tuple = Depends(get_current_user_from_cookie)):
+    "Rta para o usuário logado alterar sua própria senha."
+    user_id, payload = user_info
+    
+    current_password = body.get('current_password')
+    new_password = body.get('new_password')
+    
+    if not current_password or not new_password:
+        raise HTTPException(status_code=400, detail='Senha atual e nova senha são obrigatórios.')
+    
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail='A nova senha deve ter no mínimo 6 caracteres.')
+    
+    user_res = supabase.table('funcionarios').select('senha, nome').eq('id', user_id).execute()
+    if not user_res.data:
+        raise HTTPException(status_code=404, detail='Usuário não encontrado.')
+    
+    user = user_res.data[0]
+    
+    if not verify_password(current_password, user.get('senha', '')):
+         raise HTTPException(status_code=400, detail='Senha atual incorreta.')
+    
+    from src.core.security import get_password_hash
+    hashed_new_password = get_password_hash(new_password)
+    
+    update_res = supabase.table('funcionarios').update({'senha': hashed_new_password}).eq('id', user_id).execute()
+    
+    try:
+        # Busca todos os gerentes/admins
+        gerentes_res = supabase.table('funcionarios').select('id, nome, permissao').execute()
+        if gerentes_res.data:
+            # Filtra administradores/gerentes
+            admin_ids = [g['id'] for g in gerentes_res.data if (g.get('permissao') or '').lower() == 'gerente' or (g.get('nome') or '').lower() in ['admin', 'manager']]
+            notificacoes = []
+            for admin_id in admin_ids:
+                if admin_id != int(user_id):
+                    notificacoes.append({
+                        'remetente_id': int(user_id),
+                        'destinatario_id': admin_id,
+                        'texto': f'SISTEMA: O usuário {user.get("nome", "Desconhecido")} alterou sua senha de acesso.',
+                        'visualizada': False
+                    })
+            if notificacoes:
+                supabase.table('chat_mensagens').insert(notificacoes).execute()
+    except Exception as e:
+        print(f'Erro ao notificar alteração de senha: {e}')
+
+    return {'message': 'Senha alterada com sucesso.'}
+
