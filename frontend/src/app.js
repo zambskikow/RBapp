@@ -4515,15 +4515,13 @@ function openTaskModal(taskId) {
 
 
 
-    const statusHtml = task.feito
+    const statusBadge = task.feito
+        ? `<span class="status-badge concluido"><i class="fa-solid fa-check"></i> Finalizado</span>`
+        : `<span class="status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>`;
 
-        ? '<span class="status-badge concluido" style="font-size: 1rem;"><i class="fa-solid fa-check"></i> Finalizado</span>'
+    const lockIcon = (task.feito && !isAdmin) ? ' <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.9rem;" title="Bloqueado para edição"></i>' : '';
 
-        : '<span class="status-badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass); color: #fff; font-size: 1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
-
-
-
-    document.getElementById('modal-status').innerHTML = statusHtml;
+    document.getElementById('modal-status').innerHTML = statusBadge + lockIcon;
 
 
 
@@ -4585,10 +4583,8 @@ function openTaskModal(taskId) {
         // Atualizar cabeçalho automaticamente
 
         document.getElementById('modal-status').innerHTML = checked
-
-            ? '<span class="status-badge concluido" style="font-size: 1rem;"><i class="fa-solid fa-check"></i> Finalizado</span>'
-
-            : '<span class="status-badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass); color: #fff; font-size: 1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
+            ? '<span class="status-badge concluido"><i class="fa-solid fa-check"></i> Finalizado</span>'
+            : '<span class="status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
 
     });
 
