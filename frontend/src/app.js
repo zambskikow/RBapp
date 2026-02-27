@@ -185,9 +185,6 @@ async function initApp() {
     setupNavigation();
 
 
-    setupPasswordToggles();
-
-
 
 
     // 2. Set Format Dates
@@ -5288,15 +5285,15 @@ function initSettingsTabs() {
 
     settingsInitDone = true;
 }
-
+let passwordTogglesInitialized = false;
 function setupPasswordToggles() {
-    console.log("Configurando alternadores de senha...");
+    if (passwordTogglesInitialized) return;
+    passwordTogglesInitialized = true;
+
     // Usar delegação de eventos para garantir que funcione mesmo com elementos dinâmicos
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('.btn-toggle-password');
         if (!btn) return;
-
-        console.log("Clique detectado no botão de senha!");
 
         // Previne comportamento padrão de botões em formulários
         e.preventDefault();
@@ -5308,7 +5305,6 @@ function setupPasswordToggles() {
         const icon = btn.querySelector('i');
 
         if (input && icon) {
-            console.log("Alternando visibilidade da senha...");
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.remove('fa-eye');
@@ -5320,9 +5316,6 @@ function setupPasswordToggles() {
             }
         }
     });
-
-    // Remover listeners antigos de botões já existentes para não duplicar se for chamado novamente
-    // (A delegação acima já cuida disso, então não precisamos mais do forEach aqui)
 }
 
 // Handler para liberação antecipada de competência
