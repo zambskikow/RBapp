@@ -1669,20 +1669,24 @@ body {
 }
 
 .btn-edit:hover i {
-    animation: rotate-icon 0.5s ease;
+    animation: subtle-pulse 0.4s ease-in-out;
 }
 
 .btn-delete:hover i {
     animation: shake-icon 0.4s ease-in-out infinite;
 }
 
-@keyframes rotate-icon {
+@keyframes subtle-pulse {
     0% {
-        transform: rotate(0deg);
+        transform: scale(1) rotate(0deg);
+    }
+
+    50% {
+        transform: scale(1.15) rotate(-10deg);
     }
 
     100% {
-        transform: rotate(360deg);
+        transform: scale(1) rotate(0deg);
     }
 }
 
