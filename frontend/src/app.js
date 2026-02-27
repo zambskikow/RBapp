@@ -1924,34 +1924,7 @@ function renderOperacional() {
     });
 
     // Adicionar rotinas que não possuem tarefas no momento (para manter visibilidade se não houver busca)
-    if (!searchVal) {
-        const allClients = Store.getData().clientes;
-        const allRotinas = Store.getData().rotinasBase;
-
-        console.log(`[Visibilidade] Iniciando checagem para ${allRotinas.length} rotinas e ${allClients.length} clientes...`);
-
-        allRotinas.forEach(rb => {
-            // REGRA: Só mostrar a rotina no painel se houver pelo menos 1 cliente vinculado a ela
-            const vinculados = allClients.filter(c => {
-                const sids = (c.rotinasSelecionadas || []).map(id => String(id));
-                return sids.includes(String(rb.id));
-            });
-            const temVinculo = vinculados.length > 0;
-
-            if (rb.frequencia === 'Eventual') {
-                console.log(`[Visibilidade] Rotina Eventual: "${rb.nome}" (ID: ${rb.id}), Clientes Vinculados: ${vinculados.length}`);
-            }
-
-            if (!temVinculo) return;
-
-            if (!groupOrder.includes(rb.nome)) groupOrder.push(rb.nome);
-        });
-
-        // Se a ordenação for por Rotina, ordenar a lista final de grupos
-        if (sortVal === 'rotina-az') {
-            groupOrder.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-        }
-    }
+    // REMOVIDO: Agora o painel só mostra categorias que possuem tarefas (execuções) reais por padrão.
 
     groupOrder.forEach(rotinaName => {
         const groupTasks = grouped[rotinaName] || [];
