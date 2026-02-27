@@ -1057,8 +1057,6 @@ function applyBranding() {
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(link => {
-        if (link.id === 'btn-logout') return; // Handled separately
-
         link.addEventListener('click', (e) => {
             e.preventDefault();
             // Update active state
@@ -1120,11 +1118,6 @@ function setupNavigation() {
                 }
             }
         });
-    });
-
-    document.getElementById('btn-logout').addEventListener('click', (e) => {
-        e.preventDefault();
-        handleLogout();
     });
 }
 
@@ -5682,18 +5675,11 @@ function initUserAccountMenu() {
         }
     });
 
-    // Ação: Sair (Reaproveitando a lógica de logout existente)
+    // Ação: Sair (Chamando handleLogout diretamente agora que o botão global foi removido)
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
             closeUserMenu();
-            // Procura o botão global de logout e simula clique
-            const globalLogout = document.getElementById('btn-logout');
-            if (globalLogout) {
-                globalLogout.click();
-            } else {
-                localStorage.removeItem('fiscalapp_session');
-                window.location.reload();
-            }
+            handleLogout();
         });
     }
 
