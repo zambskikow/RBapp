@@ -319,7 +319,7 @@ async function initApp() {
 
             try {
                 // Tenta chamar backend
-                await fetch('/api/auth/logout', { method: 'POST' });
+                await Store.apiFetch('/api/auth/logout', { method: 'POST' });
             } catch (e) {
                 console.error("Erro ao fazer logout no servidor:", e);
             }
@@ -749,7 +749,7 @@ async function downloadBackupFile() {
 
     try {
         const API_BASE = window.API_BASE || '/api';
-        const response = await fetch(`${API_BASE}/backup/download`, { credentials: 'omit' });
+        const response = await Store.apiFetch(`${API_BASE}/backup/download`);
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({ detail: 'Erro desconhecido' }));
@@ -5912,7 +5912,7 @@ function initUserAccountMenu() {
                 btnSubmit.disabled = true;
 
                 try {
-                    const response = await fetch(`${window.API_BASE}/auth/change-password`, {
+                    const response = await Store.apiFetch(`${window.API_BASE}/auth/change-password`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ current_password: senhaAtual, new_password: novaSenha })
