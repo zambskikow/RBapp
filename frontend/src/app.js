@@ -1925,10 +1925,11 @@ function renderOperacional() {
 
     // Adicionar rotinas que não possuem tarefas no momento (para manter visibilidade se não houver busca)
     if (!searchVal) {
+        const allClients = Store.getData().clientes;
         Store.getData().rotinasBase.forEach(rb => {
-            // Se for eventual, só aparece se tiver tarefas (clientes vinculados com demanda)
-            const isEventual = (rb.frequencia || '').toLowerCase() === 'eventual';
-            if (isEventual) return; // Rotinas eventuais vazias nunca devem poluir o painel
+            // REGRA: Só mostrar a rotina no painel se houver pelo menos 1 cliente vinculado a ela
+            const temVinculo = allClients.some(c => (c.rotinasSelecionadas || []).includes(rb.id));
+            if (!temVinculo) return;
 
             if (!groupOrder.includes(rb.nome)) groupOrder.push(rb.nome);
         });
