@@ -1955,8 +1955,8 @@ function renderOperacional() {
 
     groupOrder.forEach(rotinaName => {
         const groupTasks = grouped[rotinaName] || [];
-        if (groupTasks.length === 0 && searchVal) return; // Ocultar grupos vazios na busca
-        if (groupTasks.length === 0 && !groupOrder.includes(rotinaName)) return; // Segurança
+        // Se o grupo está vazio (não há execuções para esta categoria), não renderiza o grupo.
+        if (groupTasks.length === 0) return;
 
         groupTasks.sort((a, b) => {
             if (a.feito && !b.feito) return 1;
