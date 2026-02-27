@@ -624,7 +624,7 @@ window.Store = {
                 body: JSON.stringify({
                     feito: ex.feito,
                     feito_em: ex.feitoEm,
-                    baixado_por: ex.baixado_por,
+                    baixado_por: ex.baixadoPor,
                     subitems: ex.subitems
                 })
             });

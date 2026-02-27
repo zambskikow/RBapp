@@ -16,4 +16,5 @@ class ExecucaoCreate(BaseModel):
 class ExecucaoUpdate(BaseModel):
     feito: bool
     feito_em: str | None = None
+    baixado_por: str | None = None
     subitems: list = []
