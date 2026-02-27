@@ -52,6 +52,9 @@ async function initApp() {
 
     document.getElementById('login-form').addEventListener('submit', handleLogin);
 
+    // Ativa visibilidade de senha (olho) no formulário de login
+    setupPasswordToggles();
+
 
 
     // Check session storage for session
@@ -873,7 +876,15 @@ async function handleLogin(e) {
     } else {
         if (btn) btn.innerHTML = 'Entrar no Sistema';
         errorMsg.style.display = 'block';
-        errorMsg.textContent = 'Erro ao entrar. Login inválido ou servidor indisponível.';
+        errorMsg.textContent = 'Usuário ou senha incorretos.';
+
+        // Adiciona efeito de vibração em vermelho no card
+        const card = document.querySelector('.login-card');
+        if (card) {
+            card.classList.remove('shake-error');
+            void card.offsetWidth; // Força reflow CSS
+            card.classList.add('shake-error');
+        }
     }
 }
 
