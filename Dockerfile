@@ -13,17 +13,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar apenas o requirements primeiro para aproveitar o cache do Docker
-COPY requirements.txt .
+# Copiar apenas o requirements primeiro de dentro da pasta backend
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar o restante do código do backend
-# Note: no Hugging Face, se você subir a pasta 'backend', o Dockerfile deve estar nela.
-COPY . .
+# Copiar o código do backend para a pasta /app do container
+# Copiamos o CONTEÚDO da pasta backend para a raiz do container
+COPY backend/ .
 
 # O Hugging Face Spaces usa a porta 7860 por padrão
 EXPOSE 7860
 
 # Comando para rodar a aplicação
-# Ajustamos o host para 0.0.0.0 para aceitar conexões externas dentro do container
+# O arquivo estará em /app/src/main.py
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "7860"]
