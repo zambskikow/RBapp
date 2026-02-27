@@ -182,7 +182,7 @@ async def debug_login(form_data: dict, request: Request):
 
 @router.post('/change-password')
 async def change_password(request: Request, body: dict, user_info: tuple = Depends(get_current_user_from_cookie)):
-    "Rta para o usuário logado alterar sua própria senha."
+    """Rota para o usuário logado alterar sua própria senha."""
     user_id, payload = user_info
     
     current_password = body.get('current_password')
@@ -224,7 +224,7 @@ async def change_password(request: Request, body: dict, user_info: tuple = Depen
                         'visualizada': False
                     })
             if notificacoes:
-                supabase.table('chat_mensagens').insert(notificacoes).execute()
+                supabase.table('mensagens').insert(notificacoes).execute()
     except Exception as e:
         print(f'Erro ao notificar alteração de senha: {e}')
 

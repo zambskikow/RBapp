@@ -11,6 +11,8 @@ WORKDIR /app
 # Instalar dependências do sistema necessárias para algumas bibliotecas Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    libffi-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar apenas o requirements primeiro de dentro da pasta backend
