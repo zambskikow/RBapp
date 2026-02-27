@@ -1682,6 +1682,11 @@ body {
     animation: subtle-shake 0.4s ease-in-out;
 }
 
+/* Salto sutil para ícones genéricos (que não são pen nem trash) */
+.btn:hover i:not(.fa-pen):not(.fa-trash) {
+    animation: subtle-jump 0.4s ease-in-out;
+}
+
 @keyframes subtle-pulse {
     0% {
         transform: scale(1) rotate(0deg);
@@ -1710,6 +1715,22 @@ body {
     75% {
         transform: rotate(8deg);
     }
+}
+
+@keyframes subtle-jump {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+transform: rotate(8deg);
+}
 }
 
 @keyframes delete-pop {
