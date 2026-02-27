@@ -1,5 +1,7 @@
 ---
+title: rbapp
 sdk: docker
+app_port: 7860
 ---
 
 # RBapp - Backend

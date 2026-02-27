@@ -17,4 +17,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git push --force https://eikiko:$HF_TOKEN@huggingface.co/spaces/eikiko/RbApp main:main
+          git push --force https://eikiko:$HF_TOKEN@huggingface.co/spaces/eikiko/rbapp main:main
