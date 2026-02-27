@@ -1061,69 +1061,78 @@ function applyBranding() {
     if (selectTheme) selectTheme.value = theme;
 }
 
+// Função centralizada para troca de visões (views)
+function switchView(targetView) {
+    if (!targetView) return;
+
+    localStorage.setItem('fiscalapp_current_view', targetView);
+
+    // Atualizar estado ativo nos links de navegação da sidebar
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(nav => {
+        if (nav.getAttribute('data-view') === targetView) {
+            nav.classList.add('active');
+        } else {
+            nav.classList.remove('active');
+        }
+    });
+
+    // Ocultar todas as seções e mostrar a alvo
+    document.querySelectorAll('.view-section').forEach(view => {
+        view.style.display = 'none';
+        view.classList.remove('active');
+    });
+
+    const viewEl = document.getElementById(`view-${targetView}`);
+    if (viewEl) {
+        viewEl.style.display = 'block';
+        // Pequeno atraso para disparar animação CSS
+        setTimeout(() => viewEl.classList.add('active'), 10);
+
+        // Fechar sidebar no mobile após navegar
+        if (window.innerWidth <= 768) {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) sidebar.classList.remove('mobile-open');
+        }
+
+        // Inicializações específicas de cada view
+        if (targetView === 'marketing') Marketing.init();
+        if (targetView === 'dashboard') renderDashboard();
+        if (targetView === 'meu-desempenho') renderMeuDesempenho();
+        if (targetView === 'operacional') renderOperacional();
+        if (targetView === 'clientes') renderClientes();
+        if (targetView === 'rotinas') renderRotinas();
+        if (targetView === 'mensagens') renderMensagens();
+        if (targetView === 'competencias') renderCompetenciasAdmin();
+        if (targetView === 'settings') {
+            initSettingsTabs();
+            const savedTabId = localStorage.getItem('fiscalapp_settings_tab');
+            let activeTab = null;
+            if (savedTabId) {
+                activeTab = document.querySelector(`.settings-tab-btn[data-target="${savedTabId}"]`);
+            }
+            if (!activeTab) activeTab = document.querySelector('.settings-tab-btn.active');
+            if (activeTab) activeTab.click();
+        }
+    }
+}
+window.switchView = switchView;
+
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            // Update active state
-            navItems.forEach(nav => nav.classList.remove('active'));
-            link.classList.add('active');
 
             // Disparar animação sutil no ícone
             const icon = link.querySelector('i');
             if (icon) {
                 icon.classList.add('icon-animate');
-                // Remove a classe após a animação (0.3s) para permitir repetir
                 setTimeout(() => icon.classList.remove('icon-animate'), 300);
             }
 
-            // Switch views globally
             const targetView = link.getAttribute('data-view');
-            localStorage.setItem('fiscalapp_current_view', targetView);
-            document.querySelectorAll('.view-section').forEach(view => {
-                view.style.display = 'none';
-                view.classList.remove('active');
-            });
-
-            const viewEl = document.getElementById(`view-${targetView}`);
-            if (viewEl) {
-                viewEl.style.display = 'block';
-                // Small delay to trigger CSS animation
-                setTimeout(() => viewEl.classList.add('active'), 10);
-
-                // Fechar sidebar no mobile após navegar
-                if (window.innerWidth <= 768) {
-                    const sidebar = document.querySelector('.sidebar');
-                    if (sidebar) sidebar.classList.remove('mobile-open');
-                }
-
-                if (targetView === 'marketing') {
-                    Marketing.init();
-                }
-
-                // Refresh data based on view
-                if (targetView === 'dashboard') renderDashboard();
-                if (targetView === 'meu-desempenho') renderMeuDesempenho();
-                if (targetView === 'operacional') renderOperacional();
-                if (targetView === 'clientes') renderClientes();
-                if (targetView === 'rotinas') renderRotinas();
-                if (targetView === 'mensagens') renderMensagens();
-                if (targetView === 'competencias') renderCompetenciasAdmin();
-                if (targetView === 'settings') {
-                    // Trigger the saved tab, first tab by default, or re-render active
-                    initSettingsTabs();
-                    const savedTabId = localStorage.getItem('fiscalapp_settings_tab');
-                    let activeTab = null;
-                    if (savedTabId) {
-                        activeTab = document.querySelector(`.settings-tab-btn[data-target="${savedTabId}"]`);
-                    }
-                    if (!activeTab) {
-                        activeTab = document.querySelector('.settings-tab-btn.active');
-                    }
-                    if (activeTab) activeTab.click();
-                }
-            }
+            switchView(targetView);
         });
     });
 }
@@ -1631,6 +1640,10 @@ window.formatCompetencia = formatCompetencia;
 
 function openEmployeePerformanceModal(employeeName) {
     currentEmployeeForPerformance = employeeName;
+
+    // Mudar para a nova view de página enviando o nome
+    switchView('employee-performance');
+
     document.getElementById('emp-perf-name').textContent = employeeName;
 
     // Popula o seletor de competência com as disponíveis no sistema
@@ -1642,20 +1655,15 @@ function openEmployeePerformanceModal(employeeName) {
     comps.forEach(c => {
         const option = document.createElement('option');
         option.value = c;
-        if (c === currentCompetencia) option.selected = true; // Pré-selecionar o mês do dashboard
+        if (c === currentCompetencia) option.selected = true;
         option.textContent = formatCompetencia(c);
         compSelect.appendChild(option);
     });
 
-    updateEmployeePerformanceModal();
-
-    const modal = document.getElementById('modal-employee-performance');
-    if (modal) {
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
-    } else {
-        console.error("ERRO: Elemento 'modal-employee-performance' não encontrado no DOM.");
-    }
+    // Pequeno delay para garantir que a view está visível antes de animar/renderizar gráficos
+    setTimeout(() => {
+        updateEmployeePerformanceModal();
+    }, 50);
 }
 window.openEmployeePerformanceModal = openEmployeePerformanceModal;
 
