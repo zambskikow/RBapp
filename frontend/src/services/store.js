@@ -224,6 +224,86 @@ window.Store = {
         return loaded;
     },
 
+    /**
+     * Helper unificado para gerar execuções (tarefas) para uma competência específica.
+     * Centraliza a lógica de cálculo de data e criação de subitems.
+     */
+    async gerarExecucaoParaCompetencia(cliente, rotina, competenciaId) {
+        // Verifica se já existe para evitar duplicatas
+        const existsE = db.execucoes.find(e =>
+            e.clienteId === cliente.id &&
+            e.rotina === rotina.nome &&
+            e.competencia === competenciaId
+        );
+        if (existsE) return null;
+
+        const [y, mStr] = competenciaId.split('-');
+        let execDate = new Date(parseInt(y), parseInt(mStr) - 1, 1);
+
+        // Padrão: Vencimento no mês seguinte à competência
+        execDate.setMonth(execDate.getMonth() + 1);
+
+        let execYStr = execDate.getFullYear();
+        let execMStr = (execDate.getMonth() + 1).toString().padStart(2, '0');
+        let diaStr = (rotina.diaPrazoPadrao || "05").toString().padStart(2, '0');
+        let dateStr = `${execYStr}-${execMStr}-${diaStr}`;
+
+        // Regra especial para Anual (ex: "15/04")
+        if (rotina.frequencia === 'Anual' && rotina.diaPrazoPadrao.toString().includes('/')) {
+            const [diaAnual, mesAnual] = rotina.diaPrazoPadrao.toString().split('/');
+            dateStr = `${y}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
+        }
+
+        const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
+            const text = typeof item === 'string' ? item : item.texto;
+            return { id: idx + 1, texto: text, done: false };
+        });
+
+        try {
+            const resE = await fetch(`${API_BASE}/execucoes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cliente_id: cliente.id,
+                    rotina: rotina.nome,
+                    competencia: competenciaId,
+                    dia_prazo: dateStr,
+                    drive_link: cliente.driveLink || "",
+                    responsavel: rotina.responsavel || "",
+                    subitems: subitems,
+                    eh_pai: true,
+                    feito: false,
+                    iniciado_em: new Date().toISOString().split('T')[0],
+                    checklist_gerado: true
+                })
+            });
+
+            if (resE.ok) {
+                const dataE = await resE.json();
+                const newExec = {
+                    id: dataE[0] ? dataE[0].id : Date.now(),
+                    clienteId: cliente.id,
+                    rotina: rotina.nome,
+                    competencia: competenciaId,
+                    diaPrazo: dateStr,
+                    driveLink: cliente.driveLink || "",
+                    feito: false,
+                    feitoEm: null,
+                    responsavel: rotina.responsavel || "",
+                    iniciadoEm: new Date().toISOString().split('T')[0],
+                    checklistGerado: true,
+                    ehPai: true,
+                    subitems: subitems
+                };
+                db.execucoes.push(newExec);
+                return newExec;
+            }
+        } catch (e) {
+            console.error(`[Store] Erro ao gerar execução para ${rotina.nome} / ${cliente.razaoSocial}:`, e);
+        }
+        return null;
+    },
+
     async checkCompetenciaRollover() {
         if (!db.meses) db.meses = [];
 
@@ -277,21 +357,33 @@ window.Store = {
                 });
 
                 if (res.ok) {
-                    // Ele retorna um array, mapeando de volta
                     const data = await res.json();
                     db.meses.push(data[0]);
                     this.registerLog("Sistema", `Competência virada para ${currentExt}`);
 
-                    // Bootstrapping da engine: Disparar criação de tarefas para todos os clientes
-                    console.log(`[Rollover] Gerando tarefas para ${db.clientes.length} clientes...`);
-                    // Devemos esperar um pouco para garantir que o mês foi inserido localmente
+                    console.log(`[Rollover] Gerando tarefas periódicas para ${db.clientes.length} clientes...`);
+
+                    // Estrutura de replicação unificada para garantir consistência
                     for (let cliente of db.clientes) {
-                        this.engineRotinas(cliente);
+                        const routinesToProcess = cliente.rotinasSelecionadas || [];
+                        for (const rotId of routinesToProcess) {
+                            const rotina = db.rotinasBase.find(r => r.id === rotId);
+                            if (!rotina) continue;
+
+                            // REGRA CRÍTICA: Não replicar rotinas eventuais
+                            if ((rotina.frequencia || '').toLowerCase() === 'eventual') {
+                                console.log(`[Rollover] Ignorando rotina eventual: ${rotina.nome} para cliente ${cliente.razaoSocial}`);
+                                continue;
+                            }
+
+                            await this.gerarExecucaoParaCompetencia(cliente, rotina, currentCompId);
+                        }
                     }
                 }
             } catch (e) {
                 console.error("Erro ao criar nova competência:", e);
             }
+
         } else if (!exists.ativo) {
             // Corrigir caso extremo onde o mês existe, mas não está marcado como ativo
             exists.ativo = true;
@@ -608,77 +700,16 @@ window.Store = {
                     const rotina = db.rotinasBase.find(r => r.id === rotId);
                     if (!rotina) continue;
 
-                    // Só gera daquele responsável 
+                    // Filtro por responsável
                     if (!rotina.responsavel || !rotina.responsavel.includes(username)) continue;
+
+                    // REGRA CRÍTICA: Não replicar rotinas eventuais
                     if ((rotina.frequencia || '').toLowerCase() === 'eventual') continue;
 
-                    // Verifica se já existe
-                    const existsE = db.execucoes.find(e =>
-                        e.clienteId === cliente.id &&
-                        e.rotina === rotina.nome &&
-                        e.competencia === nextCompId
-                    );
-
-                    if (!existsE) {
-                        // Calcular a execução (Competencia + 1)
-                        let execDate = new Date(parseInt(nextY), parseInt(nextMNum) - 1, 1);
-                        execDate.setMonth(execDate.getMonth() + 1);
-                        let execYStr = execDate.getFullYear();
-                        let execMStr = (execDate.getMonth() + 1).toString().padStart(2, '0');
-                        let diaStr = rotina.diaPrazoPadrao.toString().padStart(2, '0');
-                        let dateStr = `${execYStr}-${execMStr}-${diaStr}`;
-
-                        if (rotina.frequencia === 'Anual' && rotina.diaPrazoPadrao.toString().includes('/')) {
-                            const [diaAnual, mesAnual] = rotina.diaPrazoPadrao.toString().split('/');
-                            const anoAtual = new Date().getFullYear();
-                            dateStr = `${anoAtual}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
-                        }
-
-                        const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
-                            const text = typeof item === 'string' ? item : item.texto;
-                            return { id: idx + 1, texto: text, done: false };
-                        });
-
-                        try {
-                            const resE = await fetch(`${API_BASE}/execucoes`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    cliente_id: cliente.id,
-                                    rotina: rotina.nome,
-                                    competencia: nextCompId,
-                                    dia_prazo: dateStr,
-                                    drive_link: cliente.driveLink,
-                                    responsavel: rotina.responsavel,
-                                    subitems: subitems,
-                                    eh_pai: true,
-                                    feito: false,
-                                    iniciado_em: new Date().toISOString().split('T')[0],
-                                    checklist_gerado: true
-                                })
-                            });
-                            if (resE.ok) {
-                                const dataE = await resE.json();
-                                db.execucoes.push({
-                                    id: dataE[0] ? dataE[0].id : Date.now(),
-                                    clienteId: cliente.id,
-                                    rotina: rotina.nome,
-                                    competencia: nextCompId,
-                                    diaPrazo: dateStr,
-                                    driveLink: cliente.driveLink,
-                                    feito: false,
-                                    feitoEm: null,
-                                    responsavel: rotina.responsavel,
-                                    iniciadoEm: new Date().toISOString().split('T')[0],
-                                    checklistGerado: true,
-                                    ehPai: true,
-                                    subitems: subitems
-                                });
-                            }
-                        } catch (e) { console.error("Erro rede ao criar task release", e); }
-                    }
+                    await this.gerarExecucaoParaCompetencia(cliente, rotina, nextCompId);
                 }
             }
+
 
             // Sempre alertar sobre a liberação usando o novo Overlay Full Screen
             if (typeof window.showSuccessOverlay === 'function') {
@@ -735,53 +766,14 @@ window.Store = {
                     for (const rotId of routinesToProcess) {
                         const rotina = db.rotinasBase.find(r => r.id === rotId);
                         if (!rotina) continue;
+
+                        // REGRA CRÍTICA: Não replicar rotinas eventuais
                         if ((rotina.frequencia || '').toLowerCase() === 'eventual') continue;
 
-                        // Ignora já existentes (não deveria ter, mas bom garantir)
-                        const existsE = db.execucoes.find(e =>
-                            e.clienteId === cliente.id &&
-                            e.rotina === rotina.nome &&
-                            e.competencia === anoMesId
-                        );
-                        if (existsE) continue;
-
-                        let execDate = new Date(parseInt(y), monthIndex, 1);
-                        execDate.setMonth(execDate.getMonth() + 1);
-                        let execYStr = execDate.getFullYear();
-                        let execMStr = (execDate.getMonth() + 1).toString().padStart(2, '0');
-                        let diaStr = rotina.diaPrazoPadrao.toString().padStart(2, '0');
-                        let dateStr = `${execYStr}-${execMStr}-${diaStr}`;
-
-                        if (rotina.frequencia === 'Anual' && rotina.diaPrazoPadrao.toString().includes('/')) {
-                            const [diaAnual, mesAnual] = rotina.diaPrazoPadrao.toString().split('/');
-                            const anoAtual = new Date().getFullYear();
-                            dateStr = `${anoAtual}-${mesAnual.padStart(2, '0')}-${diaAnual.padStart(2, '0')}`;
-                        }
-
-                        const subitems = (rotina.checklistPadrao || []).map((item, idx) => {
-                            const text = typeof item === 'string' ? item : item.texto;
-                            return { id: idx + 1, texto: text, done: false };
-                        });
-
-                        await fetch(`${API_BASE}/execucoes`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                cliente_id: cliente.id, rotina: rotina.nome, competencia: anoMesId,
-                                dia_prazo: dateStr, drive_link: cliente.driveLink, responsavel: rotina.responsavel,
-                                subitems: subitems, eh_pai: true, feito: false,
-                                iniciado_em: new Date().toISOString().split('T')[0], checklist_gerado: true
-                            })
-                        }).then(r => r.json()).then(dataE => {
-                            db.execucoes.push({
-                                id: dataE[0] ? dataE[0].id : Date.now(),
-                                clienteId: cliente.id, rotina: rotina.nome, competencia: anoMesId, diaPrazo: dateStr, driveLink: cliente.driveLink,
-                                feito: false, feitoEm: null, responsavel: rotina.responsavel, iniciadoEm: new Date().toISOString().split('T')[0],
-                                checklistGerado: true, ehPai: true, subitems: subitems
-                            });
-                        }).catch(e => console.error(e));
+                        await this.gerarExecucaoParaCompetencia(cliente, rotina, anoMesId);
                     }
                 }
+
                 hideLoading();
                 return true;
             }
