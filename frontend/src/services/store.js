@@ -313,8 +313,8 @@ window.Store = {
 
     // ... resto das estruturas da função original
     async registerLog(action, details) {
-        const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
-        const permissao = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.permissao : "Automático";
+        const username = (typeof window.LOGGED_USER !== 'undefined' && window.LOGGED_USER) ? window.LOGGED_USER.nome : "Sistema";
+        const permissao = (typeof window.LOGGED_USER !== 'undefined' && window.LOGGED_USER) ? window.LOGGED_USER.permissao : "Automático";
 
         try {
             await fetch(`${API_BASE}/logs`, {
@@ -471,7 +471,7 @@ window.Store = {
     // Em uma restruturação profunda real, teríamos um app.put('/api/execucoes/{id}') no Python
     async toggleExecucaoFeito(id, isFeito) {
         const ex = db.execucoes.find(e => e.id === id);
-        const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
+        const username = (typeof window.LOGGED_USER !== 'undefined' && window.LOGGED_USER) ? window.LOGGED_USER.nome : "Sistema";
         ex.feito = isFeito;
         ex.feitoEm = isFeito ? new Date().toISOString().split('T')[0] : null;
         ex.baixadoPor = isFeito ? username : null;
@@ -512,7 +512,7 @@ window.Store = {
 
     async updateChecklist(execId, subId, isDone) {
         const ex = db.execucoes.find(e => e.id === execId);
-        const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
+        const username = (typeof window.LOGGED_USER !== 'undefined' && window.LOGGED_USER) ? window.LOGGED_USER.nome : "Sistema";
         const sub = ex.subitems.find(s => s.id === subId);
         if (sub) sub.done = isDone;
 
@@ -550,7 +550,7 @@ window.Store = {
     },
 
     async checkEmployeeCompetenciaCompletion(competenciaId) {
-        const username = (typeof LOGGED_USER !== 'undefined' && LOGGED_USER) ? LOGGED_USER.nome : "Sistema";
+        const username = (typeof window.LOGGED_USER !== 'undefined' && window.LOGGED_USER) ? window.LOGGED_USER.nome : "Sistema";
 
         // Espelhar exatamente o que o usuário vê na interface (ignora órfãos)
         // Usar Store. ao invés de this. para evitar problemas de contexto (this undefined) em disparos assíncronos
@@ -561,10 +561,9 @@ window.Store = {
         }
 
         const incompletas = execsUser.filter(e => !e.feito);
-        console.log(`[Competencia Check] ${username} - Total: ${execsUser.length}, Incompletas: ${incompletas.length}`);
 
         if (incompletas.length === 0) {
-            console.log(`[Early Release] Iniciando liberação para ${username} na competência ${competenciaId}...`);
+            console.log(`[Early Release] ${username} concluiu todas as tarefas da competência ${competenciaId}! Liberando próxima...`);
 
             // Calcular próxima competência
             let [y, m] = competenciaId.split('-');

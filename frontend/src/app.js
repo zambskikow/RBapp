@@ -65,6 +65,7 @@ async function initApp() {
         if (auth) {
             console.log("Sessão recuperada com sucesso para:", auth.nome);
             LOGGED_USER = auth;
+            window.LOGGED_USER = auth;
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('main-app-container').style.display = 'flex';
 
@@ -827,6 +828,7 @@ async function handleLogin(e) {
     const auth = await Store.login(user, pass);
     if (auth) {
         LOGGED_USER = auth;
+        window.LOGGED_USER = auth;
         document.getElementById('login-overlay').classList.remove('active');
         setTimeout(() => {
             document.getElementById('login-overlay').style.display = 'none';
@@ -886,6 +888,7 @@ function handleLogout() {
 
     setTimeout(() => {
         LOGGED_USER = null;
+        window.LOGGED_USER = null;
         localStorage.removeItem('fiscalapp_session');
         window.location.reload();
     }, 850); // Um pouco mais que a animação CSS (800ms)
