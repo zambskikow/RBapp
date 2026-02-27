@@ -1,5 +1,5 @@
-:root {
-    /* Branding Padr„o (Ser· sobrescrito pelo JS) - Restaurando Roxo Premium */
+Ôªø:root {
+    /* Branding Padr√£o (Ser√° sobrescrito pelo JS) - Restaurando Roxo Premium */
     --primary: #6366F1;
     --primary-light: #818cf8;
     --primary-dark: #4f46e5;
@@ -15,7 +15,7 @@
     --danger: #EF4444;
     --danger-bg: rgba(239, 68, 68, 0.15);
 
-    /* Dimensıes Globais */
+    /* Dimens√µes Globais */
     --sidebar-width: 280px;
     --sidebar-collapsed-width: 80px;
     --topbar-height: 70px;
@@ -24,7 +24,7 @@
     --radius-sm: 8px;
 }
 
-/* TEMA GLASS (Padr„o Premium) */
+/* TEMA GLASS (Padr√£o Premium) */
 body.theme-glass,
 :root:not([class*="theme-"]) {
     --bg-base: #0B0F19;
@@ -44,7 +44,7 @@ body.theme-glass,
     --scrollbar-thumb-hover: var(--primary-light);
 }
 
-/* TEMA DARK (SÛlido Profissional) */
+/* TEMA DARK (S√≥lido Profissional) */
 body.theme-dark {
     --bg-base: #0f172a;
     --bg-panel: #1e293b;
@@ -98,7 +98,7 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Utilit·rios Glassmorphism */
+/* Utilit√°rios Glassmorphism */
 .glass-panel {
     background: var(--bg-panel);
     backdrop-filter: blur(20px);
@@ -294,7 +294,7 @@ body {
     transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* AnimaÁ„o para erro no login */
+/* Anima√ß√£o para erro no login */
 @keyframes shake {
 
     0%,
@@ -370,7 +370,7 @@ body {
     overflow: hidden;
 }
 
-/* NavegaÁ„o da Barra Lateral */
+/* Navega√ß√£o da Barra Lateral */
 .sidebar {
     width: var(--sidebar-width);
     display: flex;
@@ -524,7 +524,7 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* InteraÁ„o do Perfil (Clic·vel) */
+/* Intera√ß√£o do Perfil (Clic√°vel) */
 .user-profile {
     cursor: pointer;
     transition: background 0.3s ease, transform 0.2s ease;
@@ -532,7 +532,7 @@ body {
     position: relative;
     padding: 10px;
     margin: 0.5rem -10px 0;
-    /* Compensa o padding da sidebar para crescer a ·rea clic·vel se necess·rio, ou usar 0 */
+    /* Compensa o padding da sidebar para crescer a √°rea clic√°vel se necess√°rio, ou usar 0 */
     display: flex;
     align-items: center;
     gap: 12px;
@@ -587,12 +587,12 @@ body {
     visibility: visible;
 }
 
-/* Classe din‚mica para jogar o perfil pro topo do Blur */
+/* Classe din√¢mica para jogar o perfil pro topo do Blur */
 .uac-on-top {
     z-index: 999999 !important;
 }
 
-/* User Account Dropdown (ConfiguraÁıes da Conta) */
+/* User Account Dropdown (Configura√ß√µes da Conta) */
 .user-account-dropdown {
     position: absolute;
     bottom: 80px;
@@ -764,7 +764,7 @@ body {
     color: #ef4444;
 }
 
-/* Sino de NotificaÁ„o na Barra Lateral */
+/* Sino de Notifica√ß√£o na Barra Lateral */
 .sidebar-notification {
     margin-left: auto;
     background: rgba(255, 255, 255, 0.05);
@@ -779,7 +779,7 @@ body {
     /* Esconder quando colapsado para evitar quebra de layout */
 }
 
-/* AnimaÁ„o de Tremor */
+/* Anima√ß√£o de Tremor */
 @keyframes bell-shake {
     0% {
         transform: rotate(0);
@@ -819,7 +819,7 @@ body {
     color: var(--warning) !important;
 }
 
-/* AnimaÁ„o do Õcone da Barra Lateral - Efeito Pop */
+/* Anima√ß√£o do √çcone da Barra Lateral - Efeito Pop */
 @keyframes icon-pop {
     0% {
         transform: scale(1);
@@ -838,7 +838,7 @@ body {
     animation: icon-pop 0.3s ease-out;
 }
 
-/* AnimaÁ„o do Õcone de Salvar */
+/* Anima√ß√£o do √çcone de Salvar */
 @keyframes save-pulse {
     0% {
         transform: scale(1);
@@ -858,7 +858,7 @@ body {
     color: var(--success) !important;
 }
 
-/* ¡rea de Conte˙do Principal */
+/* √Årea de Conte√∫do Principal */
 .main-content {
     flex: 1;
     display: flex;
@@ -870,7 +870,7 @@ body {
     width: 100%;
 }
 
-/* Barra de CabeÁalho Superior */
+/* Barra de Cabe√ßalho Superior */
 .topbar {
     height: var(--topbar-height);
     flex-shrink: 0;
@@ -1006,10 +1006,10 @@ body {
     display: inline-block;
 }
 
-/* Estilos Gerais de VisualizaÁıes */
+/* Estilos Gerais de Visualiza√ß√µes */
 .view-section {
     padding: 1.5rem;
-    /* Ajustado para ser mais flexÌvel */
+    /* Ajustado para ser mais flex√≠vel */
     animation: fadeAndSlideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
@@ -1031,7 +1031,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    /* Alinhado ao topo para evitar desalinhamento com subtÌtulo */
+    /* Alinhado ao topo para evitar desalinhamento com subt√≠tulo */
     flex-wrap: wrap;
     /* Permite quebrar em telas menores */
     gap: 1.5rem;
@@ -1050,7 +1050,7 @@ body {
 .subtitle {
     color: var(--text-muted);
     font-size: 0.95rem;
-    /* Ajustado para eleg‚ncia */
+    /* Ajustado para eleg√¢ncia */
     max-width: 400px;
 }
 
@@ -1109,7 +1109,7 @@ body {
     justify-content: center;
     align-items: center;
     font-size: 1.3rem;
-    /* Õcone um pouco maior */
+    /* √çcone um pouco maior */
     background: rgba(99, 102, 241, 0.15);
     color: var(--primary-light);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -1156,7 +1156,7 @@ body {
     box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
 }
 
-/* Layouts de Gr·ficos e Dashboards */
+/* Layouts de Gr√°ficos e Dashboards */
 .charts-grid {
     display: grid;
     grid-template-columns: minmax(300px, 1fr) 2fr;
@@ -1184,7 +1184,7 @@ body {
     align-items: center;
 }
 
-/* EstilizaÁ„o de Tabelas */
+/* Estiliza√ß√£o de Tabelas */
 .table-header-action {
     display: flex;
     justify-content: space-between;
@@ -1377,57 +1377,63 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.65);
+    width: 100vw;
+    height: 100vh;
+    background: rgba(11, 15, 25, 0.7);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 999;
     opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .modal-overlay.active {
     opacity: 1;
-    pointer-events: auto;
-}
-
-.modal-content {
-    width: 90%;
-    max-width: 680px;
-    transform: translateY(30px) scale(0.95);
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    display: flex;
-    flex-direction: column;
-    max-height: 90vh;
-    /* RestriÁ„o responsiva */
+    visibility: visible;
 }
 
 .modal-overlay.active .modal-content {
     transform: translateY(0) scale(1);
 }
 
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+    padding: 2rem;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .modal-header {
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid var(--border-glass);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(0, 0, 0, 0.2);
+    margin-bottom: 1.5rem;
 }
 
 .modal-header h2 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     color: var(--text-main);
 }
 
 .highlight-text {
-    color: var(--primary-light);
+    background: linear-gradient(135deg, var(--primary-light), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .close-btn {
@@ -1663,7 +1669,7 @@ body {
     background: rgba(0, 0, 0, 0.2);
 }
 
-/* Botıes Base */
+/* Bot√µes Base */
 .btn {
     padding: 0.65rem 1.25rem;
     border-radius: var(--radius-sm);
@@ -1739,7 +1745,7 @@ body {
     border-radius: 6px;
 }
 
-/* UX dos Botıes de AÁ„o Global */
+/* UX dos Bot√µes de A√ß√£o Global */
 .btn-action-container {
     display: flex;
     gap: 12px;
@@ -1756,7 +1762,7 @@ body {
     animation: subtle-shake 0.4s ease-in-out;
 }
 
-/* Salto sutil para Ìcones genÈricos (que n„o s„o pen nem trash) */
+/* Salto sutil para √≠cones gen√©ricos (que n√£o s√£o pen nem trash) */
 .btn:hover i:not(.fa-pen):not(.fa-trash) {
     animation: subtle-jump 0.4s ease-in-out;
 }
@@ -1917,7 +1923,7 @@ body {
     background: transparent;
 }
 
-/* Formul·rios e Entradas */
+/* Formul√°rios e Entradas */
 .form-group {
     margin-bottom: 1.2rem;
 }
@@ -1958,7 +1964,7 @@ body {
    GLOBAL SETTINGS HUB (Admin Panel)
    ========================================== */
 
-/* Estilos para o Grid Premium de Permissıes (Roles) */
+/* Estilos para o Grid Premium de Permiss√µes (Roles) */
 .permissions-premium-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -2078,7 +2084,7 @@ body {
     box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
 }
 
-/* Cart„o Perigoso (Admin) */
+/* Cart√£o Perigoso (Admin) */
 .danger-card input:checked~.perm-card-content {
     background: rgba(239, 68, 68, 0.1);
     border-color: var(--danger);
@@ -2151,12 +2157,12 @@ body {
     display: block;
 }
 
-/* AnimaÁıes gerais */
+/* Anima√ß√µes gerais */
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
 }
 
-/* AnimaÁ„o de Exclus„o */
+/* Anima√ß√£o de Exclus√£o */
 .row-fade-out {
     animation: rowFadeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
     pointer-events: none;
@@ -2205,7 +2211,7 @@ body {
 }
 
 /* ==========================================
-   PRINT LAYOUT (RelatÛrios PDF)
+   PRINT LAYOUT (Relat√≥rios PDF)
    ========================================== */
 @media print {
     body {
@@ -2325,14 +2331,14 @@ body {
    KPI Responsivo - Container com scroll
    ============================================= */
 
-/* Container que permite scroll horizontal quando os KPIs n„o cabem */
+/* Container que permite scroll horizontal quando os KPIs n√£o cabem */
 .kpi-scroll-row {
     display: flex;
     gap: 0.6rem;
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 0.3rem;
-    /* EspaÁo para scrollbar sutil */
+    /* Espa√ßo para scrollbar sutil */
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
@@ -2350,7 +2356,7 @@ body {
     border-radius: 4px;
 }
 
-/* Cada KPI dentro do container scroll·vel */
+/* Cada KPI dentro do container scroll√°vel */
 .kpi-chip {
     flex: 0 0 auto;
     background: rgba(15, 23, 42, 0.6);
@@ -2432,7 +2438,7 @@ body {
     min-width: 140px;
 }
 
-/* --- MÛdulo de Marketing Profissional --- */
+/* --- M√≥dulo de Marketing Profissional --- */
 
 .calendar-grid {
     display: grid;
@@ -2535,7 +2541,7 @@ body {
 
 
 /* =====/* =====================================================================
-   PAINEL DE CONTROLE (SETTINGS) & SETTINGS MENU (FLUIDO E ⁄NICA LINHA)
+   PAINEL DE CONTROLE (SETTINGS) & SETTINGS MENU (FLUIDO E √öNICA LINHA)
    ===================================================================== */
 .settings-tabs-header {
     width: 100%;
@@ -2547,19 +2553,19 @@ body {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    /* MantÈm numa ˙nica linha sempre */
+    /* Mant√©m numa √∫nica linha sempre */
     gap: 0.5rem;
     justify-content: flex-start;
     align-items: center;
     overflow-x: auto;
-    /* Permite rolar horizontalmente se n„o couber tudo */
+    /* Permite rolar horizontalmente se n√£o couber tudo */
     padding-bottom: 0.2rem;
-    /* espaÁo pequeno pra barra caso apareÁa */
+    /* espa√ßo pequeno pra barra caso apare√ßa */
     scrollbar-width: thin;
     /* Firefox */
 }
 
-/* Scroll horizontal customizado ultra-fino e moderno para o menu de configuraÁıes */
+/* Scroll horizontal customizado ultra-fino e moderno para o menu de configura√ß√µes */
 .settings-menu::-webkit-scrollbar {
     height: 4px;
     /* Barra fina */
@@ -2580,9 +2586,9 @@ body {
 
 .settings-tab-btn {
     flex: 0 0 auto;
-    /* N„o cresce e sÛ encolhe se necess·rio, baseado no texto, mas mantendo o scroll */
+    /* N√£o cresce e s√≥ encolhe se necess√°rio, baseado no texto, mas mantendo o scroll */
     min-width: max-content;
-    /* Impede que uma ˙nica palavra quebre */
+    /* Impede que uma √∫nica palavra quebre */
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-muted);
@@ -2607,7 +2613,7 @@ body {
     color: white;
 }
 
-/* AnimaÁ„o Premium Global de Lixeira */
+/* Anima√ß√£o Premium Global de Lixeira */
 @keyframes trash-bounce {
     0% {
         transform: translateY(0) rotate(0deg);
@@ -2636,7 +2642,7 @@ button:hover i.fa-trash,
 .text-danger:hover i.fa-trash {
     animation: trash-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     display: inline-block;
-    /* Garantir que a transformaÁ„o se aplique */
+    /* Garantir que a transforma√ß√£o se aplique */
 }
 
 .settings-tab-btn.active {
@@ -2647,14 +2653,14 @@ button:hover i.fa-trash,
 
 .nav-divider-v {
     flex-shrink: 0;
-    /* O divisor n„o encolhe */
+    /* O divisor n√£o encolhe */
     width: 1px;
     height: 24px;
     background: var(--border-glass-light);
     margin: 0 0.5rem;
 }
 
-/* Categoria de navegaÁ„o dentro do menu de configuraÁıes */
+/* Categoria de navega√ß√£o dentro do menu de configura√ß√µes */
 .nav-category {
     font-size: 0.75rem;
     font-weight: 700;
@@ -2663,9 +2669,9 @@ button:hover i.fa-trash,
     letter-spacing: 0.5px;
     padding: 0.6rem 1rem;
     flex-shrink: 0;
-    /* N„o encolhe */
+    /* N√£o encolhe */
     white-space: nowrap;
-    /* Garante que o texto n„o quebre */
+    /* Garante que o texto n√£o quebre */
 }
 
 
@@ -2702,7 +2708,7 @@ button:hover i.fa-trash,
 
     body {
         overflow: auto;
-        /* Permitir scroll no body se necess·rio */
+        /* Permitir scroll no body se necess√°rio */
     }
 
     .app-container {
@@ -2727,7 +2733,7 @@ button:hover i.fa-trash,
 
     .sidebar.collapsed {
         width: var(--sidebar-width);
-        /* N„o colapsar no mobile, apenas esconder */
+        /* N√£o colapsar no mobile, apenas esconder */
     }
 
     .mobile-only-btn {
@@ -2751,7 +2757,7 @@ button:hover i.fa-trash,
 
     .date-display {
         display: none !important;
-        /* Esconder data no mobile para ganhar espaÁo */
+        /* Esconder data no mobile para ganhar espa√ßo */
     }
 
     .topbar-actions {
@@ -2773,7 +2779,7 @@ button:hover i.fa-trash,
         align-items: center;
     }
 
-    /* Grids e Layout de Conte˙do - ForÁar Resete */
+    /* Grids e Layout de Conte√∫do - For√ßar Resete */
     .view-section {
         padding: 1rem !important;
     }
@@ -2815,7 +2821,7 @@ button:hover i.fa-trash,
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Ocultar barra de rolagem em scroll-row para estÈtica premium */
+    /* Ocultar barra de rolagem em scroll-row para est√©tica premium */
     .kpi-scroll-row::-webkit-scrollbar {
         height: 4px;
     }
@@ -2833,7 +2839,7 @@ button:hover i.fa-trash,
     }
 }
 
-/* AnimaÁ„o de Desligar / Encerrar */
+/* Anima√ß√£o de Desligar / Encerrar */
 .shutdown-overlay {
     position: fixed;
     top: 0;
@@ -2916,7 +2922,7 @@ button:hover i.fa-trash,
     }
 }
 
-/* ReordenaÁ„o de Menu Arrastar e Soltar */
+/* Reordena√ß√£o de Menu Arrastar e Soltar */
 .reorder-list {
     display: flex;
     flex-direction: column;
@@ -3152,7 +3158,7 @@ button:hover i.fa-trash,
     }
 }
 
-/* NotificaÁıes Toast Globais - Glassmorphism Premium */
+/* Notifica√ß√µes Toast Globais - Glassmorphism Premium */
 .toast-container {
     position: fixed;
     top: 2rem;
@@ -3330,7 +3336,7 @@ button:hover i.fa-trash,
 
 .data-table {
     min-width: 600px;
-    /* Garante que a tabela n„o esmague em mobile */
+    /* Garante que a tabela n√£o esmague em mobile */
 }
 
 
@@ -3500,4 +3506,3 @@ button:hover i.fa-trash,
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(16, 185, 129, 0.2);
     border-color: rgba(16, 185, 129, 0.3);
 }
-

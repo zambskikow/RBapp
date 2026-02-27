@@ -4504,16 +4504,12 @@ function openTaskModal(taskId) {
 
 
     const isLate = task.semaforo === 'red';
-
     const isToday = task.semaforo === 'yellow' && task.statusAuto === 'Hoje';
-
     const deadBadge = isLate ? 'atrasado' : (isToday ? 'hoje' : 'noprazo');
-
-
 
     document.getElementById('modal-prazo').innerHTML = `<span class="status-badge ${deadBadge}">${formatDate(task.diaPrazo)}</span>`;
 
-
+    const isAdmin = LOGGED_USER && ['gerente', 'adm', 'admin', 'supervisor'].includes(LOGGED_USER.permissao.toLowerCase());
 
     const statusBadge = task.feito
         ? `<span class="status-badge concluido"><i class="fa-solid fa-check"></i> Finalizado</span>`
@@ -4523,32 +4519,18 @@ function openTaskModal(taskId) {
 
     document.getElementById('modal-status').innerHTML = statusBadge + lockIcon;
 
-
-
     // Renderizar Subitens
-
     renderChecklist();
 
-
-
     const overlay = document.getElementById('task-modal');
-
     overlay.classList.add('active');
 
-
-
     // Vinculando o Toggle principal dentro do modal
-
     const mainToggle = document.getElementById('modal-done-toggle');
-
     const newToggle = mainToggle.cloneNode(true);
-
     mainToggle.parentNode.replaceChild(newToggle, mainToggle);
 
-
-
     newToggle.checked = task.feito;
-    const isAdmin = LOGGED_USER && ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(LOGGED_USER.permissao);
 
     // Bloquear toggle global se concluído e NÃO for admin/supervisor
     if (task.feito && !isAdmin) {
@@ -4604,7 +4586,7 @@ function renderChecklist() {
 
     if (!currentOpenTask) return;
 
-    const task = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
+    const task = Store.getExecucoesWithDetails('All').find(t => t.id === currentOpenTask.id);
 
     currentOpenTask = task;
 
@@ -4632,7 +4614,7 @@ function renderChecklist() {
 
 
 
-        const isAdmin = LOGGED_USER && ['Gerente', 'Adm', 'Admin', 'Supervisor'].includes(LOGGED_USER.permissao);
+        const isAdmin = LOGGED_USER && ['gerente', 'adm', 'admin', 'supervisor'].includes(LOGGED_USER.permissao.toLowerCase());
         const isLocked = task.feito && !isAdmin;
 
         div.innerHTML = `
@@ -4666,7 +4648,7 @@ function renderChecklist() {
 
             // Re-sincronizar cabeçalho se o estado mudou devido a todos os checks
 
-            const refreshedTask = Store.getExecucoesWithDetails().find(t => t.id === currentOpenTask.id);
+            const refreshedTask = Store.getExecucoesWithDetails('All').find(t => t.id === currentOpenTask.id);
 
             if (!wasDone && refreshedTask.feito) {
                 fireConfetti();
