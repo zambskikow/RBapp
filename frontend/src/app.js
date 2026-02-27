@@ -55,7 +55,7 @@ async function initApp() {
 
 
     // Check session storage for session
-    const storedSession = localStorage.getItem('fiscalapp_session');
+    const storedSession = sessionStorage.getItem('fiscalapp_session');
 
     if (storedSession) {
 
@@ -159,7 +159,7 @@ async function initApp() {
             }
         } else {
             console.warn("Sessão storage encontrada, mas inválida no banco de dados.");
-            localStorage.removeItem('fiscalapp_session');
+            sessionStorage.removeItem('fiscalapp_session');
             // Sem sessão válida: ocultar splash para exibir a tela de login
             const splash = document.getElementById('app-splash-screen');
             if (splash) {
@@ -865,7 +865,7 @@ async function handleLogin(e) {
                 if (firstNav) firstNav.click();
             }
 
-            localStorage.setItem('fiscalapp_session', auth.id);
+            sessionStorage.setItem('fiscalapp_session', auth.id);
 
             // Execute Auto-Backup if enabled
             checkAndRunAutoBackup();
@@ -889,7 +889,7 @@ function handleLogout() {
     setTimeout(() => {
         LOGGED_USER = null;
         window.LOGGED_USER = null;
-        localStorage.removeItem('fiscalapp_session');
+        sessionStorage.removeItem('fiscalapp_session');
         window.location.reload();
     }, 850); // Um pouco mais que a animação CSS (800ms)
 }
