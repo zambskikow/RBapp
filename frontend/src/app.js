@@ -1926,9 +1926,19 @@ function renderOperacional() {
     // Adicionar rotinas que não possuem tarefas no momento (para manter visibilidade se não houver busca)
     if (!searchVal) {
         const allClients = Store.getData().clientes;
-        Store.getData().rotinasBase.forEach(rb => {
+        const allRotinas = Store.getData().rotinasBase;
+
+        console.log(`[Visibilidade] Iniciando checagem para ${allRotinas.length} rotinas e ${allClients.length} clientes...`);
+
+        allRotinas.forEach(rb => {
             // REGRA: Só mostrar a rotina no painel se houver pelo menos 1 cliente vinculado a ela
-            const temVinculo = allClients.some(c => (c.rotinasSelecionadas || []).includes(rb.id));
+            const vinculados = allClients.filter(c => (c.rotinasSelecionadas || []).includes(rb.id));
+            const temVinculo = vinculados.length > 0;
+
+            if (rb.frequencia === 'Eventual') {
+                console.log(`[Visibilidade] Rotina Eventual: "${rb.nome}" (ID: ${rb.id}), Clientes Vinculados: ${vinculados.length}`);
+            }
+
             if (!temVinculo) return;
 
             if (!groupOrder.includes(rb.nome)) groupOrder.push(rb.nome);
