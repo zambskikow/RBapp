@@ -4943,83 +4943,6 @@ function renderAuditoria() {
 
 
 
-function downloadAuditoriaCSV() {
-
-    const logs = [...Store.getData().logs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    if (logs.length === 0) {
-
-        showNotify("Atenção", "Não há dados para exportar.", "info");
-
-        return;
-
-    }
-
-
-
-    // Cabeçalho CSV
-
-    let csvContent = "Data/Hora,Usuário,Permissão,Ação,Detalhes\n";
-
-
-
-    logs.forEach(l => {
-
-        const d = new Date(l.timestamp);
-
-        const formatData = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR');
-
-
-
-        // Escapar aspas e vírgulas
-
-        const escUser = (l.user_name || "").replace(/"/g, '""');
-
-        const escPerm = (l.permissao || "").replace(/"/g, '""');
-
-        const escAction = (l.action || "").replace(/"/g, '""');
-
-        const escDetails = (l.details || "").replace(/"/g, '""');
-
-
-
-        csvContent += `"${formatData}","${escUser}","${escPerm}","${escAction}","${escDetails}"\n`;
-
-    });
-
-
-
-    // Criar URL Blob e disparar download
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-
-    const url = URL.createObjectURL(blob);
-
-
-
-    const link = document.createElement("a");
-
-    link.setAttribute("href", url);
-
-    link.setAttribute("download", `auditoria_fiscalapp_${new Date().toISOString().split('T')[0]}.csv`);
-
-    link.style.visibility = 'hidden';
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-
-
-
-    Store.registerLog("Backup de Segurança", "Realizou o download manual da base de dados");
-
-    Store.saveToStorage();
-
-}
-
-
 
 function handleRestoreBackup(e) {
     const file = e.target.files[0];
@@ -5807,8 +5730,116 @@ function initUserAccountMenu() {
 
 // Vinculação Global (Scoping Fix)
 window.renderAdminPanel = renderAdminPanel;
-window.openCargoModal = openCargoModal;
-window.closeCargoModal = closeCargoModal;
-window.handleSaveCargo = handleSaveCargo;
-window.deleteCargoUI = deleteCargoUI;
-window.renderBackupView = renderBackupView;
+
+// --- Auto-Expose Globals para Vite ---
+if (typeof window !== "undefined") window.initApp = initApp;
+if (typeof window !== "undefined") window.downloadBackupFile = downloadBackupFile;
+if (typeof window !== "undefined") window.downloadAuditoriaCSV = downloadAuditoriaCSV;
+if (typeof window !== "undefined") window.restoreBackupFile = restoreBackupFile;
+if (typeof window !== "undefined") window.handleLogin = handleLogin;
+if (typeof window !== "undefined") window.handleLogout = handleLogout;
+if (typeof window !== "undefined") window.applyUserPermissions = applyUserPermissions;
+if (typeof window !== "undefined") window.applyBranding = applyBranding;
+if (typeof window !== "undefined") window.setupNavigation = setupNavigation;
+if (typeof window !== "undefined") window.populateDashboardSelects = populateDashboardSelects;
+if (typeof window !== "undefined") window.renderDashboard = renderDashboard;
+if (typeof window !== "undefined") window.renderHealthChart = renderHealthChart;
+if (typeof window !== "undefined") window.renderTeamProductivityChart = renderTeamProductivityChart;
+if (typeof window !== "undefined") window.renderSectorLoadChart = renderSectorLoadChart;
+if (typeof window !== "undefined") window.renderMeuDesempenho = renderMeuDesempenho;
+if (typeof window !== "undefined") window.formatCompetencia = formatCompetencia;
+if (typeof window !== "undefined") window.openEmployeePerformanceModal = openEmployeePerformanceModal;
+if (typeof window !== "undefined") window.updateEmployeePerformanceModal = updateEmployeePerformanceModal;
+if (typeof window !== "undefined") window.renderEmployeeStatusChart = renderEmployeeStatusChart;
+if (typeof window !== "undefined") window.renderEmployeeProductionChart = renderEmployeeProductionChart;
+if (typeof window !== "undefined") window.closeEmployeePerformanceModal = closeEmployeePerformanceModal;
+if (typeof window !== "undefined") window.renderOperacional = renderOperacional;
+if (typeof window !== "undefined") window.renderClientes = renderClientes;
+if (typeof window !== "undefined") window.showLoading = showLoading;
+if (typeof window !== "undefined") window.hideLoading = hideLoading;
+if (typeof window !== "undefined") window.showSuccessOverlay = showSuccessOverlay;
+if (typeof window !== "undefined") window.hideSuccessOverlay = hideSuccessOverlay;
+if (typeof window !== "undefined") window.toggleListVisibility = toggleListVisibility;
+if (typeof window !== "undefined") window.setupClientCheckboxes = setupClientCheckboxes;
+if (typeof window !== "undefined") window.openClientDetail = openClientDetail;
+if (typeof window !== "undefined") window.closeClientDetail = closeClientDetail;
+if (typeof window !== "undefined") window.handleAddClient = handleAddClient;
+if (typeof window !== "undefined") window.generateRandomClientCode = generateRandomClientCode;
+if (typeof window !== "undefined") window.toggleClientStatus = toggleClientStatus;
+if (typeof window !== "undefined") window.renderEquipe = renderEquipe;
+if (typeof window !== "undefined") window.openEquipeModal = openEquipeModal;
+if (typeof window !== "undefined") window.openEditEquipeModal = openEditEquipeModal;
+if (typeof window !== "undefined") window.closeEquipeModal = closeEquipeModal;
+if (typeof window !== "undefined") window.handleAddFuncionario = handleAddFuncionario;
+if (typeof window !== "undefined") window.showConfirm = showConfirm;
+if (typeof window !== "undefined") window.handleDeleteFuncionario = handleDeleteFuncionario;
+if (typeof window !== "undefined") window.deleteFuncionarioDirectly = deleteFuncionarioDirectly;
+if (typeof window !== "undefined") window.deleteCargo = deleteCargo;
+if (typeof window !== "undefined") window.toggleFuncionarioStatus = toggleFuncionarioStatus;
+if (typeof window !== "undefined") window.renderRotinas = renderRotinas;
+if (typeof window !== "undefined") window.openRotinaModal = openRotinaModal;
+if (typeof window !== "undefined") window.renderRoutineClientsGrid = renderRoutineClientsGrid;
+if (typeof window !== "undefined") window.closeRotinaModal = closeRotinaModal;
+if (typeof window !== "undefined") window.handleAddChecklistItem = handleAddChecklistItem;
+if (typeof window !== "undefined") window.removeChecklistItem = removeChecklistItem;
+if (typeof window !== "undefined") window.renderChecklistBuilderPreview = renderChecklistBuilderPreview;
+if (typeof window !== "undefined") window.handleSaveRotina = handleSaveRotina;
+if (typeof window !== "undefined") window.handleDeleteRotina = handleDeleteRotina;
+if (typeof window !== "undefined") window.renderCompetenciasAdmin = renderCompetenciasAdmin;
+if (typeof window !== "undefined") window.closeDeleteCompetenciaModal = closeDeleteCompetenciaModal;
+if (typeof window !== "undefined") window.renderMenuReorderList = renderMenuReorderList;
+if (typeof window !== "undefined") window._renderReorderItems = _renderReorderItems;
+if (typeof window !== "undefined") window._updateReorderBadgesAndButtons = _updateReorderBadgesAndButtons;
+if (typeof window !== "undefined") window._setupDragBehavior = _setupDragBehavior;
+if (typeof window !== "undefined") window._applyAndSaveMenuOrder = _applyAndSaveMenuOrder;
+if (typeof window !== "undefined") window.saveMenuOrder = saveMenuOrder;
+if (typeof window !== "undefined") window.loadSetoresSelects = loadSetoresSelects;
+if (typeof window !== "undefined") window.renderSetoresListPreview = renderSetoresListPreview;
+if (typeof window !== "undefined") window.openSetoresModal = openSetoresModal;
+if (typeof window !== "undefined") window.closeSetoresModal = closeSetoresModal;
+if (typeof window !== "undefined") window.handleAddSetor = handleAddSetor;
+if (typeof window !== "undefined") window.handleDeleteSetor = handleDeleteSetor;
+if (typeof window !== "undefined") window.updateMensagensBadges = updateMensagensBadges;
+if (typeof window !== "undefined") window.initInboxTabs = initInboxTabs;
+if (typeof window !== "undefined") window.updateBulkActionsVisibility = updateBulkActionsVisibility;
+if (typeof window !== "undefined") window.renderMensagens = renderMensagens;
+if (typeof window !== "undefined") window.loadMessageIntoReader = loadMessageIntoReader;
+if (typeof window !== "undefined") window.hideInboxReader = hideInboxReader;
+if (typeof window !== "undefined") window.openNovaMensagemModal = openNovaMensagemModal;
+if (typeof window !== "undefined") window.closeNovaMensagemModal = closeNovaMensagemModal;
+if (typeof window !== "undefined") window.handleSendMensagem = handleSendMensagem;
+if (typeof window !== "undefined") window.mostrarAnimacaoMensagemEnviada = mostrarAnimacaoMensagemEnviada;
+if (typeof window !== "undefined") window.triggerPaperPlaneAnimation = triggerPaperPlaneAnimation;
+if (typeof window !== "undefined") window.fireConfetti = fireConfetti;
+if (typeof window !== "undefined") window.openTaskModal = openTaskModal;
+if (typeof window !== "undefined") window.renderChecklist = renderChecklist;
+if (typeof window !== "undefined") window.closeModal = closeModal;
+if (typeof window !== "undefined") window.openDemandaEventualModal = openDemandaEventualModal;
+if (typeof window !== "undefined") window._fecharDropdownFora = _fecharDropdownFora;
+if (typeof window !== "undefined") window.toggleClienteDropdown = toggleClienteDropdown;
+if (typeof window !== "undefined") window.filtrarClientesEventual = filtrarClientesEventual;
+if (typeof window !== "undefined") window.selecionarClienteEventual = selecionarClienteEventual;
+if (typeof window !== "undefined") window.onEventualRotinaChange = onEventualRotinaChange;
+if (typeof window !== "undefined") window.closeDemandaEventualModal = closeDemandaEventualModal;
+if (typeof window !== "undefined") window.closeModalSemRotinaEventual = closeModalSemRotinaEventual;
+if (typeof window !== "undefined") window.handleSaveDemandaEventual = handleSaveDemandaEventual;
+if (typeof window !== "undefined") window.formatDate = formatDate;
+if (typeof window !== "undefined") window.animateValue = animateValue;
+if (typeof window !== "undefined") window.animateValueSuffix = animateValueSuffix;
+if (typeof window !== "undefined") window.renderAuditoria = renderAuditoria;
+if (typeof window !== "undefined") window.downloadAuditoriaCSV = downloadAuditoriaCSV;
+if (typeof window !== "undefined") window.handleRestoreBackup = handleRestoreBackup;
+if (typeof window !== "undefined") window.checkAndRunAutoBackup = checkAndRunAutoBackup;
+if (typeof window !== "undefined") window.renderAuditoriaCompetencia = renderAuditoriaCompetencia;
+if (typeof window !== "undefined") window.runAuditoriaCompetencia = runAuditoriaCompetencia;
+if (typeof window !== "undefined") window.initSettingsTabs = initSettingsTabs;
+if (typeof window !== "undefined") window.setupPasswordToggles = setupPasswordToggles;
+if (typeof window !== "undefined") window.renderAdminPanel = renderAdminPanel;
+if (typeof window !== "undefined") window.openCargoModal = openCargoModal;
+if (typeof window !== "undefined") window.closeCargoModal = closeCargoModal;
+if (typeof window !== "undefined") window.handleSaveCargo = handleSaveCargo;
+if (typeof window !== "undefined") window.deleteCargoUI = deleteCargoUI;
+if (typeof window !== "undefined") window.renderSetoresSettings = renderSetoresSettings;
+if (typeof window !== "undefined") window.renderBrandingSettings = renderBrandingSettings;
+if (typeof window !== "undefined") window.renderBackupView = renderBackupView;
+if (typeof window !== "undefined") window.initUserAccountMenu = initUserAccountMenu;

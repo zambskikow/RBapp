@@ -6,12 +6,11 @@
       "use": "@vercel/python"
     },
     {
-      "src": "frontend/public/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "frontend/src/**",
-      "use": "@vercel/static"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "frontend/dist"
+      }
     }
   ],
   "rewrites": [
@@ -20,16 +19,12 @@
       "destination": "/backend/src/main.py"
     },
     {
-      "source": "/src/(.*)",
-      "destination": "/frontend/src/$1"
-    },
-    {
-      "source": "/",
-      "destination": "/frontend/public/index.html"
+      "source": "/assets/(.*)",
+      "destination": "/frontend/dist/assets/$1"
     },
     {
       "source": "/(.*)",
-      "destination": "/frontend/public/$1"
+      "destination": "/frontend/dist/index.html"
     }
   ]
 }
