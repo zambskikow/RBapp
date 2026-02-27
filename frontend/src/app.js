@@ -19,19 +19,20 @@ nowApp.setMonth(nowApp.getMonth() - 1);
 let currentCompetencia = `${nowApp.getFullYear()}-${(nowApp.getMonth() + 1).toString().padStart(2, '0')}`;
 // Set para rastrear grupos de rotinas que o usuário abriu manualmente
 // Preserva o estado aberto mesmo após re-renderização ou recarregamento (via localStorage)
-const operacionalGruposAbertos = new Set();
+window.operacionalGruposAbertos = new Set();
 try {
     const saved = localStorage.getItem('fiscalapp_operacional_abertos');
     if (saved) {
-        JSON.parse(saved).forEach(item => operacionalGruposAbertos.add(item));
+        JSON.parse(saved).forEach(item => window.operacionalGruposAbertos.add(item));
     }
 } catch (e) {
     console.warn('[Session] Falha ao recuperar grupos abertos:', e);
 }
 
 function saveOperacionalGruposAbertos() {
-    localStorage.setItem('fiscalapp_operacional_abertos', JSON.stringify([...operacionalGruposAbertos]));
+    localStorage.setItem('fiscalapp_operacional_abertos', JSON.stringify([...window.operacionalGruposAbertos]));
 }
+window.saveOperacionalGruposAbertos = saveOperacionalGruposAbertos;
 
 let LOGGED_USER = null; // Replaced hardcoded string
 
@@ -1922,15 +1923,21 @@ function renderOperacional() {
 
     // Capturar quais grupos estão atualmente abertos (não collapsed) antes de re-renderizar
     // Isso preserva o estado quando o usuário abre uma lista com >10 clientes e executa uma tarefa
-    container.querySelectorAll('.routine-group[data-rotina]').forEach(g => {
-        const content = g.querySelector('.routine-group-content');
-        const rotinaKey = g.getAttribute('data-rotina');
-        if (content && !content.classList.contains('collapsed')) {
-            operacionalGruposAbertos.add(rotinaKey);
-        } else if (content && content.classList.contains('collapsed')) {
-            operacionalGruposAbertos.delete(rotinaKey);
-        }
-    });
+    // Capturar quais grupos estão atualmente abertos (não collapsed) antes de re-renderizar
+    // Isso preserva o estado quando o usuário abre uma lista com >10 clientes e executa uma tarefa
+    const currentGroups = container.querySelectorAll('.routine-group[data-rotina]');
+    if (currentGroups.length > 0) {
+        currentGroups.forEach(g => {
+            const content = g.querySelector('.routine-group-content');
+            const rotinaKey = g.getAttribute('data-rotina');
+            if (content && !content.classList.contains('collapsed')) {
+                window.operacionalGruposAbertos.add(rotinaKey);
+            } else if (content && content.classList.contains('collapsed')) {
+                window.operacionalGruposAbertos.delete(rotinaKey);
+            }
+        });
+        saveOperacionalGruposAbertos();
+    }
 
     container.innerHTML = '';
 
@@ -2002,17 +2009,12 @@ function renderOperacional() {
         // - Se não houver registro manual (primeira vez), rotinas com >10 clientes iniciam fechadas
         let isCollapsed = false;
 
-        // Verificamos se já existe uma preferência salva (aberto ou explicitamente fechado)
-        // Se o usuário interagiu, operacionalGruposAbertos terá a info.
-        // Se for a primeira carga e tiver > 10 tarefas, fecha.
-        const jaInteragiu = operacionalGruposAbertos.size > 0; // Aproximação simples
-
         // Se o grupo está no Set, ele DEVE estar aberto.
         // Se NÃO está no Set, pode estar fechado por ser longo ou por ter sido fechado manualmente.
-        if (operacionalGruposAbertos.has(rotinaName)) {
+        if (window.operacionalGruposAbertos.has(rotinaName)) {
             isCollapsed = false;
         } else {
-            // Se tem mais de 10 tarefas, fecha por padrão na primeira carga
+            // Se tem mais de 10 tarefas e nunca foi aberto manualmente, fecha por padrão
             isCollapsed = groupTasks.length > 10;
         }
 
@@ -2022,11 +2024,11 @@ function renderOperacional() {
                          this.querySelector('.chevron-icon').classList.toggle('fa-rotate-180'); 
                          var rn=this.closest('[data-rotina]').getAttribute('data-rotina'); 
                          if(this.nextElementSibling.classList.contains('collapsed')){ 
-                            operacionalGruposAbertos.delete(rn); 
+                            window.operacionalGruposAbertos.delete(rn); 
                          } else { 
-                            operacionalGruposAbertos.add(rn); 
+                            window.operacionalGruposAbertos.add(rn); 
                          }
-                         saveOperacionalGruposAbertos();">
+                         window.saveOperacionalGruposAbertos();">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <i class="fa-solid fa-chevron-up chevron-icon ${isCollapsed ? 'fa-rotate-180' : ''}" style="transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text-muted);"></i>
                     <h2><i class="fa-solid fa-layer-group"></i> ${rotinaName}</h2>
