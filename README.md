@@ -1,11 +1,10 @@
 ---
-title: RBapp
-emoji: 📊
-colorFrom: indigo
-colorTo: blue
+title: RbApp
 sdk: docker
+emoji: 🚀
+colorFrom: blue
+colorTo: indigo
 app_port: 7860
-pinned: false
 ---
 
 # RBapp - Backend
