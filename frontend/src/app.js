@@ -18,8 +18,20 @@ const nowApp = new Date();
 nowApp.setMonth(nowApp.getMonth() - 1);
 let currentCompetencia = `${nowApp.getFullYear()}-${(nowApp.getMonth() + 1).toString().padStart(2, '0')}`;
 // Set para rastrear grupos de rotinas que o usuário abriu manualmente
-// Preserva o estado aberto mesmo após re-renderização do painel operacional
+// Preserva o estado aberto mesmo após re-renderização ou recarregamento (via localStorage)
 const operacionalGruposAbertos = new Set();
+try {
+    const saved = localStorage.getItem('fiscalapp_operacional_abertos');
+    if (saved) {
+        JSON.parse(saved).forEach(item => operacionalGruposAbertos.add(item));
+    }
+} catch (e) {
+    console.warn('[Session] Falha ao recuperar grupos abertos:', e);
+}
+
+function saveOperacionalGruposAbertos() {
+    localStorage.setItem('fiscalapp_operacional_abertos', JSON.stringify([...operacionalGruposAbertos]));
+}
 
 let LOGGED_USER = null; // Replaced hardcoded string
 
@@ -1986,13 +1998,35 @@ function renderOperacional() {
         const doneCount = groupTasks.filter(t => t.feito).length;
 
         // Regra de colapso:
-        // - Grupos com >10 clientes começam colapsados por padrão
-        // - Mas se o usuário abriu manualmente o grupo antes do re-render, mantém aberto
-        const foiAbertoManualmente = operacionalGruposAbertos.has(rotinaName);
-        const isCollapsed = groupTasks.length > 10 && !foiAbertoManualmente;
+        // - Agora respeitamos o estado persistido (manual ou inicial)
+        // - Se não houver registro manual (primeira vez), rotinas com >10 clientes iniciam fechadas
+        let isCollapsed = false;
+
+        // Verificamos se já existe uma preferência salva (aberto ou explicitamente fechado)
+        // Se o usuário interagiu, operacionalGruposAbertos terá a info.
+        // Se for a primeira carga e tiver > 10 tarefas, fecha.
+        const jaInteragiu = operacionalGruposAbertos.size > 0; // Aproximação simples
+
+        // Se o grupo está no Set, ele DEVE estar aberto.
+        // Se NÃO está no Set, pode estar fechado por ser longo ou por ter sido fechado manualmente.
+        if (operacionalGruposAbertos.has(rotinaName)) {
+            isCollapsed = false;
+        } else {
+            // Se tem mais de 10 tarefas, fecha por padrão na primeira carga
+            isCollapsed = groupTasks.length > 10;
+        }
 
         let tableHtml = `
-            <div class="routine-group-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="this.nextElementSibling.classList.toggle('collapsed'); this.querySelector('.chevron-icon').classList.toggle('fa-rotate-180'); var rn=this.closest('[data-rotina]').getAttribute('data-rotina'); if(this.nextElementSibling.classList.contains('collapsed')){ operacionalGruposAbertos.delete(rn); } else { operacionalGruposAbertos.add(rn); }">
+            <div class="routine-group-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" 
+                onclick="this.nextElementSibling.classList.toggle('collapsed'); 
+                         this.querySelector('.chevron-icon').classList.toggle('fa-rotate-180'); 
+                         var rn=this.closest('[data-rotina]').getAttribute('data-rotina'); 
+                         if(this.nextElementSibling.classList.contains('collapsed')){ 
+                            operacionalGruposAbertos.delete(rn); 
+                         } else { 
+                            operacionalGruposAbertos.add(rn); 
+                         }
+                         saveOperacionalGruposAbertos();">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <i class="fa-solid fa-chevron-up chevron-icon ${isCollapsed ? 'fa-rotate-180' : ''}" style="transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text-muted);"></i>
                     <h2><i class="fa-solid fa-layer-group"></i> ${rotinaName}</h2>
