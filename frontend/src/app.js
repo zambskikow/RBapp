@@ -26,6 +26,7 @@ let LOGGED_USER = null; // Replaced hardcoded string
 
 
 async function initApp() {
+    console.log("Iniciando FiscalApp...");
     // Configurações de UI estáticas que não dependem da API
     document.getElementById('login-form').addEventListener('submit', handleLogin);
     setupPasswordToggles();
@@ -5289,10 +5290,13 @@ function initSettingsTabs() {
 }
 
 function setupPasswordToggles() {
+    console.log("Configurando alternadores de senha...");
     // Usar delegação de eventos para garantir que funcione mesmo com elementos dinâmicos
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('.btn-toggle-password');
         if (!btn) return;
+
+        console.log("Clique detectado no botão de senha!");
 
         // Previne comportamento padrão de botões em formulários
         e.preventDefault();
