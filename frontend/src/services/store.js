@@ -260,7 +260,7 @@ window.Store = {
         });
 
         try {
-            const resE = await fetch(`${API_BASE}/execucoes`, {
+            const resE = await apiFetch(`${API_BASE}/execucoes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -327,7 +327,7 @@ window.Store = {
             for (let m of oldActives) {
                 m.ativo = false;
                 try {
-                    await fetch(`${API_BASE}/meses/${m.id}`, {
+                    await apiFetch(`${API_BASE}/meses/${m.id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ ativo: false })
@@ -387,7 +387,7 @@ window.Store = {
         } else if (!exists.ativo) {
             // Corrigir caso extremo onde o mês existe, mas não está marcado como ativo
             exists.ativo = true;
-            await fetch(`${API_BASE}/meses/${exists.id}`, {
+            await apiFetch(`${API_BASE}/meses/${exists.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ativo: true })
