@@ -570,7 +570,7 @@ window.Store = {
         else ex.subitems.forEach(s => s.done = false);
 
         try {
-            await fetch(`${API_BASE}/execucoes/${id}`, {
+            await apiFetch(`${API_BASE}/execucoes/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -581,7 +581,7 @@ window.Store = {
                 })
             });
         } catch (e) {
-            console.error("Erro fetch toggleExecucaoFeito:", e);
+            console.error("Erro apiFetch toggleExecucaoFeito:", e);
         }
 
         this.registerLog("Ação de Rotina", `Marcou rotina '${ex.rotina}' como ${isFeito ? 'Concluída' : 'Pendente'}`);
@@ -594,7 +594,7 @@ window.Store = {
     async deleteExecucao(id) {
         db.execucoes = db.execucoes.filter(e => e.id !== id);
         try {
-            await fetch(`${API_BASE}/execucoes/${id}`, { method: 'DELETE' });
+            await apiFetch(`${API_BASE}/execucoes/${id}`, { method: 'DELETE' });
         } catch (e) {
             console.error("Erro ao excluir execução via API:", e);
         }
@@ -618,7 +618,7 @@ window.Store = {
         }
 
         try {
-            await fetch(`${API_BASE}/execucoes/${execId}`, {
+            await apiFetch(`${API_BASE}/execucoes/${execId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -629,7 +629,7 @@ window.Store = {
                 })
             });
         } catch (e) {
-            console.error("Erro fetch updateChecklist:", e);
+            console.error("Erro apiFetch updateChecklist:", e);
         }
 
         this.registerLog("Atualizou Checklist", `Checklist item id ${subId} (rotina ${ex.rotina}) - ${isDone ? 'Feito' : 'Desfeito'}`);
