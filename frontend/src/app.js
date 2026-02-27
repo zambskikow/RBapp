@@ -1926,6 +1926,10 @@ function renderOperacional() {
     // Adicionar rotinas que não possuem tarefas no momento (para manter visibilidade se não houver busca)
     if (!searchVal) {
         Store.getData().rotinasBase.forEach(rb => {
+            // Se for eventual, só aparece se tiver tarefas (clientes vinculados com demanda)
+            const isEventual = (rb.frequencia || '').toLowerCase() === 'eventual';
+            if (isEventual) return; // Rotinas eventuais vazias nunca devem poluir o painel
+
             if (!groupOrder.includes(rb.nome)) groupOrder.push(rb.nome);
         });
 
