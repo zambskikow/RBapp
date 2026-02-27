@@ -2,6 +2,9 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
     ? 'http://127.0.0.1:8000/api'
     : 'https://eikiko-rbapp.hf.space/api';
 
+window.API_BASE = API_BASE;
+
+
 const today = new Date();
 const addDays = (date, days) => {
     const d = new Date(date);
