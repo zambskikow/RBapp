@@ -1,8 +1,6 @@
-// js/store.js - Configurado para buscar da API Python / Vercel
-
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://127.0.0.1:8000/api' // URL do servidor local FastAPI para testes
-    : '/api'; // URL relativa de produção da Vercel
+    ? 'http://127.0.0.1:8000/api'
+    : 'https://eikiko-rbapp.hf.space/api';
 
 const today = new Date();
 const addDays = (date, days) => {

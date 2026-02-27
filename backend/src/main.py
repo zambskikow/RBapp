@@ -83,7 +83,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5500",
     ],
-    allow_origin_regex=r"https://.*\.vercel\.app.*",
+    allow_origin_regex=r"https://.*\.vercel\.app.*|https://.*\.hf\.space.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

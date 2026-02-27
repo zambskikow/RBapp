@@ -1922,14 +1922,25 @@ function renderOperacional() {
     tasks.forEach(t => {
         if (!groupOrder.includes(t.rotina)) groupOrder.push(t.rotina);
     });
+    // Restaurar visibilidade de rotinas que têm clientes vinculados mas não possuem tarefas no momento
+    const allRotinas = Store.getData().rotinasBase;
+    const allClientes = Store.getData().clientes;
 
-    // Adicionar rotinas que não possuem tarefas no momento (para manter visibilidade se não houver busca)
-    // REMOVIDO: Agora o painel só mostra categorias que possuem tarefas (execuções) reais por padrão.
+    allRotinas.forEach(r => {
+        if (groupOrder.includes(r.nome)) return;
+
+        const vinculados = allClientes.filter(c =>
+            c.rotinasSelecionadas && c.rotinasSelecionadas.map(id => String(id)).includes(String(r.id))
+        );
+
+        if (vinculados.length > 0) {
+            groupOrder.push(r.nome);
+        }
+    });
 
     groupOrder.forEach(rotinaName => {
         const groupTasks = grouped[rotinaName] || [];
-        // Se o grupo está vazio (não há execuções para esta categoria), não renderiza o grupo.
-        if (groupTasks.length === 0) return;
+        // Agora permitimos renderizar grupos vazios se eles estiverem no groupOrder (pois têm clientes vinculados)
 
         groupTasks.sort((a, b) => {
             if (a.feito && !b.feito) return 1;
@@ -1981,10 +1992,31 @@ function renderOperacional() {
         `;
 
         if (groupTasks.length === 0) {
+            const rotinaBase = Store.getData().rotinasBase.find(r => r.nome === rotinaName);
+            const isEventual = rotinaBase && rotinaBase.frequencia === 'Eventual';
+
+            // Buscar nomes dos clientes vinculados para exibir mesmo sem tarefas
+            const todosOsClientes = Store.getData().clientes;
+            const vinculadosNames = todosOsClientes
+                .filter(c => c.rotinasSelecionadas && c.rotinasSelecionadas.map(id => String(id)).includes(String(rotinaBase ? rotinaBase.id : '')))
+                .map(c => c.razaoSocial)
+                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+                .join(", ");
+
+            const msg = isEventual
+                ? "Nenhuma demanda eventual ativa para os clientes vinculados."
+                : "Sem pendências para os clientes vinculados.";
+
             tableHtml += `
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-style: italic;">
-                        Sem pendências.
+                    <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted); font-style: italic;">
+                        <div style="margin-bottom: 0.8rem; font-size: 1.5rem; opacity: 0.3;">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">${msg}</div>
+                        ${vinculadosNames ? `<div style="margin-top: 10px; font-size: 0.85rem; opacity: 0.7; font-style: normal; color: var(--text-main);">
+                            <i class="fa-solid fa-building" style="margin-right: 5px; font-size: 0.75rem;"></i> Clientes vinculados: <strong>${vinculadosNames}</strong>
+                        </div>` : ''}
                     </td>
                 </tr>
             `;
