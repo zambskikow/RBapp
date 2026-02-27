@@ -4515,3 +4515,17 @@ button:hover i.fa-trash,
         background-position: -200% 0;
     }
 }
+
+/* Overlay de Sucesso Premium */
+#success-overlay {
+    transition: opacity 0.5s ease;
+}
+
+#success-overlay[style*="opacity: 1"] .glass-card {
+    transform: scale(1) !important;
+}
+
+#success-overlay .glass-card {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.3);
+}

@@ -2947,6 +2947,23 @@
     <!-- Camada de Desligamento / Encerramento -->
     <div id="shutdown-overlay" class="shutdown-overlay"></div>
 
+    <!-- Overlay de Sucesso (Celebração Early Release) -->
+    <div id="success-overlay"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;">
+        <div class="glass-card"
+            style="padding: 3rem; text-align: center; max-width: 500px; transform: scale(0.9); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px;">
+            <div
+                style="width: 80px; height: 80px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2.5rem; color: white; box-shadow: 0 0 20px var(--success);">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h2 id="success-overlay-title"
+                style="font-size: 2rem; margin-bottom: 1rem; background: linear-gradient(135deg, #fff, #a0a0a0); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Parabéns!</h2>
+            <p id="success-overlay-message" style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.6;">Você
+                concluiu todas as tarefas da competência antecipadamente.</p>
+        </div>
+    </div>
+
     <!-- Modal de Confirmação Premium -->
     <div class="modal-overlay" id="modal-confirm-premium">
         <div class="glass-card modal-content" style="max-width: 400px; padding: 2.5rem; text-align: center;">

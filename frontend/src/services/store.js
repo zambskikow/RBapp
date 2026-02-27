@@ -683,10 +683,10 @@ window.Store = {
             }
 
             // Sempre alertar sobre a liberação usando o novo Overlay Full Screen
-            if (typeof showSuccessOverlay === 'function') {
-                showSuccessOverlay('Mês Liberado!', `A competência ${nextExt} foi gerada nas suas tarefas.`);
-            } else if (typeof showFeedbackToast === 'function') {
-                showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, 'success');
+            if (typeof window.showSuccessOverlay === 'function') {
+                window.showSuccessOverlay('Mês Liberado!', `A competência ${nextExt} foi gerada nas suas tarefas.`);
+            } else if (typeof window.showFeedbackToast === 'function') {
+                window.showFeedbackToast(`Parabéns! Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, 'success');
             } else {
                 window.showNotify("Parabéns!", `Você concluiu suas demandas. A competência ${nextExt} foi liberada!`, "success");
             }

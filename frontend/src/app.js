@@ -2247,6 +2247,11 @@ function showSuccessOverlay(title = 'Parabéns!', message = 'Você concluiu a co
         overlay.style.pointerEvents = 'all';
         overlay.style.opacity = '1';
 
+        // Disparar confetes se a função estiver disponível
+        if (typeof fireConfetti === 'function') {
+            fireConfetti();
+        }
+
         // Ocultar automaticamente após 5 segundos
         setTimeout(() => {
             hideSuccessOverlay();
