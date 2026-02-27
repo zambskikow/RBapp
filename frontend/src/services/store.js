@@ -561,9 +561,10 @@ window.Store = {
         }
 
         const incompletas = execsUser.filter(e => !e.feito);
+        console.log(`[Competencia Check] ${username} - Total: ${execsUser.length}, Incompletas: ${incompletas.length}`);
 
         if (incompletas.length === 0) {
-            console.log(`[Early Release] ${username} concluiu todas as tarefas da competência ${competenciaId}! Liberando próxima...`);
+            console.log(`[Early Release] Iniciando liberação para ${username} na competência ${competenciaId}...`);
 
             // Calcular próxima competência
             let [y, m] = competenciaId.split('-');
