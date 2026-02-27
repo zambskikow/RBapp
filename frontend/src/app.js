@@ -1769,8 +1769,24 @@ function renderEmployeeStatusChart(execs) {
             cutout: '70%',
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 10,
+                    bottom: 25,
+                    left: 10,
+                    right: 10
+                }
+            },
             plugins: {
-                legend: { position: 'bottom', labels: { color: '#94A3B8', font: { size: 10 }, usePointStyle: true, padding: 15 } },
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#94A3B8',
+                        font: { size: 10 },
+                        usePointStyle: true,
+                        padding: 15
+                    }
+                },
                 datalabels: {
                     color: '#fff',
                     font: { weight: 'bold', size: 11 },
