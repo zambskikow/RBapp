@@ -26,9 +26,11 @@ let LOGGED_USER = null; // Replaced hardcoded string
 
 
 async function initApp() {
+    // Configurações de UI estáticas que não dependem da API
+    document.getElementById('login-form').addEventListener('submit', handleLogin);
+    setupPasswordToggles();
 
     // Await API Hydration First!
-
     const loaded = await Store.loadFromStorage();
 
     if (!loaded) {
@@ -50,10 +52,6 @@ async function initApp() {
         }
     }
 
-    document.getElementById('login-form').addEventListener('submit', handleLogin);
-
-    // Ativa visibilidade de senha (olho) no formulário de login
-    setupPasswordToggles();
 
 
 
@@ -5291,22 +5289,36 @@ function initSettingsTabs() {
 }
 
 function setupPasswordToggles() {
-    document.querySelectorAll('.btn-toggle-password').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const wrapper = this.closest('.password-wrapper');
-            if (!wrapper) return;
-            const input = wrapper.querySelector('input');
-            const icon = this.querySelector('i');
+    // Usar delegação de eventos para garantir que funcione mesmo com elementos dinâmicos
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-toggle-password');
+        if (!btn) return;
 
+        // Previne comportamento padrão de botões em formulários
+        e.preventDefault();
+
+        const wrapper = btn.closest('.password-wrapper');
+        if (!wrapper) return;
+
+        const input = wrapper.querySelector('input');
+        const icon = btn.querySelector('i');
+
+        if (input && icon) {
+            console.log("Alternando visibilidade da senha...");
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
             } else {
                 input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
             }
-        });
+        }
     });
+
+    // Remover listeners antigos de botões já existentes para não duplicar se for chamado novamente
+    // (A delegação acima já cuida disso, então não precisamos mais do forEach aqui)
 }
 
 // Handler para liberação antecipada de competência
