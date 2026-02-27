@@ -82,7 +82,7 @@ async def login(response: Response, form_data: LoginRequest):
             value=f"Bearer {access_token}",
             httponly=True,  # Proíbe acesso via JavaScript no Frontend
             secure=True,    # Apenas HTTPS
-            samesite="lax",
+            samesite="none",
             max_age=86400   # 1 dia
         )
 

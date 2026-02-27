@@ -10,6 +10,11 @@ if backend_dir not in sys.path:
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente do .env
+load_dotenv()
+
 from src.core.database import supabase, supabase_admin, supabase_error, url
 
 app = FastAPI()
@@ -92,8 +97,6 @@ app.add_middleware(
 # --- ROTAS e ENDPOINTS MODULARES ---
 from src.api.v1.endpoints import auth
 app.include_router(auth.router)
-
-from src.core.database import supabase, supabase_admin, supabase_error, url
 
 from src.api.v1.endpoints.auth import get_current_user_from_cookie
 

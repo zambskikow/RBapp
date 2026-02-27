@@ -1,5 +1,9 @@
 import os
 from supabase import create_client
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente do .env
+load_dotenv()
 
 # Supabase Credentials Loader
 url: str = os.getenv("SUPABASE_URL", "")
