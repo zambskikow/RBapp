@@ -1932,7 +1932,10 @@ function renderOperacional() {
 
         allRotinas.forEach(rb => {
             // REGRA: Só mostrar a rotina no painel se houver pelo menos 1 cliente vinculado a ela
-            const vinculados = allClients.filter(c => (c.rotinasSelecionadas || []).includes(rb.id));
+            const vinculados = allClients.filter(c => {
+                const sids = (c.rotinasSelecionadas || []).map(id => String(id));
+                return sids.includes(String(rb.id));
+            });
             const temVinculo = vinculados.length > 0;
 
             if (rb.frequencia === 'Eventual') {
