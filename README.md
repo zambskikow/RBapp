@@ -1,10 +1,5 @@
 ---
-title: RbApp
 sdk: docker
-emoji: 🚀
-colorFrom: blue
-colorTo: indigo
-app_port: 7860
 ---
 
 # RBapp - Backend
