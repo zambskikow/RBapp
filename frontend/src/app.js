@@ -2972,25 +2972,36 @@ function showConfirm(title, message, type = 'warning') {
 
         modal.classList.add('active');
 
-        const handleOk = () => {
+        const cleanup = () => {
             modal.classList.remove('active');
+            btnOk.removeEventListener('click', handleOk);
+            btnCancel.removeEventListener('click', handleCancel);
+            document.removeEventListener('keydown', handleEsc);
+            modal.removeEventListener('click', handleClickOutside);
+        };
+
+        const handleOk = () => {
             cleanup();
             resolve(true);
         };
 
         const handleCancel = () => {
-            modal.classList.remove('active');
             cleanup();
             resolve(false);
         };
 
-        const cleanup = () => {
-            btnOk.removeEventListener('click', handleOk);
-            btnCancel.removeEventListener('click', handleCancel);
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') handleCancel();
+        };
+
+        const handleClickOutside = (e) => {
+            if (e.target === modal) handleCancel();
         };
 
         btnOk.addEventListener('click', handleOk, { once: true });
         btnCancel.addEventListener('click', handleCancel, { once: true });
+        document.addEventListener('keydown', handleEsc, { once: true });
+        modal.addEventListener('click', handleClickOutside);
     });
 }
 
