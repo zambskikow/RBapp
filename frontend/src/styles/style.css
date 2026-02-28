@@ -3198,17 +3198,6 @@ button:hover i.fa-trash,
     box-sizing: border-box;
     animation: fadeAndSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
-
-border: 1px solid rgba(255, 255, 255, 0.1);
-border-radius: var(--radius-lg);
-padding: 1rem 1.25rem;
-display: flex;
-align-items: center;
-gap: 1rem;
-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-transform: translateX(120%);
-transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-animation: toast-in 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
 .toast.hide {
