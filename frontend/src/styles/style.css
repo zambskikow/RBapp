@@ -3506,3 +3506,134 @@ button:hover i.fa-trash,
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(16, 185, 129, 0.2);
     border-color: rgba(16, 185, 129, 0.3);
 }
+
+/* =====================================================================
+   MÓDULO DE CLIENTES - ABAS E DETALHES (DESIGN PREMIUM)
+   ===================================================================== */
+
+.modal-tabs {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-glass);
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.modal-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.modal-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.6rem 0.4rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    white-space: nowrap;
+}
+
+.modal-tab-btn i {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+.modal-tab-btn:hover {
+    color: var(--text-main);
+}
+
+.modal-tab-btn.active {
+    color: var(--primary-light);
+}
+
+.modal-tab-btn.active i {
+    color: var(--primary-light);
+    opacity: 1;
+}
+
+.modal-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    box-shadow: 0 0 10px var(--primary);
+    border-radius: 2px;
+}
+
+.tab-content {
+    display: none;
+    animation: tabFadeIn 0.4s ease-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes tabFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Ajustes finos no Painel de Detalhes */
+.clientes-detail-panel {
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.detail-title-group h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-main);
+}
+
+.detail-title-group p {
+    margin: 0.3rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.client-rotina-checkbox {
+    accent-color: var(--primary-light);
+}
+
+.rotinas-grid-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.rotinas-grid-scroll::-webkit-scrollbar {
+    width: 5px;
+}
+
+.rotinas-grid-scroll::-webkit-scrollbar-thumb {
+    background: var(--border-glass);
+    border-radius: 10px;
+}
