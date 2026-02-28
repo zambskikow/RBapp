@@ -1928,18 +1928,22 @@ body {
     margin-bottom: 1.2rem;
 }
 
-.form-group label {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-}
-
 .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    /* Aumentado para mais respiro entre campos */
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
 }
 
 .glass-input {
@@ -3178,16 +3182,33 @@ button:hover i.fa-trash,
     /* Slate ultra escuro */
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.clientes-detail-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-glass);
     border-radius: var(--radius-lg);
-    padding: 1rem 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    transform: translateX(120%);
-    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-    animation: toast-in 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    padding: 3.5rem;
+    /* Aumentado para mais respiro premium */
+    width: calc(100% - 4rem);
+    max-width: 1000px;
+    margin: 2rem auto;
+    position: relative;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
+    animation: fadeAndSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+border: 1px solid rgba(255, 255, 255, 0.1);
+border-radius: var(--radius-lg);
+padding: 1rem 1.25rem;
+display: flex;
+align-items: center;
+gap: 1rem;
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+transform: translateX(120%);
+transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+animation: toast-in 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
 .toast.hide {
