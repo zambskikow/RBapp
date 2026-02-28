@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from src.core.database import supabase, supabase_admin, supabase_error, url
-from src.api.v1.endpoints import auth, clientes, funcionarios, meses, execucoes, marketing, misc
+from src.api.v1.endpoints import auth, clientes, funcionarios, meses, execucoes, misc
 
 app = FastAPI(title="FiscalApp API")
 
@@ -39,7 +39,7 @@ app.include_router(clientes.router)
 app.include_router(funcionarios.router)
 app.include_router(meses.router)
 app.include_router(execucoes.router)
-app.include_router(marketing.router)
+
 app.include_router(misc.router)
 
 # --- ENDPOINTS DE DIAGNÓSTICO E SISTEMA ---
@@ -73,7 +73,6 @@ def download_backup():
     tabelas = [
         "clientes", "funcionarios", "rotinas_base", "execucoes", "meses", 
         "setores", "logs", "mensagens", "global_config", "cargos_permissoes",
-        "marketing_posts", "marketing_campanhas", "marketing_metricas", "marketing_equipe",
     ]
 
     dados = {}

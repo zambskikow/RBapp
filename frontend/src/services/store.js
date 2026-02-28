@@ -57,8 +57,7 @@ window.Store = {
             const [
                 setoresRes, funcionariosRes, rotinasBaseRes,
                 clientesRes, mesesRes, execucoesRes, mensagensRes, logsRes, cargosRes,
-                marketing_postsRes, marketing_campanhasRes, marketing_equipeRes,
-                marketing_metricasRes, global_configRes
+                global_configRes
             ] = await Promise.all([
                 apiFetch(`${API_BASE}/setores`),
                 apiFetch(`${API_BASE}/funcionarios`),
@@ -69,10 +68,6 @@ window.Store = {
                 apiFetch(`${API_BASE}/mensagens`),
                 apiFetch(`${API_BASE}/logs`),
                 apiFetch(`${API_BASE}/cargos`),
-                apiFetch(`${API_BASE}/marketing_posts`),
-                apiFetch(`${API_BASE}/marketing_campanhas`),
-                apiFetch(`${API_BASE}/marketing_equipe`),
-                apiFetch(`${API_BASE}/marketing_metricas`),
                 apiFetch(`${API_BASE}/global_config`)
             ]);
 
@@ -101,25 +96,7 @@ window.Store = {
                 db.cargos = Array.isArray(cargosData) ? cargosData : [];
             } catch (e) { db.cargos = []; }
 
-            try {
-                const marketingData = await marketing_postsRes.json();
-                db.marketing_posts = Array.isArray(marketingData) ? marketingData : [];
-            } catch (e) { db.marketing_posts = []; }
 
-            try {
-                const campanhasData = await marketing_campanhasRes.json();
-                db.marketing_campanhas = Array.isArray(campanhasData) ? campanhasData : [];
-            } catch (e) { db.marketing_campanhas = []; }
-
-            try {
-                const equipeData = await marketing_equipeRes.json();
-                db.marketing_equipe = Array.isArray(equipeData) ? equipeData : [];
-            } catch (e) { db.marketing_equipe = []; }
-
-            try {
-                const metricsData = await marketing_metricasRes.json();
-                db.marketing_metricas = Array.isArray(metricsData) ? metricsData : [];
-            } catch (e) { db.marketing_metricas = []; }
 
             try {
                 const configData = await global_configRes.json();
