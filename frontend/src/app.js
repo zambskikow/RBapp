@@ -4535,7 +4535,7 @@ function openTaskModal(taskId) {
     // Bloquear toggle global se concluído e NÃO for admin/supervisor
     if (task.feito && !isAdmin) {
         newToggle.disabled = true;
-        document.getElementById('modal-status').innerHTML += ' <i class="fa-solid fa-lock" title="Bloqueado para edição"></i>';
+        // Removido o cadeado redundante para evitar duplicidade
     } else {
         newToggle.disabled = false;
     }
