@@ -4512,10 +4512,10 @@ function openTaskModal(taskId) {
     const isAdmin = LOGGED_USER && ['gerente', 'adm', 'admin', 'supervisor'].includes(LOGGED_USER.permissao.toLowerCase());
 
     const statusBadge = task.feito
-        ? `<span class="status-badge concluido"><i class="fa-solid fa-check"></i> Finalizado</span>`
-        : `<span class="status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>`;
+        ? `<span class="status-badge concluido" style="font-size: 0.95rem;"><i class="fa-solid fa-check"></i> Finalizado</span>`
+        : `<span class="status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; font-size: 0.95rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>`;
 
-    const lockIcon = (task.feito && !isAdmin) ? ' <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.9rem;" title="Bloqueado para edição"></i>' : '';
+    const lockIcon = (task.feito && !isAdmin) ? ' <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.85rem;" title="Bloqueado para edição"></i>' : '';
 
     document.getElementById('modal-status').innerHTML = statusBadge + lockIcon;
 
@@ -4535,39 +4535,30 @@ function openTaskModal(taskId) {
     // Bloquear toggle global se concluído e NÃO for admin/supervisor
     if (task.feito && !isAdmin) {
         newToggle.disabled = true;
-        // Removido o cadeado redundante para evitar duplicidade
     } else {
         newToggle.disabled = false;
     }
 
-    newToggle.addEventListener('change', (e) => {
-
+    newToggle.addEventListener('change', async (e) => {
         const checked = e.target.checked;
         const wasDone = task.feito;
 
-        Store.toggleExecucaoFeito(task.id, checked);
+        // Feedback visual imediato antes da API
+        const tempBadge = checked
+            ? '<span class="status-badge concluido" style="font-size: 0.95rem;"><i class="fa-solid fa-check"></i> Finalizado</span>'
+            : '<span class="status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; font-size: 0.95rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
+        document.getElementById('modal-status').innerHTML = tempBadge + ((checked && !isAdmin) ? ' <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.85rem;"></i>' : '');
+
+        await Store.toggleExecucaoFeito(task.id, checked);
 
         if (checked && !wasDone) {
             fireConfetti();
         }
         task.feito = checked;
 
-        // Atualizar visualizações nativamente
-
         renderChecklist();
-
         renderOperacional();
-
         renderDashboard();
-
-
-
-        // Atualizar cabeçalho automaticamente
-
-        document.getElementById('modal-status').innerHTML = checked
-            ? '<span class="status-badge concluido"><i class="fa-solid fa-check"></i> Finalizado</span>'
-            : '<span class="status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
-
     });
 
 
@@ -4628,38 +4619,31 @@ function renderChecklist() {
 
         const chk = div.querySelector('input');
 
-        chk.addEventListener('change', (e) => {
-
+        chk.addEventListener('change', async (e) => {
             const wasDone = task.feito;
-
-            Store.updateChecklist(task.id, sub.id, e.target.checked);
-
-
-
-            // Renderizar novamente checklist e atualizar listas subjacentes
+            await Store.updateChecklist(task.id, sub.id, e.target.checked);
 
             renderChecklist();
-
             renderOperacional();
-
             renderDashboard();
 
-
-
-            // Re-sincronizar cabeçalho se o estado mudou devido a todos os checks
-
+            // Re-sincronizar cabeçalho
             const refreshedTask = Store.getExecucoesWithDetails('All').find(t => t.id === currentOpenTask.id);
+            if (!wasDone && refreshedTask.feito) fireConfetti();
 
-            if (!wasDone && refreshedTask.feito) {
-                fireConfetti();
+            const updatedBadge = refreshedTask.feito
+                ? '<span class="status-badge concluido" style="font-size: 0.95rem;"><i class="fa-solid fa-check"></i> Finalizado</span>'
+                : '<span class="status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; font-size: 0.95rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
+
+            const updatedLock = (refreshedTask.feito && !isAdmin) ? ' <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.85rem;"></i>' : '';
+            document.getElementById('modal-status').innerHTML = updatedBadge + updatedLock;
+
+            // Atualizar toggle principal se necessário
+            const mainToggle = document.getElementById('modal-done-toggle');
+            if (mainToggle) {
+                mainToggle.checked = refreshedTask.feito;
+                if (refreshedTask.feito && !isAdmin) mainToggle.disabled = true;
             }
-
-            document.getElementById('modal-status').innerHTML = refreshedTask.feito
-
-                ? '<span class="status-badge concluido" style="font-size: 1rem;"><i class="fa-solid fa-check"></i> Finalizado</span>'
-
-                : '<span class="status-badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass); color: #fff; font-size: 1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Pendente</span>';
-
         });
 
 
