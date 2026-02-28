@@ -1403,13 +1403,19 @@ body {
 .modal-content {
     width: 90%;
     max-width: 500px;
-    padding: 2rem;
+    padding: 2.5rem;
+    /* Aumentado para respiro padrão premium */
     background: var(--bg-glass);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-lg);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
     transform: translateY(20px) scale(0.95);
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Modal de Tarefa Operacional mais largo */
+#task-modal .modal-content {
+    max-width: 800px;
 }
 
 .modal-header {
@@ -1463,14 +1469,14 @@ body {
 
 .task-info-grid {
     display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr;
-    gap: 1.25rem;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    padding: 1.75rem;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-lg);
-    align-items: center;
+    align-items: flex-start;
 }
 
 .info-group label {
@@ -1584,6 +1590,8 @@ body {
 .item-text {
     flex: 1;
     font-size: 0.95rem;
+    line-height: 1.5;
+    word-break: break-word;
     transition: color 0.2s;
 }
 
