@@ -1,10 +1,29 @@
-﻿// js/app.js - Main UI Controller
+// js/app.js - Main UI Controller
 
 
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    initApp();
+    initApp().catch(err => {
+        console.error("Erro fatal no initApp:", err);
+        // Fail-safe: se der erro critico, remove a splash pra nao travar o usuario
+        const splash = document.getElementById('app-splash-screen');
+        if (splash) {
+            splash.style.transition = 'opacity 0.6s ease';
+            splash.style.opacity = '0';
+            setTimeout(() => splash.remove(), 600);
+        }
+    });
+
+    // Timeout de seguranca absoluto: 8 segundos e remove a splash de qualquer jeito
+    setTimeout(() => {
+        const splash = document.getElementById('app-splash-screen');
+        if (splash) {
+            console.warn("Removendo splash screen por timeout de seguranca.");
+            splash.classList.add('splash-fadeout');
+            setTimeout(() => splash.remove(), 600);
+        }
+    }, 8000);
 
 });
 
@@ -3598,7 +3617,7 @@ function renderMenuReorderList() {
     })));
 }
 
-// Renderiza os itens com botões ↑↓ e drag-and-drop suave
+// Renderiza os itens com botões ?? e drag-and-drop suave
 function _renderReorderItems(container, itemsData) {
     container.innerHTML = '';
 
@@ -3625,7 +3644,7 @@ function _renderReorderItems(container, itemsData) {
             <span class="reorder-position-badge">${index + 1}</span>
         `;
 
-        // Botões ↑↓
+        // Botões ??
         div.querySelectorAll('.reorder-btn-arrow').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -4070,7 +4089,7 @@ function initInboxTabs() {
                 showNotify("Informação", "Configurações de Mensagens em breve...", "info");
             }
             if (e.target.closest('#btn-inbox-help')) {
-                showNotify("Ajuda das Mensagens", "• Clique nas pastas para navegar\n• Use ? para favoritar\n• Marque checkboxes para ações em massa", "info");
+                showNotify("Ajuda das Mensagens", " Clique nas pastas para navegar\n Use ? para favoritar\n Marque checkboxes para ações em massa", "info");
             }
         });
 
@@ -4703,7 +4722,7 @@ function openDemandaEventualModal() {
 
     // Popular select de rotinas eventuais
     const rotinasSel = document.getElementById('evt-rotina-select');
-    rotinasSel.innerHTML = '<option value="">— Selecione a Rotina —</option>';
+    rotinasSel.innerHTML = '<option value=""> Selecione a Rotina </option>';
     rotinas.forEach(r => {
         rotinasSel.innerHTML += `<option value="${r.id}">${r.nome} (${r.diaPrazoPadrao} d.c.)</option>`;
     });
@@ -4715,7 +4734,7 @@ function openDemandaEventualModal() {
 
     // Resetar estado do dropdown de clientes
     document.getElementById('evt-cliente-select').value = '';
-    document.getElementById('evt-cliente-label').textContent = '— Selecione o Cliente —';
+    document.getElementById('evt-cliente-label').textContent = ' Selecione o Cliente ';
     document.getElementById('evt-cliente-label').style.color = 'var(--text-muted)';
     document.getElementById('evt-cliente-busca').value = '';
     document.getElementById('evt-cliente-dropdown').style.display = 'none';
@@ -5638,11 +5657,11 @@ function renderBrandingSettings() {
         };
     }
 
-    // 2. Renderizar lista de reordenação (nova UX com botões ↑↓)
+    // 2. Renderizar lista de reordenação (nova UX com botões ??)
     renderMenuReorderList();
 }
 
-// [REMOVIDO] renderMenuReorder() legado — substituído por renderMenuReorderList() em L3440
+// [REMOVIDO] renderMenuReorder() legado  substituído por renderMenuReorderList() em L3440
 
 
 // ==========================================
