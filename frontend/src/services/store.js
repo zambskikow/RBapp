@@ -53,10 +53,13 @@ window.Store = {
     // -----------------------------------------------------------------
     async fetchAllData() {
         try {
-            console.log("Baixando dados do banco de dados (Supabase/Python)...");
+            console.log("%c [BOOT] Iniciando carregamento de dados vitais...", "color: #6366f1; font-weight: bold;");
+            const startTime = performance.now();
+
+            // FASE 1: Dados Críticos para o Funcionamento Inicial
             const [
                 setoresRes, funcionariosRes, rotinasBaseRes,
-                clientesRes, mesesRes, execucoesRes, mensagensRes, logsRes, cargosRes,
+                clientesRes, mesesRes, execucoesRes, cargosRes,
                 global_configRes
             ] = await Promise.all([
                 apiFetch(`${API_BASE}/setores`),
@@ -65,8 +68,6 @@ window.Store = {
                 apiFetch(`${API_BASE}/clientes`),
                 apiFetch(`${API_BASE}/meses`),
                 apiFetch(`${API_BASE}/execucoes`),
-                apiFetch(`${API_BASE}/mensagens`),
-                apiFetch(`${API_BASE}/logs`),
                 apiFetch(`${API_BASE}/cargos`),
                 apiFetch(`${API_BASE}/global_config`)
             ]);
@@ -77,26 +78,11 @@ window.Store = {
             db.clientes = await clientesRes.json() || [];
             db.meses = await mesesRes.json() || [];
             db.execucoes = await execucoesRes.json() || [];
-            db.mensagens = (await mensagensRes.json()).map(m => ({
-                id: m.id,
-                remetente: m.remetente,
-                destinatario: m.destinatario,
-                texto: m.texto,
-                assunto: m.assunto || 'Sem Assunto',
-                lida: m.lida,
-                data: m.data,
-                excluido_por: Array.isArray(m.excluido_por) ? m.excluido_por : (typeof m.excluido_por === 'string' ? JSON.parse(m.excluido_por) : []),
-                favorito: m.favorito || false
-            })) || [];
-            db.logs = await logsRes.json() || [];
 
-            // Tentar definir os cargos (pode falhar se a tabela não existir, fallback para array vazio)
             try {
                 const cargosData = await cargosRes.json();
                 db.cargos = Array.isArray(cargosData) ? cargosData : [];
             } catch (e) { db.cargos = []; }
-
-
 
             try {
                 const configData = await global_configRes.json();
@@ -119,13 +105,13 @@ window.Store = {
                     }
 
                     db.config.menuOrder = Array.isArray(mOrder) ? mOrder : [];
-                    db.config.menu_order = db.config.menuOrder; // Garantir sincronia local
+                    db.config.menu_order = db.config.menuOrder;
                 }
             } catch (e) {
                 console.warn("Erro ao processar global_config:", e);
             }
 
-            // Mapear rotinasBase do python para camelCase esperado por compatibilidade de frontend legado
+            // --- PROCESSAMENTO E MAPEAMENTO DE DADOS VITAIS ---
             db.rotinasBase = db.rotinasBase.map(r => ({
                 id: r.id,
                 nome: r.nome,
@@ -145,7 +131,6 @@ window.Store = {
                 responsavelFiscal: c.responsavel_fiscal,
                 rotinasSelecionadas: typeof c.rotinas_selecionadas === 'string' ? JSON.parse(c.rotinas_selecionadas) : c.rotinas_selecionadas || [],
                 driveLink: c.drive_link,
-                // Novos campos expansíveis (fallback para vazio se não existirem na API)
                 ie: c.inscricao_estadual || "",
                 im: c.inscricao_municipal || "",
                 dataAbertura: c.data_abertura || "",
@@ -162,7 +147,7 @@ window.Store = {
                 loginDominio: c.login_dominio || "",
                 senhaDominio: c.senha_dominio || "",
                 outrosAcessos: c.outros_acessos || "",
-                ativo: c.ativo !== false // Default true
+                ativo: c.ativo !== false
             }));
 
             db.execucoes = db.execucoes.map(e => ({
@@ -174,7 +159,7 @@ window.Store = {
                 driveLink: e.drive_link,
                 feito: e.feito,
                 feitoEm: e.feito_em,
-                baixadoPor: e.baixado_por || "", // Novo campo mapeado do banco
+                baixadoPor: e.baixado_por || "",
                 responsavel: e.responsavel,
                 iniciadoEm: e.iniciado_em,
                 checklistGerado: e.checklist_gerado,
@@ -182,17 +167,55 @@ window.Store = {
                 subitems: typeof e.subitems === 'string' ? JSON.parse(e.subitems) : e.subitems
             }));
 
-            console.log("Dados sincronizados com sucesso!");
+            const endTime = performance.now();
+            console.log(`%c [BOOT] Dados Vitais carregados e processados em ${(endTime - startTime).toFixed(2)}ms`, "color: #10b981; font-weight: bold;");
+
+            // FASE 2: Dados Secundários (Background)
+            this.fetchSecondaryData();
+
             return true;
         } catch (error) {
-            console.error("Erro ao puxar dados do banco:", error);
-            // Fallback para testes offline visuais se necessário, ou notificar o usuário
+            console.error("Erro crítico no carregamento inicial:", error);
             if (typeof window.showNotify === 'function') {
-                window.showNotify("Erro de Conexão", "Erro de conexão com o banco de dados. Tente atualizar a página.", "error");
-            } else {
-                console.error("Erro de conexão com o banco de dados.");
+                window.showNotify("Erro de Conexão", "Falha ao carregar dados vitais. Verifique sua rede.", "error");
             }
             return false;
+        }
+    },
+
+    /**
+     * Carrega dados pesados em background para não travar o login/boot
+     */
+    async fetchSecondaryData() {
+        try {
+            console.log("%c [BOOT] Carregando dados secundários em background (Logs/Mensagens)...", "color: #94a3b8;");
+            const [mensagensRes, logsRes] = await Promise.all([
+                apiFetch(`${API_BASE}/mensagens`),
+                apiFetch(`${API_BASE}/logs`)
+            ]);
+
+            db.mensagens = (await mensagensRes.json()).map(m => ({
+                id: m.id,
+                remetente: m.remetente,
+                destinatario: m.destinatario,
+                texto: m.texto,
+                assunto: m.assunto || 'Sem Assunto',
+                lida: m.lida,
+                data: m.data,
+                excluido_por: Array.isArray(m.excluido_por) ? m.excluido_por : (typeof m.excluido_por === 'string' ? JSON.parse(m.excluido_por) : []),
+                favorito: m.favorito || false
+            })) || [];
+
+            db.logs = await logsRes.json() || [];
+
+            console.log("%c [BOOT] Dados secundários sincronizados.", "color: #10b981;");
+
+            // Notifica o app de que as mensagens chegaram (para atualizar badges/listas se necessário)
+            if (typeof window.updateMensagensBadges === 'function') window.updateMensagensBadges();
+            if (typeof window.renderMensagens === 'function' && window.LOGGED_USER) window.renderMensagens();
+
+        } catch (e) {
+            console.warn("Erro ao carregar dados secundários em background:", e);
         }
     },
 

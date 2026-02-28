@@ -891,37 +891,44 @@ async function handleLogin(e) {
             document.querySelector('.sidebar .user-name').textContent = auth.nome;
             document.querySelector('.sidebar .user-role').textContent = auth.permissao;
 
-            // Trigger renders since we now have contextual access
+            // Renderização Seletiva (Lazy Loading) para o Login ser instantâneo
+            const initialView = auth.telas_permitidas.includes('dashboard') ? 'dashboard' : (auth.telas_permitidas[0] || 'operacional');
+
+            console.log(`%c [LOGIN] Login bem-sucedido. Renderizando view inicial: ${initialView}`, "color: #6366f1; font-weight: bold;");
+
+            // Prioridade Alta: Dados de Contexto e Menu
             loadSetoresSelects();
-            renderDashboard();
-            renderOperacional();
-            renderClientes();
-            renderRotinas();
-            renderMensagens();
-            renderAuditoria();
-            renderBackupView();
-            updateMensagensBadges();
-
-            // Execute Dynamic Authorization on Navbar (RBAC)
             applyUserPermissions(auth);
-
-            // Aplicar Branding após Login
             applyBranding();
-
-            // Inicializa Menu da Conta na Sidebar
             initUserAccountMenu();
 
-            // Re-route user to their first available view if they don't have access to Dashboard
-            if (!auth.telas_permitidas.includes('dashboard') && auth.telas_permitidas.length > 0) {
-                const firstView = auth.telas_permitidas[0];
-                const firstNav = document.querySelector(`.nav-item[data-view="${firstView}"]`);
-                if (firstNav) firstNav.click();
+            // Renderiza apenas a View inicial
+            if (initialView === 'dashboard') renderDashboard();
+            else if (initialView === 'operacional') renderOperacional();
+            else if (initialView === 'clientes') renderClientes();
+            else if (initialView === 'rotinas') renderRotinas();
+            else if (initialView === 'mensagens') renderMensagens();
+
+            // Renderização em Background (Prioridade Baixa) - Deferido para não travar a entrada
+            setTimeout(() => {
+                if (initialView !== 'dashboard') renderDashboard();
+                if (initialView !== 'operacional') renderOperacional();
+                if (initialView !== 'clientes') renderClientes();
+                if (initialView !== 'rotinas') renderRotinas();
+                if (initialView !== 'mensagens') renderMensagens();
+                renderAuditoria();
+                renderBackupView();
+                updateMensagensBadges();
+                checkAndRunAutoBackup();
+            }, 1000);
+
+            // Re-route se necessário
+            if (initialView !== 'dashboard') {
+                const navItem = document.querySelector(`.nav-item[data-view="${initialView}"]`);
+                if (navItem) navItem.click();
             }
 
             sessionStorage.setItem('fiscalapp_session', auth.id);
-
-            // Execute Auto-Backup if enabled
-            checkAndRunAutoBackup();
         }, 300); // Wait for fade out
     } else {
         if (btn) btn.innerHTML = 'Entrar no Sistema';
