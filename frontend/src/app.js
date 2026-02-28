@@ -2407,7 +2407,10 @@ function toggleListVisibility(gridId, iconId) {
     const icon = document.getElementById(iconId);
 
     if (grid && icon) {
-        const isHidden = grid.style.display === 'none';
+        // Obter o estilo computado se o estilo inline estiver vazio
+        const currentDisplay = grid.style.display || window.getComputedStyle(grid).display;
+        const isHidden = currentDisplay === 'none';
+
         grid.style.display = isHidden ? 'grid' : 'none';
 
         // Rotacionar ícone
@@ -4512,7 +4515,7 @@ function fireConfetti() {
             particleCount: 150,
             spread: 80,
             origin: { y: 0.6 },
-            zIndex: 9999,
+            zIndex: 20000,
             colors: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
         });
     }

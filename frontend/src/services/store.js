@@ -1655,8 +1655,16 @@ window.Store = {
                     ehPai: true,
                     subitems: subitems
                 });
-                // Rotinas eventuais nao vinculam o cliente permanentemente.
-                // A execucao fica salva apenas na competencia atual (historico/auditoria).
+                // Vincular o cliente permanentemente à rotina para que apareça na Gestão de Rotinas
+                const rotinasAtuais = cliente.rotinasSelecionadas || [];
+                if (!rotinasAtuais.includes(rotina.id)) {
+                    console.log(`[Store] Vinculando rotina ${rotina.id} au cliente ${cliente.id} via demanda eventual`);
+                    await this.editClient(cliente.id, {
+                        ...cliente,
+                        rotinasSelecionadas: [...rotinasAtuais, rotina.id]
+                    });
+                }
+
                 this.registerLog('Demanda Eventual', `Criada demanda "${rotina.nome}" para ${cliente.razaoSocial} (prazo: ${dateStr})`);
                 return { ok: true };
             } else {

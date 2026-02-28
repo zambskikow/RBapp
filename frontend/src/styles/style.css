@@ -3803,3 +3803,7 @@ button:hover i.fa-trash,
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
+/* Estado Colapsado para Grupos de Rotinas */
+.routine-group-content.collapsed {
+    display: none !important;
+}
