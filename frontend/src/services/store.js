@@ -461,7 +461,10 @@ window.Store = {
                 const rotinasDoCliente = client.rotinasSelecionadas || [];
                 const isEventual = rotinaObj.frequencia && rotinaObj.frequencia.toLowerCase() === 'eventual';
 
-                if (!isEventual && !rotinasDoCliente.includes(rotinaObj.id)) {
+                // Usar comparação de string para evitar problemas de tipo (ID como string vs number)
+                const estaVinculada = rotinasDoCliente.some(id => String(id) === String(rotinaObj.id));
+
+                if (!isEventual && !estaVinculada) {
                     return false; // A rotina não pertence mais ao cliente. Omitir.
                 }
             }

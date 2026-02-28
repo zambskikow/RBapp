@@ -1968,11 +1968,9 @@ function renderOperacional() {
     animateValue('kpi-operacional-late', 0, opLate, 500);
 
     const container = document.getElementById('operacional-groups-container');
+    if (!container) return; // Fail-safe
 
     // Capturar quais grupos estão atualmente abertos (não collapsed) antes de re-renderizar
-    // Isso preserva o estado quando o usuário abre uma lista com >10 clientes e executa uma tarefa
-    // Capturar quais grupos estão atualmente abertos (não collapsed) antes de re-renderizar
-    // Isso preserva o estado quando o usuário abre uma lista com >10 clientes e executa uma tarefa
     const currentGroups = container.querySelectorAll('.routine-group[data-rotina]');
     if (currentGroups.length > 0) {
         currentGroups.forEach(g => {
@@ -1989,13 +1987,7 @@ function renderOperacional() {
 
     container.innerHTML = '';
 
-    if (tasks.length === 0) {
-        container.innerHTML = `<div class="glass-card" style="text-align:center; padding: 3rem; color: var(--text-muted);">
-            <i class="fa-solid fa-magnifying-glass fa-2x" style="margin-bottom:1rem; opacity:0.5;"></i><br>
-            Nenhuma tarefa encontrada com os filtros atuais.
-        </div>`;
-        return;
-    }
+    // Removido early return para permitir mostrar grupos vazios com clientes vinculados
 
     // Grouping and Rendering...
     const grouped = {};
@@ -2169,6 +2161,14 @@ function renderOperacional() {
         groupDiv.innerHTML = tableHtml;
         container.appendChild(groupDiv);
     });
+
+    if (groupOrder.length === 0) {
+        container.innerHTML = `<div class="glass-card" style="text-align:center; padding: 3rem; color: var(--text-muted);">
+            <i class="fa-solid fa-magnifying-glass fa-2x" style="margin-bottom:1rem; opacity:0.5;"></i><br>
+            Nenhuma tarefa ou rotina vinculada encontrada com os filtros atuais.
+        </div>`;
+        return;
+    }
 
     document.querySelectorAll('#operacional-groups-container tr[data-id]').forEach(tr => {
         const taskId = parseInt(tr.getAttribute('data-id'));
@@ -3124,7 +3124,7 @@ function renderRotinas() {
 
         // Lista de clientes vinculados em uma só linha
         const clientesVinculados = clientes
-            .filter(c => c.rotinasSelecionadas && c.rotinasSelecionadas.includes(r.id))
+            .filter(c => c.rotinasSelecionadas && c.rotinasSelecionadas.some(id => String(id) === String(r.id)))
             .map(c => c.razaoSocial)
             .join(", ") || "Nenhum cliente";
 
