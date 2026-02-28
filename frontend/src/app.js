@@ -4247,14 +4247,14 @@ function renderMensagens() {
         const date = new Date(m.data);
         const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-        const snippet = m.texto.substring(0, 50) + (m.texto.length > 50 ? '...' : '');
-        const sender = currentInboxFolder === 'sent' ? m.destinatario : m.remetente;
+        const snippet = (m.texto || '').substring(0, 60) + ((m.texto || '').length > 60 ? '...' : '');
+        const sender = currentInboxFolder === 'sent' ? (m.destinatario || 'Desconhecido') : (m.remetente || 'Sistema');
         const initials = sender.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
         div.innerHTML = `
             <div class="msg-refined-left">
                 <input type="checkbox" class="msg-check" onclick="event.stopPropagation(); updateBulkActionsVisibility()">
-                <i class="fa-solid fa-star msg-star ${m.favorito ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorito(${m.id})"></i>
+                <i class="fa-solid fa-star msg-star ${m.favorito ? 'active' : ''}" onclick="event.stopPropagation(); window.toggleFavorito(${m.id})"></i>
             </div>
             <div class="msg-refined-avatar">${initials}</div>
             <div class="msg-refined-content">
@@ -4267,9 +4267,6 @@ function renderMensagens() {
                 </div>
                 <div class="msg-content-bot">
                     <p class="msg-preview-line">${snippet}</p>
-                    <div class="msg-item-indicators">
-                        ${m.anexos ? '<i class="fa-solid fa-paperclip"></i>' : ''}
-                    </div>
                 </div>
             </div>
         `;
@@ -4315,32 +4312,48 @@ function loadMessageIntoReader(id) {
         }
     });
 
-    document.querySelector('.empty-reader-state').style.display = 'none';
-    const reader = document.querySelector('.reader-content-refined');
-    reader.style.display = 'flex';
+    const emptyState = document.querySelector('.empty-reader-state');
+    if (emptyState) emptyState.style.display = 'none';
 
-    // Atualizar animação
-    reader.classList.remove('fade-in');
-    void reader.offsetWidth;
-    reader.classList.add('fade-in');
+    const readerContent = document.querySelector('.reader-content-refined');
+    if (readerContent) {
+        readerContent.style.display = 'flex';
+        readerContent.classList.remove('fade-in');
+        void readerContent.offsetWidth;
+        readerContent.classList.add('fade-in');
+    }
+
+    // Mobile: Ativar visor
+    document.getElementById('inbox-reader').classList.add('mobile-active');
 
     const subjectStr = msg.assunto || 'Sem Assunto';
     document.getElementById('reader-subject').textContent = subjectStr;
 
     // Texto do Avatar (iniciais)
-    const senderName = msg.remetente || 'S';
-    document.getElementById('reader-avatar-text').textContent = senderName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    document.getElementById('reader-email-text').textContent = `${senderName.toLowerCase().replace(/ /g, '.')}@fiscal.app`;
+    const senderName = msg.remetente || 'Sistema';
+    const initialsReader = senderName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
-    const displayUser = currentInboxFolder === 'sent' ? `Para: ${msg.destinatario}` : msg.remetente;
-    document.getElementById('reader-from').textContent = displayUser;
+    const avatarEl = document.getElementById('reader-avatar-text');
+    if (avatarEl) avatarEl.textContent = initialsReader;
 
-    const d = new Date(msg.data);
-    document.getElementById('reader-date').textContent = `${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    const emailEl = document.getElementById('reader-email-text');
+    if (emailEl) emailEl.textContent = `${senderName.toLowerCase().replace(/ /g, '.')}@fiscal.app`;
+
+    const fromEl = document.getElementById('reader-from');
+    if (fromEl) fromEl.textContent = currentInboxFolder === 'sent' ? `Para: ${msg.destinatario}` : senderName;
+
+    const dateEl = document.getElementById('reader-date');
+    if (dateEl) {
+        const d = new Date(msg.data);
+        dateEl.textContent = `${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    }
 
     // Formatar o texto em parágrafos
-    const paragraphs = msg.texto.split('\n').filter(p => p.trim() !== '').map(p => `<p style="margin-bottom:1.2rem;">${p}</p>`).join('');
-    document.getElementById('reader-body-content').innerHTML = paragraphs;
+    const bodyEl = document.getElementById('reader-body-content');
+    if (bodyEl) {
+        const paragraphs = (msg.texto || '').split('\n').filter(p => p.trim() !== '').map(p => `<p style="margin-bottom:1.2rem;">${p}</p>`).join('');
+        bodyEl.innerHTML = paragraphs;
+    }
 
     // Botões de ação
     const btnReply = document.getElementById('btn-reply-msg');
