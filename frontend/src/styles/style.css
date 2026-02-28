@@ -3585,6 +3585,7 @@ button:hover i.fa-trash,
         opacity: 0;
         transform: translateY(8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -3593,17 +3594,19 @@ button:hover i.fa-trash,
 
 /* Ajustes finos no Painel de Detalhes */
 .clientes-detail-panel {
-    max-width: 1000px;
-    margin: 0 auto;
-    width: 100%;
+    max-width: 1100px;
+    margin: 2rem auto;
+    width: calc(100% - 4rem);
+    padding: 2.5rem;
+    box-sizing: border-box;
 }
 
 .detail-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
     border-bottom: 1px solid var(--border-glass);
 }
 
